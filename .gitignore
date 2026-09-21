@@ -1,0 +1,15 @@
+# Credenciales y configuracion local
+.env
+.env.*
+!.env.example
+
+# Dependencias y artefactos locales
+/vendor/
+/.idea/
+/.vscode/
+*.log
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
