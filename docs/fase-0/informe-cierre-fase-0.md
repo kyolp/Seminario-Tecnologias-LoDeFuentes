@@ -1,293 +1,306 @@
 ============================================================
-# INFORME DE CIERRE — FASE 0
+# REAUDITORÍA Y CIERRE — FASE 0
 ============================================================
 
-## 1. IDENTIFICACIÓN
+## 1. MOTIVO DE LA REAUDITORÍA
 
-Proyecto: **NO DEFINIDO EN LOS DOCUMENTOS AUTORIZADOS**  
-Fase: Fase 0 — Diagnóstico, aislamiento y preparación  
-Directorio: `C:\Users\David\Documents\Universidad\2026\Segundo semestre\seminario de tecnologias\ProyectoFinal`  
-Fecha: 2026-09-20
+La Fase 0 terminó como `APROBABLE CON OBSERVACIONES` porque el Prompt Maestro
+era la única fuente disponible: el nombre, la institución y el objetivo se
+registraron como no definidos; se contabilizaron cuatro actores y dieciocho RNF
+derivados de instrucciones generales; además, PHP y MySQL no estaban
+disponibles.
 
-## 2. OBJETIVO DE LA FASE
+La incorporación del documento oficial de alcance hizo necesario corregir de
+forma limitada la identidad, los actores y la trazabilidad, y volver a verificar
+el entorno técnico, sin iniciar la Fase 1 ni implementar funcionalidades.
 
-Preparar el proyecto antes del desarrollo mediante la lectura de la fuente
-autorizada, identificación del alcance disponible, revisión del directorio y de
-Git, control de contaminación, verificación del entorno PHP/MySQL, preparación
-documental mínima y registro de pendientes, sin implementar funcionalidades.
+## 2. DOCUMENTO OFICIAL UTILIZADO
 
-## 3. DOCUMENTOS UTILIZADOS
+`C:\Users\David\Documents\Universidad\2026\Segundo semestre\seminario de tecnologias\Documento_Alcance_Escuela_Lo_de_Fuentes_Andersson_Godoy (1).docx`
 
-1. `C:\Users\David\.codex\attachments\f527ca4e-e765-452a-a8cd-8fc3d00987cb\Texto pegado.txt`
-   — Prompt Maestro proporcionado por el usuario.
+También se consultaron exclusivamente el Prompt Maestro, el prompt de
+reauditoría y los tres artefactos existentes de Fase 0 dentro del directorio
+autorizado.
 
-No se utilizó ningún otro documento externo.
+## 3. IDENTIDAD CORREGIDA DEL PROYECTO
 
-## 4. ARCHIVOS DEL PROYECTO CONSULTADOS
+Nombre: Sistema web integral para la gestión de inscripciones, asignación de
+secciones y control de asistencia docente de una institución educativa.
 
-Al inicio no existía ningún archivo dentro del directorio autorizado. Tras su
-creación durante esta fase, se consultaron:
+Institución: Escuela Oficial Rural Mixta Lo de Fuentes.
 
-1. `.gitignore`
-2. `README.md`
-3. `docs/fase-0/diagnostico.md`
-4. `docs/fase-0/matriz-trazabilidad.md`
+Ubicación: 13 Calle, Lo de Fuentes, Zona 11, Mixco.
 
-## 5. REQUERIMIENTOS TRABAJADOS
+Objetivo: Desarrollar un sistema web integral para gestionar las inscripciones
+y cupos de estudiantes, la asignación de grados, secciones, aulas y docentes, y
+el control digital de entrada y salida del personal docente, incorporando
+validación de ubicación, gestión de permisos y generación de comprobantes y
+reportes para apoyar la administración de la Escuela Oficial Rural Mixta Lo de
+Fuentes.
 
-- Identificación del proyecto, institución, objetivo, actores, módulos,
-  tecnologías, requerimientos funcionales y no funcionales, reglas, criterios,
-  exclusiones, pendientes y ambigüedades.
-- Verificación del directorio autorizado y posible contaminación.
-- Revisión e inicialización de Git.
-- Comprobación de PHP, MySQL/MariaDB y herramientas del entorno.
-- Preparación de estructura inicial estrictamente documental.
-- Evaluación de viabilidad de la prueba mínima PHP → MySQL.
-- Creación de la matriz inicial de trazabilidad.
+Fuente: portada y sección 7 del documento oficial.
 
-## 6. TRABAJO REALIZADO
+## 4. ACTORES CORRECTOS
 
-- Se leyó completamente el único documento autorizado.
-- Se verificó que el directorio existe y se encontraba vacío.
-- Se determinó que el nombre, la institución y el objetivo oficial no están
-  definidos; no se tomó el nombre de la estructura ilustrativa como oficial.
-- Se identificaron cuatro actores, once áreas funcionales, 32 requerimientos
-  funcionales y 18 requerimientos no funcionales expresos o directamente
-  derivados de las fases obligatorias del documento.
-- Se documentaron reglas confirmadas, criterios de aceptación disponibles,
-  exclusiones, veinte grupos de datos pendientes y nueve ambigüedades.
-- Se comprobó la ausencia de indicios de contaminación.
-- Se inicializó Git en la rama `main` y se registró el trabajo documental.
-- Se verificaron las herramientas del entorno.
-- Se protegieron configuraciones y credenciales locales mediante `.gitignore`.
-- No se crearon carpetas de aplicación, tablas, código PHP ni funcionalidades.
+Cantidad: **3 actores o roles funcionales**.
 
-## 7. ARCHIVOS CREADOS
+| Actor o rol | Funciones principales | Sección documental |
+|---|---|---|
+| Dirección / Administración | Administrar usuarios, docentes, estudiantes, grados, secciones, cupos, aulas y asignaciones; revisar permisos; consultar reportes; configurar ubicación y supervisar el sistema. | 3.1 y 9.1 |
+| Personal docente | Iniciar sesión; consultar asignación y estudiantes; registrar entrada/salida e historial; solicitar permisos y consultar su estado. | 3.1 y 9.3 |
+| Padre, madre o encargado | Realizar la inscripción; seleccionar grado y sección; verificar cupos; obtener comprobante y consultar por código, sin cuenta en la primera versión. | 3.1 y 9.2 |
 
-Ruta: `.gitignore`  
-Propósito: excluir credenciales, configuración y artefactos locales.
+El estudiante no se cuenta como actor: el alcance lo define como entidad
+gestionada, no como rol funcional o usuario independiente.
 
-Ruta: `README.md`  
-Propósito: declarar el estado, las tecnologías exigidas y el límite de fase.
+## 5. REQUERIMIENTOS FUNCIONALES
 
-Ruta: `docs/fase-0/diagnostico.md`  
-Propósito: conservar la identificación, alcance, reglas, pendientes,
-ambigüedades, entorno y decisiones técnicas de la fase.
+Cantidad: **32**.
+Rango: **RF-01 a RF-32**.
+Primer RF: RF-01 — Autenticación.
+Último RF: RF-32 — Integridad de cupos.
 
-Ruta: `docs/fase-0/matriz-trazabilidad.md`  
-Propósito: registrar la trazabilidad inicial de RF y RNF sin adelantar diseño.
+La comparación automatizada entre la tabla del documento y la matriz confirmó
+un rango continuo, identificadores idénticos, 32 valores únicos y ausencia de
+duplicados. No se agregaron RF ajenos al documento.
 
-Ruta: `docs/fase-0/informe-cierre-fase-0.md`  
-Propósito: informe formal de cierre de Fase 0.
+## 6. REQUERIMIENTOS NO FUNCIONALES
 
-## 8. ARCHIVOS MODIFICADOS
+Cantidad: **10**.
+Rango: **RNF-01 a RNF-10**.
 
-NINGUNO. El directorio se encontraba vacío y todos los archivos indicados
-fueron creados durante esta fase.
+| ID | Categoría |
+|---|---|
+| RNF-01 | Usabilidad |
+| RNF-02 | Compatibilidad |
+| RNF-03 | Seguridad |
+| RNF-04 | Privacidad |
+| RNF-05 | Integridad |
+| RNF-06 | Trazabilidad |
+| RNF-07 | Rendimiento |
+| RNF-08 | Mantenibilidad |
+| RNF-09 | Configurabilidad |
+| RNF-10 | Disponibilidad |
 
-## 9. CAMBIOS EN BASE DE DATOS
+No se contabilizaron como RNF las reglas de negocio, criterios de aceptación,
+limitaciones, controles del Prompt Maestro ni decisiones técnicas.
 
-Tablas: NINGUNA.  
-Columnas: NINGUNA.  
-Restricciones: NINGUNA.  
-Datos: NINGUNO.
+## 7. REGLAS DE NEGOCIO
 
-## 10. DECISIONES TÉCNICAS
+La sección 11 del documento contiene **14 reglas**:
 
-### DT-001 — Estructura documental mínima
+1. No superar la capacidad configurada de una sección.
+2. No mostrar secciones llenas para nuevas inscripciones.
+3. Informar cuando no existan cupos en el grado.
+4. No implementar lista de espera en la primera versión.
+5. Configurar secciones y capacidades por período, sin fijarlas en código.
+6. Generar un código por cada inscripción confirmada.
+7. No crear cuenta para el padre, madre o encargado en la primera versión.
+8. Exigir inicio de sesión docente antes del marcaje.
+9. Solicitar y validar ubicación antes del marcaje.
+10. Aceptar el marcaje solo dentro del radio autorizado.
+11. Registrar entrada y salida con fecha y hora.
+12. Impedir acceso docente a funciones administrativas.
+13. Conservar estado e historial de permisos.
+14. Relacionar grados, secciones, aulas y asignaciones para alimentar el listado
+    docente.
 
-Problema: la estructura MVC sugerida no puede comprobarse contra un documento
-funcional inexistente y pertenece principalmente a una fase posterior.  
-Motivo: evitar supuestos y trabajo adelantado.  
-Solución: crear solo el repositorio, `.gitignore`, `README.md` y
-`docs/fase-0`.  
-Impacto: el proyecto queda preparado y aislado sin comprometer la arquitectura.  
-Posibilidad de modificación futura: sí, en la Fase 2 autorizada.
+## 8. CRITERIOS DE ACEPTACIÓN
 
-### DT-002 — Prueba PHP → MySQL aplazada
+La sección 14 del documento contiene **11 criterios**:
 
-Problema: PHP, MySQL y MariaDB no están disponibles desde el entorno actual y
-no existen credenciales autorizadas.  
-Motivo: no es posible establecer una conexión real, segura y verificable.  
-Solución: registrar el bloqueo y no inventar credenciales ni descargar software.  
-Impacto: la compatibilidad PHP/MySQL no está validada.  
-Posibilidad de modificación futura: sí, cuando se proporcione el entorno.
+1. Crear grados, secciones y capacidades sin modificar código.
+2. Impedir superar el cupo máximo.
+3. Asociar la inscripción confirmada con grado y sección.
+4. Mostrar al docente los estudiantes de su sección.
+5. Permitir entrada y salida solo después de validar ubicación.
+6. Conservar fecha y hora de asistencia.
+7. Enviar, notificar, aprobar/rechazar y consultar permisos.
+8. Generar el comprobante PDF de inscripción.
+9. Generar un reporte de asistencia docente.
+10. Mostrar únicamente funciones correspondientes al rol.
+11. Documentar pruebas exitosas y de validación/error.
 
-## 11. DATOS DE PRUEBA UTILIZADOS
+## 9. CORRECCIONES REALIZADAS
 
-NINGUNO. No se inventaron datos institucionales ni funcionales.
+### Cambio 1
 
-## 12. PRUEBAS REALIZADAS
+Archivo: `docs/fase-0/diagnostico.md`
+Sección modificada: Identificación del proyecto.
+Valor anterior: nombre, institución y objetivo “NO DEFINIDO EN LOS DOCUMENTOS
+AUTORIZADOS”.
+Valor nuevo: título, Escuela Oficial Rural Mixta Lo de Fuentes, ubicación y
+objetivo general literales del documento.
+Motivo: incorporación de la fuente oficial.
+Fuente documental: portada y secciones 7 y 8.
 
-Prueba: Existencia e inventario del directorio autorizado.  
-Objetivo: confirmar la ubicación y conocer su contenido inicial.  
-Resultado esperado: directorio accesible e inventariable.  
-Resultado obtenido: directorio accesible y vacío.  
-Estado: SATISFACTORIA.
+### Cambio 2
 
-Prueba: Estado inicial de Git (`git status`, rama e historial).  
-Objetivo: determinar si existía un repositorio previo.  
-Resultado esperado: diagnóstico inequívoco.  
-Resultado obtenido: no existía repositorio; luego se inicializó `main`.  
-Estado: SATISFACTORIA.
+Archivo: `docs/fase-0/diagnostico.md`
+Sección modificada: Actores.
+Valor anterior: cuatro actores: encargado, estudiante, docente y administración.
+Valor nuevo: tres roles: Dirección / Administración, Personal docente y Padre,
+madre o encargado.
+Motivo: el estudiante es una entidad gestionada, no un actor funcional definido.
+Fuente documental: secciones 3.1, 9.1, 9.2 y 9.3.
 
-Prueba: Disponibilidad de Git.  
-Objetivo: comprobar el control de versiones.  
-Resultado esperado: Git ejecutable.  
-Resultado obtenido: Git 2.54.0.windows.1 disponible.  
-Estado: SATISFACTORIA.
+### Cambio 3
 
-Prueba: Disponibilidad de PHP.  
-Objetivo: comprobar el runtime requerido.  
-Resultado esperado: ejecutable y versión visible.  
-Resultado obtenido: comando no disponible.  
-Estado: NO SATISFACTORIA — ENTORNO PENDIENTE.
+Archivo: `docs/fase-0/diagnostico.md`
+Sección modificada: Módulos, reglas, criterios, exclusiones, pendientes y
+ambigüedades.
+Valor anterior: extracción parcial del Prompt Maestro, con catálogos y datos
+institucionales indicados como no definidos.
+Valor nuevo: cinco áreas de alcance, 14 reglas, 11 criterios, 16 exclusiones y
+12 pendientes institucionales extraídos del documento oficial.
+Motivo: reemplazar inferencias preliminares por la línea base aprobable.
+Fuente documental: secciones 9, 11, 12, 14, 15 y 17.
 
-Prueba: Disponibilidad de MySQL/MariaDB.  
-Objetivo: comprobar el cliente o servicio requerido.  
-Resultado esperado: cliente o servicio disponible.  
-Resultado obtenido: comandos no disponibles y ningún servicio con esos nombres
-detectado.  
-Estado: NO SATISFACTORIA — ENTORNO PENDIENTE.
+### Cambio 4
 
-Prueba: Disponibilidad del entorno alternativo Docker.  
-Objetivo: determinar si podía sostener una prueba aislada sin instalar software.  
-Resultado esperado: cliente y motor disponibles.  
-Resultado obtenido: cliente 28.0.4 disponible; motor no disponible.  
-Estado: NO SATISFACTORIA — ENTORNO PENDIENTE.
+Archivo: `docs/fase-0/diagnostico.md`
+Sección modificada: Entorno técnico y estado de preparación.
+Valor anterior: Docker pendiente de comprobación y documento funcional ausente.
+Valor nuevo: Docker cliente 28.0.4 verificado con motor inactivo; documento
+oficial disponible; PHP/MySQL continúan ausentes y la conectividad permanece
+bloqueada.
+Motivo: reflejar el estado actual del entorno y resolver la observación
+documental.
+Fuente documental: comandos ejecutados durante la reauditoría.
 
-Prueba: Conexión mínima PHP → MySQL.  
-Objetivo: verificar interoperabilidad y conectividad.  
-Resultado esperado: conexión exitosa con configuración autorizada.  
-Resultado obtenido: no ejecutada porque faltan PHP, MySQL, motor Docker y
-credenciales autorizadas.  
-Estado: BLOQUEADA.
+### Cambio 5
 
-Prueba: Consistencia de cambios con `git diff --check`.  
-Objetivo: detectar errores de espacios en los archivos preparados.  
-Resultado esperado: ninguna observación.  
-Resultado obtenido: ninguna observación.  
-Estado: SATISFACTORIA.
+Archivo: `docs/fase-0/matriz-trazabilidad.md`
+Sección modificada: Requerimientos funcionales.
+Valor anterior: RF-001 a RF-032, descripciones derivadas del Prompt Maestro y
+algunas correspondencias distintas a la línea base.
+Valor nuevo: RF-01 a RF-32 con los nombres y alcances de la sección 10.1.
+Motivo: igualar identificadores, orden y contenido con el documento oficial.
+Fuente documental: tabla de requerimientos funcionales de la sección 10.1.
 
-Prueba: Inventario final de archivos.  
-Objetivo: confirmar que solo existen artefactos de Fase 0.  
-Resultado esperado: documentación y configuración mínima, sin código funcional.  
-Resultado obtenido: únicamente `.gitignore`, `README.md` y documentación de
-Fase 0.  
-Estado: SATISFACTORIA.
+### Cambio 6
 
-## 13. ERRORES ENCONTRADOS
+Archivo: `docs/fase-0/matriz-trazabilidad.md`
+Sección modificada: Requerimientos no funcionales.
+Valor anterior: 18 RNF derivados de instrucciones técnicas y de proceso.
+Valor nuevo: 10 RNF oficiales, RNF-01 a RNF-10.
+Motivo: no convertir reglas, criterios, limitaciones o decisiones en RNF.
+Fuente documental: tabla de requerimientos no funcionales de la sección 10.2.
 
-1. PHP no está disponible desde el entorno actual.
-2. MySQL y MariaDB no están disponibles desde el entorno actual.
-3. No se detectó servicio MySQL/MariaDB.
-4. El cliente Docker está instalado, pero el motor no está activo.
-5. No existe documento funcional oficial ni configuración de conexión.
-6. El primer intento de registrar cambios en Git fue rechazado por las
-   restricciones de escritura del entorno sobre `.git`.
+### Cambio 7
 
-## 14. CORRECCIONES REALIZADAS
+Archivo: `docs/fase-0/matriz-trazabilidad.md`
+Sección modificada: Clasificación complementaria.
+Valor anterior: reglas, criterios y limitaciones no estaban trazados como
+categorías independientes.
+Valor nuevo: secciones separadas para 14 reglas, 11 criterios y 6 limitaciones,
+con identificadores internos claramente señalados.
+Motivo: conservar la clasificación del documento sin alterar los conteos RF/RNF.
+Fuente documental: secciones 11, 14 y 15.
 
-- Se inicializó un repositorio Git local en la rama `main`.
-- Se registraron todos los datos ausentes como “NO DEFINIDO EN LOS DOCUMENTOS
-  AUTORIZADOS” o como pendientes, sin inventarlos.
-- Se solicitó y utilizó la autorización del entorno para registrar en Git
-  exclusivamente los archivos de Fase 0.
-- Los faltantes de PHP/MySQL no se corrigieron instalando software porque tal
-  acción no fue autorizada y excede la preparación mínima segura.
+### Cambio 8
 
-## 15. PROBLEMAS NO RESUELTOS
+Archivo: `docs/fase-0/informe-cierre-fase-0.md`
+Sección modificada: Informe completo de cierre.
+Valor anterior: informe de la primera auditoría basado únicamente en el Prompt
+Maestro.
+Valor nuevo: informe de reauditoría con identidad, conteos, entorno, control de
+cambios y resultado actualizados.
+Motivo: cerrar formalmente la corrección controlada solicitada.
+Fuente documental: documento oficial, verificaciones actuales y diff de Git.
 
-- Falta el documento funcional oficial del proyecto.
-- No están definidos el nombre, institución ni objetivo oficial.
-- No existe un entorno PHP/MySQL operativo accesible.
-- No existen credenciales ni parámetros autorizados de conexión.
-- No pudo ejecutarse la prueba PHP → MySQL.
+## 10. ENTORNO TÉCNICO
 
-## 16. PENDIENTES
+PHP: **NO DISPONIBLE**. `php --version` no reconoce un ejecutable.
+MySQL: **NO DISPONIBLE**. `mysql --version` no reconoce un ejecutable y no se
+detectó servicio MySQL/MariaDB.
+Git: **DISPONIBLE**. Versión 2.54.0.windows.1; rama `main`; historial preservado.
+Docker: cliente 28.0.4, build b8034c0; **Docker Engine NO ACTIVO**.
 
-1. Aportar o autorizar el documento funcional oficial.
-2. Confirmar los datos enumerados en `docs/fase-0/diagnostico.md`.
-3. Preparar o indicar un entorno PHP/MySQL compatible y su configuración segura.
-4. Repetir la prueba PHP → MySQL antes de depender de la conexión.
-5. Autorizar explícitamente la Fase 1 cuando se acepten estas observaciones.
+Composer y MariaDB tampoco están disponibles. No se instaló ni sustituyó
+ninguna tecnología.
 
-## 17. RIESGOS
+## 11. PRUEBA PHP → MYSQL
 
-- Diseñar la base de datos sin alcance oficial podría fijar supuestos erróneos.
-- Continuar sin PHP/MySQL impediría verificar scripts e integridad en el motor
-  objetivo.
-- La falta de reglas detalladas para asistencia, permisos, notificaciones,
-  reportes y recuperación puede producir interpretaciones incompatibles con la
-  necesidad académica.
-- La ausencia de métricas RNF dificulta pruebas objetivas de calidad.
+Estado: **BLOQUEADA**.
 
-## 18. COMMITS REALIZADOS
+Resultado: no fue posible ejecutar la conexión porque faltan el runtime PHP, un
+cliente o servidor MySQL operativo y parámetros autorizados de conexión. El
+motor Docker tampoco está activo. No se creó base temporal, tabla ni archivo de
+conectividad, y no se utilizaron credenciales reales o inventadas.
 
-Hash: `4140745`  
+Versión PHP: no disponible.
+Versión MySQL: no disponible.
+Host: no definido.
+Puerto: no definido.
+Mecanismo previsto: PDO MySQL, pendiente de disponibilidad.
+
+## 12. ARCHIVOS MODIFICADOS
+
+1. `docs/fase-0/diagnostico.md`
+2. `docs/fase-0/matriz-trazabilidad.md`
+3. `docs/fase-0/informe-cierre-fase-0.md`
+
+No se creó ni modificó código PHP, esquema SQL, configuración de aplicación o
+artefacto correspondiente a una fase posterior.
+
+## 13. COMMITS
+
+Hash: `4140745`
 Mensaje: `chore(fase-0): preparar diagnóstico y trazabilidad inicial`
 
-Nota: este informe será incorporado por un commit documental de cierre
-inmediatamente después de su generación; su hash se informa al usuario porque
-no puede escribirse dentro del propio contenido antes de existir.
+Hash: `3c5341f`
+Mensaje: `docs(fase-0): registrar informe de cierre`
 
-## 19. ESTADO DE LOS REQUERIMIENTOS
+Hash: `5b74af5`
+Mensaje: `docs(fase-0): corregir diagnostico y trazabilidad`
 
-PENDIENTE:
+El presente informe será incorporado mediante un commit documental de cierre
+después de su generación; su hash se comunica al usuario porque no puede
+incluirse dentro de sí mismo antes de existir.
 
-- RF-001 a RF-032.
-- RNF-001 a RNF-015 y RNF-018.
+## 14. AUDITORÍA DE AISLAMIENTO
 
-EN DESARROLLO:
+[x] Solo se utilizó el directorio autorizado para archivos del proyecto.
+[x] Solo se utilizó el documento oficial adjunto y los prompts autorizados.
+[x] No se utilizaron otros proyectos.
+[x] No se utilizaron memorias externas.
+[x] No se desarrolló ninguna fase posterior.
+[x] No se detectó contaminación de otros proyectos.
+[x] Se preservó el historial Git.
+[x] No se instalaron ni sustituyeron tecnologías.
 
-- RNF-016 — trazabilidad durante todo el proyecto.
-- RNF-017 — control de cambios durante todo el proyecto.
+## 15. OBSERVACIONES PENDIENTES
 
-IMPLEMENTADO:
+1. Instalar o habilitar un runtime PHP compatible.
+2. Instalar o habilitar un servidor y cliente MySQL compatible.
+3. Proporcionar una configuración de diagnóstico autorizada: host, puerto, base
+   y credenciales seguras, sin versionar secretos.
+4. Ejecutar y documentar una conexión mínima PHP → MySQL.
+5. Confirmar los doce datos institucionales pendientes de la sección 17 del
+   documento, especialmente coordenadas, radio, capacidades e infraestructura.
+6. Definir métricas verificables para “tiempo razonable” y versiones de
+   navegadores compatibles en una fase posterior autorizada.
 
-- NINGUNO. Fase 0 no implementa funcionalidades.
+Componente exacto que impide cerrar completamente la Fase 0: entorno PHP/MySQL
+operativo y prueba de conexión satisfactoria.
 
-VALIDADO:
-
-- NINGUNO. Ningún requerimiento funcional fue implementado ni probado.
-
-## 20. AUDITORÍA DE AISLAMIENTO
-
-[x] Se utilizó únicamente el directorio autorizado.  
-[x] Se utilizaron únicamente documentos autorizados.  
-[x] No se utilizó información de otros proyectos.  
-[x] No se utilizó memoria de otros proyectos.  
-[x] No se utilizaron conversaciones anteriores.  
-[x] No se modificaron otros repositorios.  
-[x] No se agregaron funcionalidades fuera del alcance.  
-[x] No se usaron datos ficticios; por tanto, ninguno quedó sin identificar.  
-[x] Las decisiones técnicas fueron documentadas.
-
-## 21. RESULTADO GENERAL
+## 16. RESULTADO FINAL DE FASE 0
 
 **APROBABLE CON OBSERVACIONES**
 
-## 22. JUSTIFICACIÓN DEL RESULTADO
+La identidad, actores y trazabilidad quedaron corregidos y verificados; no hay
+contaminación y Git funciona correctamente. No se selecciona `APROBABLE` porque
+el entorno requerido continúa incompleto y la prueba PHP → MySQL está
+bloqueada, incumpliendo los puntos 8 y 9 del criterio de cierre solicitado.
 
-Se completaron el aislamiento, inventario, extracción del alcance disponible,
-trazabilidad inicial, control de contaminación, preparación documental y Git.
-No se implementó ninguna funcionalidad futura. Sin embargo, la fase no puede
-considerarse plenamente aprobable porque falta el documento funcional oficial y
-no existe un entorno PHP/MySQL operativo para ejecutar la prueba técnica mínima.
+## 17. AUTORIZACIÓN
 
-## 23. SIGUIENTE FASE PREVISTA
+“LA REAUDITORÍA DE FASE 0 HA FINALIZADO.
 
-Fase 1 — Diseño completo de la base de datos.
-
-NO IMPLEMENTARLA.
-
-## 24. AUTORIZACIÓN
-
-“LA FASE 0 HA FINALIZADO.
-
-NO CONTINUARÉ CON LA SIGUIENTE FASE HASTA RECIBIR
-AUTORIZACIÓN EXPLÍCITA DEL USUARIO.”
+NO INICIARÉ LA FASE 1 HASTA RECIBIR AUTORIZACIÓN
+EXPLÍCITA DEL USUARIO.”
 
 ============================================================
-# FIN DEL INFORME
+# FIN DE LA REAUDITORÍA
 ============================================================
