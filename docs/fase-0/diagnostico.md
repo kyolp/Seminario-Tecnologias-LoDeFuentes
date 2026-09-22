@@ -1,6 +1,7 @@
 # Diagnóstico, aislamiento y preparación — Fase 0
 
 Fecha de reauditoría: 2026-09-20
+Fecha de validación técnica definitiva: 2026-09-22
 Directorio autorizado: `C:\Users\David\Documents\Universidad\2026\Segundo semestre\seminario de tecnologias\ProyectoFinal`
 
 ## Declaración de aislamiento
@@ -221,17 +222,18 @@ Fuente: sección 17 del documento oficial.
 - Impacto: no se adelanta arquitectura, base de datos ni funcionalidad.
 - Posibilidad de modificación futura: sí, en la fase autorizada correspondiente.
 
-### DT-002 — Mantener bloqueada la prueba PHP → MySQL
+### DT-002 — Validar la conexión PHP → MySQL con recursos temporales
 
-- Problema: PHP, MySQL y MariaDB siguen sin estar disponibles; tampoco existe
-  un motor Docker activo ni una configuración de conexión autorizada.
-- Motivo: no puede establecerse una conexión PHP → MySQL real y verificable.
-- Solución: registrar la prueba como `BLOQUEADA`, sin instalar sustitutos,
-  descargar imágenes ni inventar credenciales.
-- Impacto: el entorno técnico continúa pendiente y la Fase 0 no puede quedar
-  completamente aprobable.
-- Posibilidad de modificación futura: sí, cuando exista PHP, MySQL y una
-  configuración de diagnóstico autorizada.
+- Problema resuelto: PHP, PDO, `pdo_mysql` y MySQL ya están disponibles y
+  operativos en el entorno local.
+- Motivo: era necesario comprobar la cadena PHP → PDO → MySQL → `SELECT 1` sin
+  diseñar el esquema funcional del sistema.
+- Solución: crear una base y un usuario locales temporales con permiso `SELECT`
+  mínimo, ejecutar la prueba mediante PHP CLI y eliminarlos al terminar.
+- Impacto: la conectividad técnica quedó verificada sin crear tablas,
+  funcionalidades o credenciales permanentes.
+- Posibilidad de modificación futura: la configuración real de la aplicación
+  se definirá únicamente en la fase autorizada correspondiente.
 
 ## 12. Revisión del directorio y contaminación
 
@@ -248,20 +250,24 @@ ajenas ni scripts de bases de datos.
 |---|---|
 | Sistema operativo | Microsoft Windows NT 10.0.26200.0, x64. |
 | PowerShell | 7.6.5. |
-| Git | 2.54.0.windows.1; repositorio en rama `main`, limpio antes de la corrección. |
-| PHP | No disponible desde el entorno actual. |
-| MySQL | Cliente no disponible; no se detectó servicio MySQL. |
-| MariaDB | Cliente no disponible; no se detectó servicio MariaDB. |
-| Composer | No disponible desde el entorno actual. |
-| Docker | Cliente 28.0.4, build b8034c0. |
-| Docker Engine | No activo; no existe la tubería `dockerDesktopLinuxEngine`. |
+| Git | 2.54.0.windows.1; repositorio en rama `main`; historial intacto. |
+| PHP | 8.2.12 CLI, x64 ZTS; disponible mediante `PATH` en `C:\xampp\php\php.exe`. |
+| php.ini | Cargado desde `C:\xampp\php\php.ini`. |
+| PDO | Disponible y verificado. |
+| pdo_mysql | Disponible y verificado; controlador PDO `mysql`. |
+| MySQL | Community Server 8.0.42 para Win64, disponible mediante `PATH`. |
+| Servicio MySQL | `MySQL80` en estado `Running`, inicio `Automatic`. |
+| Conectividad MySQL | `127.0.0.1:3306` en escucha; prueba TCP satisfactoria. |
+| PHP → MySQL | Conexión PDO satisfactoria; `SELECT 1` devolvió `1`. |
+| Recursos temporales | Base y usuario de diagnóstico eliminados después de la prueba. |
 
 ## 14. Estado de preparación
 
-La identidad, los actores y la línea base documental quedan corregidos. Git está
-configurado y no existe contaminación detectada. La prueba PHP → MySQL sigue
-bloqueada porque faltan el runtime PHP, el cliente o servidor MySQL operativo y
-una configuración de conexión autorizada. Por ello, la Fase 0 permanece
-**APROBABLE CON OBSERVACIONES**.
+La identidad, los actores y la línea base documental permanecen sin cambios.
+Git está configurado, no existe contaminación detectada y la validación técnica
+quedó completada: PHP, PDO, `pdo_mysql`, MySQL Community Server, el servicio
+`MySQL80`, el puerto 3306, la conexión PDO y `SELECT 1` fueron verificados.
+No quedaron credenciales, archivos de prueba, usuarios ni bases temporales.
+Por ello, la Fase 0 queda **APROBABLE**.
 
 No se ha iniciado ni preparado trabajo de la Fase 1.
