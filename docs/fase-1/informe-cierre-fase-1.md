@@ -75,6 +75,8 @@ Se proveyó soporte estructural de datos relacional para los siguientes requisit
 - **DT-07 — Historial de solicitudes de permisos:** Tabla inmutable `historial_solicitudes_permiso` que audita cada transición de estado, usuario actor, fecha y comentario; notificaciones internas asociadas a solicitudes.
 - **DT-08 — Tokens de recuperación seguros:** Almacenamiento exclusivo del hash del token (`token_hash`), con fecha de expiración forzosa y estado para garantizar uso único.
 
+> **DECISIONES TÉCNICAS DEFINIDAS PARA ESTA FASE:** DT-01 a DT-08 documentadas. No existen decisiones bloqueantes pendientes al inicio de la implementación.
+
 ## 8. ARCHIVOS CREADOS
 
 1. `docs/fase-1/decisiones-tecnicas.md`: Registro formal de las decisiones técnicas `DT-01` a `DT-08`.
@@ -214,7 +216,7 @@ Se actualizó la matriz en `docs/fase-0/matriz-trazabilidad.md` manteniendo la e
 
 ## 24. JUSTIFICACIÓN
 
-El diseño de base de datos cumple con la totalidad del alcance de datos previsto para la Escuela Oficial Rural Mixta Lo de Fuentes. Cubre las 20 entidades requeridas sin ampliar el alcance ni omitir requerimientos. Las restricciones físicas de integridad referencial, unicidad, nulabilidad y chequeo fueron validadas satisfactoriamente mediante 18 pruebas automatizadas sin fallos. No se implementó código de aplicación PHP ni se introdujeron credenciales. El repositorio se encuentra limpio y documentado.
+El diseño de base de datos cumple con la totalidad del alcance de datos previsto para la Escuela Oficial Rural Mixta Lo de Fuentes. Cubre las 20 tablas derivadas de los requerimientos oficiales y de las decisiones técnicas documentadas para soportar el modelo relacional, sin ampliar el alcance ni omitir requerimientos. Las restricciones físicas de integridad referencial, unicidad, nulabilidad y chequeo fueron validadas satisfactoriamente mediante 18 pruebas automatizadas sin fallos. No se implementó código de aplicación PHP ni se introdujeron credenciales. El repositorio se encuentra limpio y documentado.
 
 ## 25. ELEMENTOS QUE CODEX DEBE REVISAR
 
