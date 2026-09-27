@@ -121,7 +121,29 @@ Los identificadores `LIM-DOC` son referencias internas de trazabilidad.
 
 ## Observaciones de trazabilidad
 
-- No se diseñaron tablas, claves ni relaciones físicas; corresponden a la Fase 1.
+- La Fase 1 diseñó y validó las tablas, claves, relaciones e índices descritos
+  en la actualización siguiente. Esto constituye soporte de datos, no
+  implementación funcional de los RF.
 - No se definieron rutas, clases o archivos de aplicación; corresponden a fases posteriores.
 - La fuente oficial distingue expresamente RF, RNF, reglas de negocio,
   criterios de aceptación y limitaciones; esta matriz conserva esa separación.
+
+## Actualización controlada de soporte de datos — Fase 1
+
+Los estados funcionales de RF y RNF permanecen `PENDIENTE`. Solo se registra el
+soporte físico ya disponible y validado en `database/schema.sql`,
+`database/seed.sql` y `database/tests/validacion.sql`.
+
+| Requisitos respaldados | Tablas de soporte creadas | Estado de Fase 1 | Evidencia de Fase 1 |
+|---|---|---|---|
+| RF-01 a RF-03; RNF-03 | `roles`, `usuarios`, `docentes`, `tokens_recuperacion` | SOPORTE DE DATOS IMPLEMENTADO | PK, FK, UNIQUE, NOT NULL y token vigente validados. |
+| RF-04, RF-05; RNF-04 | `estudiantes`, `encargados`, `estudiantes_encargados` | SOPORTE DE DATOS IMPLEMENTADO | Relación estudiante–encargado validada con datos ficticios. |
+| RF-06 a RF-10, RF-32; RNF-05, RNF-09 | `periodos_escolares`, `grados`, `grados_periodos`, `secciones`, `inscripciones` | SOPORTE DE DATOS IMPLEMENTADO | Capacidad 30/30, disponibilidad cero y decisión `RECHAZAR` validadas. |
+| RF-11, RF-12, RF-14, RF-30, RF-31 | `inscripciones` y relaciones escolares | SOPORTE DE DATOS IMPLEMENTADO | Consulta integral estudiante–encargado–sección–grado–período validada. |
+| RF-15 a RF-17 | `docentes`, `aulas`, `asignaciones_docentes` | SOPORTE DE DATOS IMPLEMENTADO | Consulta docente–sección–aula y unicidad de asignación activa validadas. |
+| RF-18 a RF-23, RF-29; RNF-06 | `configuraciones_ubicacion`, `marcajes_asistencia` | SOPORTE DE DATOS IMPLEMENTADO | Marcaje ficticio dentro del radio persistido y relacionado. |
+| RF-24 a RF-28; RNF-06 | `solicitudes_permiso`, `historial_solicitudes_permiso`, `documentos_permiso`, `notificaciones` | SOPORTE DE DATOS IMPLEMENTADO | Flujo relacional completo validado. |
+| RF-13 | No requiere tabla propia; se genera desde `inscripciones` y sus relaciones. | SOPORTE DE DATOS IMPLEMENTADO | Decisión de datos documentada; generación PDF sigue pendiente. |
+
+La prueba ejecutada y sus 18 resultados se documentan en
+`docs/fase-1/pruebas-base-datos.md`.
