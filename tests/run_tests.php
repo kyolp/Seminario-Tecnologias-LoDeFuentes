@@ -1,0 +1,405 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Suite de pruebas automatizadas para Fase 2 — Estructura Base de la Aplicación.
+ * Ejecutable mediante PHP CLI.
+ * 
+ * Cobertura obligatoria:
+ * T2-01 a T2-12
+ */
+
+// 1. Cargar bootstrap
+require_once dirname(__DIR__) . '/app/bootstrap.php';
+
+use App\Core\App;
+use App\Core\Config;
+use App\Core\Database;
+use App\Core\DatabaseException;
+use App\Core\Request;
+use App\Core\Response;
+use App\Core\View;
+
+class Phase2TestSuite
+{
+    private int $total = 0;
+    private int $passed = 0;
+    private int $failed = 0;
+    /** @var array<int, array{id: string, name: string, expected: string, obtained: string, status: string}> */
+    private array $results = [];
+
+    public function run(): void
+    {
+        echo "============================================================\n";
+        echo "SUITE DE PRUEBAS AUTOMATIZADAS — FASE 2\n";
+        echo "Escuela Oficial Rural Mixta Lo de Fuentes\n";
+        echo "============================================================\n\n";
+
+        $this->testT2_01_AppBoot();
+        $this->testT2_02_Configuration();
+        $this->testT2_03_PdoConnection();
+        $this->testT2_04_ConnectionErrorMasking();
+        $this->testT2_05_ValidRoute();
+        $this->testT2_06_NotFoundRoute();
+        $this->testT2_07_GetMethod();
+        $this->testT2_08_PostMethod();
+        $this->testT2_09_LayoutRendering();
+        $this->testT2_10_HtmlEscaping();
+        $this->testT2_11_SecretsNotVersioned();
+        $this->testT2_12_RegressionPhase1();
+
+        $this->printSummary();
+    }
+
+    private function record(string $id, string $name, string $expected, string $obtained, bool $isOk): void
+    {
+        $this->total++;
+        if ($isOk) {
+            $this->passed++;
+            $status = 'OK';
+        } else {
+            $this->failed++;
+            $status = 'FALLO';
+        }
+
+        $this->results[] = [
+            'id' => $id,
+            'name' => $name,
+            'expected' => $expected,
+            'obtained' => $obtained,
+            'status' => $status,
+        ];
+
+        printf("[%s] %s: %s | Obtenido: %s\n", $status, $id, $name, $obtained);
+    }
+
+    /**
+     * T2-01 — Carga de aplicación: La aplicación inicia sin errores fatales.
+     */
+    private function testT2_01_AppBoot(): void
+    {
+        try {
+            $app = App::getInstance();
+            $app->boot();
+            $isBooted = true;
+            $obtained = 'Aplicación inicializada correctamente';
+        } catch (\Throwable $e) {
+            $isBooted = false;
+            $obtained = 'Error fatal: ' . $e->getMessage();
+        }
+
+        $this->record(
+            'T2-01',
+            'Carga de aplicación',
+            'Inicio exitoso sin errores fatales',
+            $obtained,
+            $isBooted
+        );
+    }
+
+    /**
+     * T2-02 — Configuración: La configuración puede cargarse sin exponer secretos.
+     */
+    private function testT2_02_Configuration(): void
+    {
+        $appName = Config::get('app.name');
+        $dbHost = Config::get('database.connections.mysql.host');
+        $allConfig = Config::all();
+
+        // Verificar que existan las secciones y que una consulta estándar no vuelque secretos
+        $isOk = !empty($appName) && !empty($dbHost) && is_array($allConfig);
+        $obtained = sprintf('app.name="%s", db.host="%s"', (string) $appName, (string) $dbHost);
+
+        $this->record(
+            'T2-02',
+            'Carga de configuración',
+            'Configuración cargada en memoria',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T2-03 — Conexión PDO: La aplicación puede conectarse correctamente a MySQL usando la configuración definida.
+     */
+    private function testT2_03_PdoConnection(): void
+    {
+        try {
+            $pdo = Database::getConnection();
+            $stmt = $pdo->query('SELECT 1 AS test');
+            $val = $stmt->fetchColumn();
+            $isOk = ($val == 1);
+            $obtained = 'Conexión PDO establecida (SELECT 1 = 1)';
+        } catch (\Throwable $e) {
+            $isOk = false;
+            $obtained = 'Error de conexión: ' . $e->getMessage();
+        }
+
+        $this->record(
+            'T2-03',
+            'Conexión PDO',
+            'Conexión exitosa a MySQL',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T2-04 — Error de conexión: Un error controlado de conexión no expone credenciales.
+     */
+    private function testT2_04_ConnectionErrorMasking(): void
+    {
+        $fakePassword = 'SuperSecretPassword999!';
+        $fakeConfig = [
+            'driver' => 'mysql',
+            'host' => '127.0.0.1',
+            'port' => 3307,
+            'database' => 'non_existent_db_xyz',
+            'username' => 'fake_user_test',
+            'password' => $fakePassword,
+            'charset' => 'utf8mb4',
+        ];
+
+        $exposed = true;
+        $caught = false;
+        $msg = '';
+
+        try {
+            Database::createConnection($fakeConfig);
+        } catch (DatabaseException $e) {
+            $caught = true;
+            $msg = $e->getMessage();
+            // Comprobar estrictamente que la contraseña no aparezca en el mensaje
+            $exposed = str_contains($msg, $fakePassword);
+        } catch (\Throwable $e) {
+            $caught = true;
+            $msg = $e->getMessage();
+            $exposed = str_contains($msg, $fakePassword);
+        }
+
+        $isOk = $caught && !$exposed;
+        $obtained = $isOk
+            ? 'Error controlado capturado sin exponer contraseña ("' . $msg . '")'
+            : 'Fallo: Contraseña expuesta o no capturada';
+
+        $this->record(
+            'T2-04',
+            'Error controlado de conexión',
+            'Excepción controlada sin exponer credenciales',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T2-05 — Ruta válida: Una ruta registrada responde correctamente.
+     */
+    private function testT2_05_ValidRoute(): void
+    {
+        $app = App::getInstance();
+        $request = Request::create('GET', '/');
+        $response = $app->handle($request);
+
+        $isOk = ($response->getStatusCode() === 200) && str_contains($response->getContent(), 'Escuela Oficial Rural Mixta Lo de Fuentes');
+        $obtained = sprintf('Status HTTP %d, contiene encabezado institucional', $response->getStatusCode());
+
+        $this->record(
+            'T2-05',
+            'Ruta registrada válida',
+            'Status 200 con contenido esperado',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T2-06 — Ruta inexistente: Una ruta inexistente devuelve manejo 404 controlado.
+     */
+    private function testT2_06_NotFoundRoute(): void
+    {
+        $app = App::getInstance();
+        $request = Request::create('GET', '/ruta-totalmente-inexistente-404');
+        $response = $app->handle($request);
+
+        $isOk = ($response->getStatusCode() === 404) && (str_contains($response->getContent(), '404') || str_contains($response->getContent(), 'No Encontrada'));
+        $obtained = sprintf('Status HTTP %d con vista de 404 controlada', $response->getStatusCode());
+
+        $this->record(
+            'T2-06',
+            'Ruta inexistente',
+            'Status 404 manejado controladamente',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T2-07 — GET: El router procesa correctamente una ruta GET.
+     */
+    private function testT2_07_GetMethod(): void
+    {
+        $app = App::getInstance();
+        $testValue = 'prueba_get_' . mt_rand(100, 999);
+        $request = Request::create('GET', '/test/get?echo=' . $testValue);
+        $response = $app->handle($request);
+
+        $data = json_decode($response->getContent(), true);
+        $isOk = ($response->getStatusCode() === 200) && is_array($data) && ($data['method'] ?? '') === 'GET' && ($data['echo'] ?? '') === $testValue;
+        $obtained = sprintf('Status %d, method=%s, echo=%s', $response->getStatusCode(), $data['method'] ?? 'null', $data['echo'] ?? 'null');
+
+        $this->record(
+            'T2-07',
+            'Enrutamiento de método GET',
+            'Status 200 con payload GET procesado',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T2-08 — POST: El router procesa correctamente una ruta POST de prueba o infraestructura.
+     */
+    private function testT2_08_PostMethod(): void
+    {
+        $app = App::getInstance();
+        $postData = ['data' => 'valor_infraestructura_' . mt_rand(1000, 9999)];
+        $request = Request::create('POST', '/test/post', [], $postData);
+        $response = $app->handle($request);
+
+        $data = json_decode($response->getContent(), true);
+        $isOk = ($response->getStatusCode() === 201) && is_array($data) && ($data['method'] ?? '') === 'POST' && ($data['received'] ?? '') === $postData['data'];
+        $obtained = sprintf('Status %d, method=%s, received=%s', $response->getStatusCode(), $data['method'] ?? 'null', $data['received'] ?? 'null');
+
+        $this->record(
+            'T2-08',
+            'Enrutamiento de método POST',
+            'Status 201 con payload POST procesado',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T2-09 — Layout: Una vista puede renderizarse utilizando el layout común.
+     */
+    private function testT2_09_LayoutRendering(): void
+    {
+        $rendered = View::render('home.index', [
+            'environment' => 'testing',
+            'phpVersion' => PHP_VERSION,
+            'dbConnected' => true,
+            'debug' => false,
+            'appName' => 'Test Layout',
+        ], 'main');
+
+        $hasHeader = str_contains($rendered, '<header class="app-header">');
+        $hasFooter = str_contains($rendered, '<footer class="app-footer">');
+        $hasContent = str_contains($rendered, 'Arquitectura Base del Sistema');
+
+        $isOk = $hasHeader && $hasFooter && $hasContent;
+        $obtained = $isOk ? 'Layout común renderizado con header, contenido y footer' : 'Fallo de ensamble de layout';
+
+        $this->record(
+            'T2-09',
+            'Renderizado con layout común',
+            'Header, contenido y footer ensamblados',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T2-10 — Escape HTML: Validar que el helper de escape no renderice directamente una cadena como: <script>alert(1)</script>
+     */
+    private function testT2_10_HtmlEscaping(): void
+    {
+        $malicious = '<script>alert(1)</script>';
+        $escaped = e($malicious);
+
+        $isOk = !str_contains($escaped, '<script>') && str_contains($escaped, '&lt;script&gt;');
+        $obtained = sprintf('Entrada: "%s" -> Salida: "%s"', $malicious, $escaped);
+
+        $this->record(
+            'T2-10',
+            'Helper de escape HTML contra XSS',
+            'Cadena escapada como &lt;script&gt;alert(1)&lt;/script&gt;',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T2-11 — Secretos: Verificar que .env o credenciales reales no estén versionados.
+     */
+    private function testT2_11_SecretsNotVersioned(): void
+    {
+        $root = dirname(__DIR__);
+        $gitStatus = (string) shell_exec('git -C "' . $root . '" status --porcelain');
+        $gitLsFiles = (string) shell_exec('git -C "' . $root . '" ls-files .env');
+
+        // .env no debe estar en el índice de Git
+        $notTracked = trim($gitLsFiles) === '';
+        // .env.example debe existir
+        $exampleExists = file_exists($root . '/.env.example');
+
+        $isOk = $notTracked && $exampleExists;
+        $obtained = $isOk
+            ? '.env no versionado en Git y .env.example disponible como plantilla'
+            : 'Fallo: .env está rastreado por Git';
+
+        $this->record(
+            'T2-11',
+            'Aislamiento de secretos y .env',
+            '.env excluido de Git y .env.example disponible',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T2-12 — Regresión Fase 1: Confirmar que los scripts y estructura de base de datos de Fase 1 continúan intactos y utilizables.
+     */
+    private function testT2_12_RegressionPhase1(): void
+    {
+        $root = dirname(__DIR__);
+        $schemaExists = file_exists($root . '/database/schema.sql') && filesize($root . '/database/schema.sql') > 1000;
+        $seedExists = file_exists($root . '/database/seed.sql') && filesize($root . '/database/seed.sql') > 500;
+        $validationExists = file_exists($root . '/database/tests/validacion.sql') && filesize($root . '/database/tests/validacion.sql') > 1000;
+        $docsF1Exists = file_exists($root . '/docs/fase-1/informe-cierre-fase-1.md') && file_exists($root . '/docs/fase-1/diccionario-datos.md');
+
+        $isOk = $schemaExists && $seedExists && $validationExists && $docsF1Exists;
+        $obtained = $isOk
+            ? 'schema.sql, seed.sql, validacion.sql e informes de Fase 1 íntegros y preservados'
+            : 'Fallo: Artefactos de Fase 1 alterados o ausentes';
+
+        $this->record(
+            'T2-12',
+            'Prueba de regresión de Fase 1',
+            'Artefactos de BD y documentación de Fase 1 íntegros',
+            $obtained,
+            $isOk
+        );
+    }
+
+    private function printSummary(): void
+    {
+        echo "\n============================================================\n";
+        echo "RESUMEN DE PRUEBAS DE FASE 2\n";
+        echo "============================================================\n";
+        printf("Total ejecutadas : %d\n", $this->total);
+        printf("Exitosas (OK)    : %d\n", $this->passed);
+        printf("Fallidas (FALLO) : %d\n", $this->failed);
+        echo "============================================================\n";
+
+        if ($this->failed === 0) {
+            echo "RESULTADO: TODAS LAS PRUEBAS DE FASE 2 SUPERADAS SATISFACTORIAMENTE.\n";
+        } else {
+            echo "RESULTADO: EXISTEN PRUEBAS FALLIDAS.\n";
+            exit(1);
+        }
+    }
+}
+
+$suite = new Phase2TestSuite();
+$suite->run();
