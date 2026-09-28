@@ -671,5 +671,9 @@ class Phase2TestSuite
     }
 }
 
-$suite = new Phase2TestSuite();
-$suite->run();
+if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
+    $suite = new Phase2TestSuite();
+    $suite->run();
+}
+
+
