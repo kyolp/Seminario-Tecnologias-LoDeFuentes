@@ -163,4 +163,20 @@ La Fase 2 implementa exclusivamente la infraestructura técnica base (arquitectu
 
 La suite automatizada de pruebas y sus 16 resultados se documentan en `docs/fase-2/pruebas.md`.
 
+## Actualización controlada de Autenticación y Roles — Fase 3
+
+La Fase 3 implementa de forma completa y funcional el subsistema de autenticación, control de sesiones, protección CSRF y autorización por roles para los perfiles `ADMINISTRADOR` y `DOCENTE`.
+
+| Requisitos respaldados | Componentes funcionales creados | Estado de Fase 3 | Evidencia de Fase 3 |
+|---|---|---|---|
+| **RF-01** (Inicio de sesión) | `AuthController::login()`, `AuthService::attempt()`, `UserRepository::findByUsername()`, `views/auth/login.php` | IMPLEMENTADO Y VERIFICADO | Autenticación con `password_verify()`, verificación de estado activo y regeneración de sesión validadas en T3-01 a T3-06. |
+| **RF-02** (Cierre de sesión) | `AuthController::logout()`, `AuthService::logout()`, `Session::destroy()` | IMPLEMENTADO Y VERIFICADO | Destrucción de sesión, invalidación de cookie y revocación de acceso a rutas privadas validadas en T3-12. |
+| **RNF-03** (Seguridad de la información) | `Session.php`, `Csrf.php`, `VerifyCsrfToken.php`, `User.php` | IMPLEMENTADO Y VERIFICADO | BCrypt nativo, mitigación de Session Fixation, validación CSRF obligatoria y confidencialidad estricta validadas en T3-06, T3-14, T3-16. |
+| **RNF-04** (Control de acceso basado en roles) | `RequireRole.php`, `Authenticate.php`, `AdminController.php`, `DocenteController.php` | IMPLEMENTADO Y VERIFICADO | Segregación estricta en backend entre ADMINISTRADOR y DOCENTE, con HTTP 403 y revalidación en tiempo real en BD validadas en T3-07 a T3-11, T3-13, T3-15. |
+| **RF-03** (Recuperación de contraseña) | - | PENDIENTE DE IMPLEMENTACIÓN | Fuera del alcance de la Fase 3; corresponde a una fase posterior autorizada. |
+| **RF-04 a RF-32** (Módulos funcionales de negocio) | - | PENDIENTE DE IMPLEMENTACIÓN FUNCIONAL | Corresponden a las Fases 4 a 14 conforme al plan maestro del proyecto. |
+
+La suite automatizada de pruebas y sus 18 resultados se documentan en `docs/fase-3/pruebas.md`.
+
+
 
