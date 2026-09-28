@@ -42,12 +42,15 @@ class Database
             $config = (array) Config::get("database.connections.{$defaultConn}", []);
         }
 
+        // Validación estricta fail-fast de parámetros obligatorios
+        self::validateConfig($config);
+
         $driver = $config['driver'] ?? 'mysql';
-        $host = $config['host'] ?? '127.0.0.1';
-        $port = (int) ($config['port'] ?? 3306);
-        $dbname = $config['database'] ?? '';
-        $username = (string) ($config['username'] ?? 'root');
-        $password = (string) ($config['password'] ?? '');
+        $host = (string) $config['host'];
+        $port = (int) $config['port'];
+        $dbname = (string) $config['database'];
+        $username = (string) $config['username'];
+        $password = (string) $config['password'];
         $charset = $config['charset'] ?? 'utf8mb4';
 
         $dsn = "{$driver}:host={$host};port={$port};charset={$charset}";
@@ -96,6 +99,46 @@ class Database
             return $stmt !== false && $stmt->fetchColumn() !== false;
         } catch (DatabaseException) {
             return false;
+        }
+    }
+
+    /**
+     * Validar estrictamente la presencia de parámetros obligatorios de conexión.
+     *
+     * @param array<string, mixed> $config
+     * @throws DatabaseException
+     */
+    public static function validateConfig(array $config): void
+    {
+        $mandatory = [
+            'host' => 'DB_HOST',
+            'port' => 'DB_PORT',
+            'database' => 'DB_DATABASE',
+            'username' => 'DB_USERNAME',
+        ];
+
+        foreach ($mandatory as $field => $envVar) {
+            if (!isset($config[$field]) || $config[$field] === '' || $config[$field] === null) {
+                throw new DatabaseException(
+                    "Configuración obligatoria de base de datos ausente: [{$envVar}]. Defina la variable en su archivo .env.",
+                    500
+                );
+            }
+        }
+
+        $port = (int) $config['port'];
+        if ($port <= 0 || $port > 65535) {
+            throw new DatabaseException(
+                "El parámetro de configuración [DB_PORT] debe ser un puerto numérico válido (1-65535).",
+                500
+            );
+        }
+
+        if (!array_key_exists('password', $config)) {
+            throw new DatabaseException(
+                "Configuración obligatoria de base de datos ausente: [DB_PASSWORD]. Defina la variable en su archivo .env.",
+                500
+            );
         }
     }
 

@@ -1,6 +1,9 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # Bloquear acceso a archivos ocultos (ej. .env, .git, etc.)
+    RewriteRule ^\.(.*)$ - [F,L]
+
     # Si la solicitud no corresponde a un archivo o carpeta existente, redirigir a index.php
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d

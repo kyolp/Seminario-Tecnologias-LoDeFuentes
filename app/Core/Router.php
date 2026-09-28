@@ -177,4 +177,16 @@ class Router
     {
         return $this->routes;
     }
+
+    /**
+     * Limpiar rutas registradas (útil para pruebas de aislamiento de rutas).
+     */
+    public function clearRoutes(): void
+    {
+        $this->routes = [
+            'GET' => [],
+            'POST' => [],
+        ];
+    }
 }
+

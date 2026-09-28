@@ -1,0 +1,21 @@
+# Protección perimetral de raíz — Escuela Oficial Rural Mixta Lo de Fuentes
+# Bloqueo estricto de acceso directo a archivos y directorios internos del sistema
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. Denegar acceso directo a archivos sensibles y de configuración
+    RewriteRule ^(\.env|\.env\.example|\.gitignore|README\.md)$ - [F,L,NC]
+
+    # 2. Denegar acceso directo a directorios internos del núcleo
+    RewriteRule ^(app|config|database|docs|storage|tests|views)(/.*)?$ - [F,L,NC]
+
+    # 3. Redirigir solicitudes web legítimas hacia la raíz pública
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Bloqueo complementario por directiva FilesMatch
+<FilesMatch "^\.(env|git)">
+    Require all denied
+</FilesMatch>

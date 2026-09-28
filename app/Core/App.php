@@ -50,6 +50,17 @@ class App
     }
 
     /**
+     * Reinicializar rutas según el entorno actual (útil para pruebas).
+     */
+    public function reboot(): self
+    {
+        $this->router->clearRoutes();
+        $this->registerRoutes();
+        $this->booted = true;
+        return $this;
+    }
+
+    /**
      * Obtener el enrutador.
      */
     public function getRouter(): Router
@@ -89,15 +100,18 @@ class App
     /**
      * Registrar las rutas base de infraestructura para la Fase 2.
      */
-    private function registerRoutes(): void
+    public function registerRoutes(): void
     {
-        // Ruta principal de bienvenida y estado del sistema
+        // Ruta principal de bienvenida y estado del sistema (públicas)
         $this->router->get('/', [\App\Controllers\HomeController::class, 'index']);
-
-        // Rutas de infraestructura técnica y pruebas obligatorias
         $this->router->get('/status', [\App\Controllers\HomeController::class, 'status']);
-        $this->router->get('/test/get', [\App\Controllers\TestController::class, 'testGet']);
-        $this->router->post('/test/post', [\App\Controllers\TestController::class, 'testPost']);
+
+        // Rutas técnicas de prueba: aisladas exclusivamente para entornos de desarrollo y testing
+        $env = (string) Config::get('app.env', 'development');
+        if (in_array(strtolower($env), ['development', 'testing', 'local'], true)) {
+            $this->router->get('/test/get', [\App\Controllers\TestController::class, 'testGet']);
+            $this->router->post('/test/post', [\App\Controllers\TestController::class, 'testPost']);
+        }
     }
 
     /**
