@@ -86,32 +86,59 @@ class Router
         }
 
         $handler = $route['handler'];
+        $middlewares = $route['middleware'] ?? [];
 
-        // Si el handler es un callable o Closure
-        if ($handler instanceof Closure || is_callable($handler) && is_string($handler)) {
-            $result = $handler($request);
-            return $this->normalizeResponse($result);
-        }
-
-        // Si el handler es [Controller::class, 'method']
-        if (is_array($handler) && count($handler) === 2) {
-            [$controllerClass, $action] = $handler;
-
-            if (!class_exists($controllerClass)) {
-                throw new RuntimeException("La clase del controlador no existe: [{$controllerClass}]");
+        $destination = function (Request $req) use ($handler, $method, $path): Response {
+            // Si el handler es un callable o Closure
+            if ($handler instanceof Closure || (is_callable($handler) && is_string($handler))) {
+                $result = $handler($req);
+                return $this->normalizeResponse($result);
             }
 
-            $controller = new $controllerClass();
+            // Si el handler es [Controller::class, 'method']
+            if (is_array($handler) && count($handler) === 2) {
+                [$controllerClass, $action] = $handler;
 
-            if (!method_exists($controller, $action)) {
-                throw new RuntimeException("El método [{$action}] no existe en el controlador [{$controllerClass}]");
+                if (!class_exists($controllerClass)) {
+                    throw new RuntimeException("La clase del controlador no existe: [{$controllerClass}]");
+                }
+
+                $controller = new $controllerClass();
+
+                if (!method_exists($controller, $action)) {
+                    throw new RuntimeException("El método [{$action}] no existe en el controlador [{$controllerClass}]");
+                }
+
+                $result = $controller->$action($req);
+                return $this->normalizeResponse($result);
             }
 
-            $result = $controller->$action($request);
-            return $this->normalizeResponse($result);
+            throw new RuntimeException("El manejador de la ruta [{$method} {$path}] no tiene un formato ejecutable válido.");
+        };
+
+        if (empty($middlewares)) {
+            return $destination($request);
         }
 
-        throw new RuntimeException("El manejador de la ruta [{$method} {$path}] no tiene un formato ejecutable válido.");
+        // Construir la cadena de middlewares de afuera hacia adentro
+        $pipeline = array_reduce(
+            array_reverse($middlewares),
+            function ($next, $middleware) {
+                return function (Request $req) use ($next, $middleware): Response {
+                    $instance = is_string($middleware) ? new $middleware() : $middleware;
+                    if ($instance instanceof \App\Middleware\MiddlewareInterface) {
+                        return $instance->handle($req, $next);
+                    }
+                    if (is_callable($instance)) {
+                        return $instance($req, $next);
+                    }
+                    throw new RuntimeException("El middleware especificado no es válido.");
+                };
+            },
+            $destination
+        );
+
+        return $pipeline($request);
     }
 
     /**

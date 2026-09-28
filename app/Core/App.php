@@ -98,15 +98,35 @@ class App
     }
 
     /**
-     * Registrar las rutas base de infraestructura para la Fase 2.
+     * Registrar las rutas base de infraestructura y módulos autorizados.
      */
     public function registerRoutes(): void
     {
-        // Ruta principal de bienvenida y estado del sistema (públicas)
+        // 1. Rutas públicas de bienvenida y estado del sistema
         $this->router->get('/', [\App\Controllers\HomeController::class, 'index']);
         $this->router->get('/status', [\App\Controllers\HomeController::class, 'status']);
 
-        // Rutas técnicas de prueba: aisladas exclusivamente para entornos de desarrollo y testing
+        // 2. Rutas de autenticación (Fase 3)
+        $this->router->get('/login', [\App\Controllers\AuthController::class, 'showLoginForm']);
+        $this->router->post('/login', [\App\Controllers\AuthController::class, 'login'], [
+            \App\Middleware\VerifyCsrfToken::class,
+        ]);
+        $this->router->post('/logout', [\App\Controllers\AuthController::class, 'logout'], [
+            \App\Middleware\VerifyCsrfToken::class,
+        ]);
+
+        // 3. Rutas privadas autorizadas por roles (Fase 3)
+        $this->router->get('/administracion', [\App\Controllers\AdminController::class, 'index'], [
+            \App\Middleware\Authenticate::class,
+            new \App\Middleware\RequireRole('ADMINISTRADOR'),
+        ]);
+
+        $this->router->get('/docente', [\App\Controllers\DocenteController::class, 'index'], [
+            \App\Middleware\Authenticate::class,
+            new \App\Middleware\RequireRole('DOCENTE'),
+        ]);
+
+        // 4. Rutas técnicas de prueba: aisladas exclusivamente para entornos de desarrollo y testing
         $env = (string) Config::get('app.env', 'development');
         if (in_array(strtolower($env), ['development', 'testing', 'local'], true)) {
             $this->router->get('/test/get', [\App\Controllers\TestController::class, 'testGet']);

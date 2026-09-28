@@ -79,3 +79,32 @@ function app(): App
 {
     return App::getInstance();
 }
+
+/**
+ * Obtener el token CSRF activo para la sesión.
+ */
+function csrf_token(): string
+{
+    return \App\Core\Csrf::getToken();
+}
+
+/**
+ * Generar campo de formulario HTML oculto para el token CSRF.
+ */
+function csrf_field(): string
+{
+    return \App\Core\Csrf::field();
+}
+
+/**
+ * Acceder al servicio de autenticación centralizado.
+ */
+function auth(): \App\Services\AuthService
+{
+    static $auth = null;
+    if ($auth === null) {
+        $auth = new \App\Services\AuthService();
+    }
+    return $auth;
+}
+
