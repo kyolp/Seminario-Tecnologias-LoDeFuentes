@@ -3,13 +3,17 @@
 .env.*
 !.env.example
 
-# Dependencias y artefactos locales
+# Dependencias y artefactos de desarrollo
 /vendor/
 /.idea/
 /.vscode/
+
+# Logs y almacenamiento temporal
+storage/logs/*.log
+!storage/logs/.gitkeep
 *.log
+*.tmp
 
 # Archivos del sistema operativo
 .DS_Store
 Thumbs.db
-
