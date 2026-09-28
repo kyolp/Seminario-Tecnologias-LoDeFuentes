@@ -147,3 +147,19 @@ soporte físico ya disponible y validado en `database/schema.sql`,
 
 La prueba ejecutada y sus 18 resultados se documentan en
 `docs/fase-1/pruebas-base-datos.md`.
+
+## Actualización controlada de infraestructura base — Fase 2
+
+Los estados funcionales de los requerimientos funcionales (RF-01 a RF-32) permanecen `PENDIENTE`.
+La Fase 2 implementa exclusivamente la infraestructura técnica base (arquitectura en capas, front controller, configuración desacoplada, conexión centralizada PDO, enrutador GET/POST, layouts, helpers de escape XSS y suite de pruebas automatizadas T2-01 a T2-12).
+
+| Requerimientos / Normas respaldadas | Componentes técnicos de infraestructura creados | Estado de Fase 2 | Evidencia de Fase 2 |
+|---|---|---|---|
+| RNF-08 (Mantenibilidad / Arquitectura) | `app/Core/App.php`, `Controller.php`, `View.php`, `public/index.php` | INFRAESTRUCTURA PREPARADA | Separación estricta entre presentación, controladores, lógica y datos verificada en T2-01, T2-05, T2-09. |
+| RNF-09 (Configurabilidad) | `App\Core\Env.php`, `App\Core\Config.php`, `.env.example`, `config/*.php` | INFRAESTRUCTURA PREPARADA | Configuración separada del código fuente sin exponer secretos, verificada en T2-02, T2-11. |
+| RNF-03 (Seguridad base / Protección de datos) | `App\Core\Database.php`, `DatabaseException.php`, `Helpers/helpers.php` (`e()`) | INFRAESTRUCTURA PREPARADA | Enmascaramiento de errores de BD y escape HTML contra inyecciones XSS verificados en T2-04, T2-10. |
+| RNF-05 (Integridad de datos) | Capa PDO centralizada con emulación desactivada y charset `utf8mb4` | INFRAESTRUCTURA PREPARADA | Conexión PDO validada en T2-03 y regresión de esquemas de Fase 1 validada en T2-12. |
+| RF-01 a RF-32 (Requerimientos funcionales) | `App\Core\Router.php`, `Request.php`, `Response.php`, `MiddlewareInterface.php` | PENDIENTE DE IMPLEMENTACIÓN FUNCIONAL | Enrutamiento GET/POST y despacho probados en T2-05 a T2-08; módulos funcionales se implementarán a partir de Fase 3. |
+
+La suite automatizada de pruebas y sus 12 resultados se documentan en `docs/fase-2/pruebas.md`.
+
