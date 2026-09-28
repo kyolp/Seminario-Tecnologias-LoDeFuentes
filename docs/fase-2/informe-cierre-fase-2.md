@@ -67,51 +67,57 @@ Las decisiones técnicas fueron registradas en `docs/fase-2/decisiones-tecnicas.
 - **DT-12:** Aislamiento y enmascaramiento estricto de errores de base de datos (`App\Core\DatabaseException`).
 - **DT-13:** Enrutador ligero con diferenciación de métodos HTTP y vistas de error 404.
 - **DT-14:** Motor de plantillas nativo con layouts y escape XSS obligatorio (`e()`).
+- **DT-15:** Aislamiento estricto de rutas técnicas en producción (F2-01).
+- **DT-16:** Protección perimetral multicapa (.htaccess raíz, storage y public) (F2-02).
+- **DT-17:** Validación fail-fast estricta de configuración de base de datos (`Database::validateConfig`) (F2-03).
+- **DT-18:** Verificación continua y automatizada de regresión de Fase 1 (`escuela_fase2_regresion_temp`) (F2-04).
 
 ## 8. ARCHIVOS CREADOS
 
-1. `.env.example`: Plantilla de configuración de entorno sin secretos reales.
-2. `app/autoload.php`: Autocargador PSR-4 nativo para el espacio `App\`.
-3. `app/bootstrap.php`: Script de inicialización de constantes, configuración, zona horaria y logs.
-4. `app/Core/App.php`: Orquestador principal de solicitudes y captura de excepciones.
-5. `app/Core/Config.php`: Repositorio de configuración con soporte para notación de puntos.
-6. `app/Core/Controller.php`: Clase base abstracta para controladores.
-7. `app/Core/Database.php`: Fábrica centralizada de conexión PDO con opciones estrictas de seguridad.
-8. `app/Core/DatabaseException.php`: Excepción personalizada para errores de BD con saneamiento de credenciales.
-9. `app/Core/Env.php`: Parser de variables de entorno desde archivo `.env`.
-10. `app/Core/Logger.php`: Gestor de logs en disco con saneamiento de campos sensibles.
-11. `app/Core/Request.php`: Abstracción tipada de la petición HTTP.
-12. `app/Core/Response.php`: Abstracción tipada de la respuesta HTTP (HTML/JSON/redirect).
-13. `app/Core/Router.php`: Enrutador HTTP para métodos GET y POST con manejo de 404.
-14. `app/Core/View.php`: Motor de renderizado de vistas y layouts mediante buffers de salida.
-15. `app/Controllers/BaseController.php`: Controlador base con metadatos institucionales.
-16. `app/Controllers/HomeController.php`: Controlador de página principal y estado técnico.
-17. `app/Controllers/TestController.php`: Controlador técnico para validación de rutas GET y POST.
-18. `app/Helpers/helpers.php`: Funciones globales (`e`, `url`, `redirect`, `config`, `view`, `app`).
-19. `app/Middleware/MiddlewareInterface.php`: Contrato base para middlewares de Fase 3+.
-20. `app/Models/.gitkeep`, `app/Services/.gitkeep`, `app/Repositories/.gitkeep`: Marcadores de arquitectura.
-21. `config/app.php`: Configuración general de la aplicación.
-22. `config/database.php`: Configuración de acceso PDO MySQL.
-23. `public/.htaccess`: Reglas de reescritura Apache hacia `index.php`.
-24. `public/index.php`: Front Controller principal.
-25. `public/css/app.css`: Estilos visuales institucionales.
-26. `public/js/app.js`: Script base del cliente.
-27. `public/img/.gitkeep`: Directorio para imágenes.
-28. `storage/logs/.gitkeep`: Directorio para logs locales.
-29. `views/layouts/main.php`: Layout HTML5 estructural común.
-30. `views/home/index.php`: Vista de estado de arquitectura de Fase 2.
-31. `views/errors/404.php`: Vista de recurso no encontrado.
-32. `views/errors/500.php`: Vista de error interno controlado.
-33. `views/errors/database.php`: Vista segura ante indisponibilidad de BD.
-34. `tests/run_tests.php`: Suite automatizada de pruebas T2-01 a T2-12.
-35. `docs/fase-2/estructura-proyecto.md`: Documentación de la arquitectura de carpetas.
-36. `docs/fase-2/decisiones-tecnicas.md`: Registro de decisiones técnicas DT-09 a DT-14.
-37. `docs/fase-2/configuracion.md`: Especificación del modelo de configuración y variables.
-38. `docs/fase-2/flujo-solicitud.md`: Diagrama y explicación del ciclo de vida HTTP.
-39. `docs/fase-2/conexion-pdo.md`: Especificación técnica de la capa de datos PDO.
-40. `docs/fase-2/router.md`: Especificación del enrutador y despacho.
-41. `docs/fase-2/pruebas.md`: Matriz de resultados de pruebas obligatorias.
-42. `docs/fase-2/informe-cierre-fase-2.md`: Este informe formal de cierre.
+1. `.htaccess`: Reglas de defensa perimetral raíz (bloqueo 403 de archivos/directorios internos y redirección a `public/`).
+2. `storage/.htaccess`: Regla de denegación total a logs y almacenamiento (`Require all denied`).
+3. `.env.example`: Plantilla de configuración de entorno sin secretos reales.
+4. `app/autoload.php`: Autocargador PSR-4 nativo para el espacio `App\`.
+5. `app/bootstrap.php`: Script de inicialización de constantes, configuración, zona horaria y logs.
+6. `app/Core/App.php`: Orquestador principal de solicitudes, rutas condicionales y captura de excepciones.
+7. `app/Core/Config.php`: Repositorio de configuración con soporte para notación de puntos.
+8. `app/Core/Controller.php`: Clase base abstracta para controladores.
+9. `app/Core/Database.php`: Fábrica centralizada de conexión PDO con validación fail-fast y opciones estrictas.
+10. `app/Core/DatabaseException.php`: Excepción personalizada para errores de BD con saneamiento de credenciales.
+11. `app/Core/Env.php`: Parser de variables de entorno desde archivo `.env`.
+12. `app/Core/Logger.php`: Gestor de logs en disco con saneamiento de campos sensibles.
+13. `app/Core/Request.php`: Abstracción tipada de la petición HTTP.
+14. `app/Core/Response.php`: Abstracción tipada de la respuesta HTTP (HTML/JSON/redirect).
+15. `app/Core/Router.php`: Enrutador HTTP para métodos GET y POST con manejo de 404 y limpieza de rutas.
+16. `app/Core/View.php`: Motor de renderizado de vistas y layouts mediante buffers de salida.
+17. `app/Controllers/BaseController.php`: Controlador base con metadatos institucionales.
+18. `app/Controllers/HomeController.php`: Controlador de página principal y estado técnico.
+19. `app/Controllers/TestController.php`: Controlador técnico para validación de rutas GET y POST.
+20. `app/Helpers/helpers.php`: Funciones globales (`e`, `url`, `redirect`, `config`, `view`, `app`).
+21. `app/Middleware/MiddlewareInterface.php`: Contrato base para middlewares de Fase 3+.
+22. `app/Models/.gitkeep`, `app/Services/.gitkeep`, `app/Repositories/.gitkeep`: Marcadores de arquitectura.
+23. `config/app.php`: Configuración general de la aplicación.
+24. `config/database.php`: Configuración estricta de acceso PDO MySQL sin fallbacks silenciosos.
+25. `public/.htaccess`: Reglas de reescritura Apache hacia `index.php` y bloqueo de archivos ocultos.
+26. `public/index.php`: Front Controller principal.
+27. `public/css/app.css`: Estilos visuales institucionales.
+28. `public/js/app.js`: Script base del cliente.
+29. `public/img/.gitkeep`: Directorio para imágenes.
+30. `storage/logs/.gitkeep`: Directorio para logs locales.
+31. `views/layouts/main.php`: Layout HTML5 estructural común.
+32. `views/home/index.php`: Vista de estado de arquitectura de Fase 2.
+33. `views/errors/404.php`: Vista de recurso no encontrado.
+34. `views/errors/500.php`: Vista de error interno controlado.
+35. `views/errors/database.php`: Vista segura ante indisponibilidad de BD.
+36. `tests/run_tests.php`: Suite automatizada de pruebas T2-01 a T2-16.
+37. `docs/fase-2/estructura-proyecto.md`: Documentación de la arquitectura de carpetas.
+38. `docs/fase-2/decisiones-tecnicas.md`: Registro de decisiones técnicas DT-09 a DT-18.
+39. `docs/fase-2/configuracion.md`: Especificación del modelo de configuración y variables.
+40. `docs/fase-2/flujo-solicitud.md`: Diagrama y explicación del ciclo de vida HTTP.
+41. `docs/fase-2/conexion-pdo.md`: Especificación técnica de la capa de datos PDO.
+42. `docs/fase-2/router.md`: Especificación del enrutador y despacho.
+43. `docs/fase-2/pruebas.md`: Matriz de resultados de pruebas obligatorias T2-01 a T2-16.
+44. `docs/fase-2/informe-cierre-fase-2.md`: Este informe formal de cierre.
 
 ## 9. ARCHIVOS MODIFICADOS
 
@@ -168,7 +174,7 @@ Se diferencian cuatro categorías de error:
 
 ## 16. PRUEBAS REALIZADAS
 
-Se ejecutó la suite automatizada `tests/run_tests.php` cubriendo la totalidad de pruebas obligatorias especificadas para la Fase 2:
+Se ejecutó la suite automatizada `tests/run_tests.php` cubriendo la totalidad de pruebas obligatorias y de auditoría especificadas para la Fase 2:
 - T2-01: Carga de aplicación
 - T2-02: Carga de configuración
 - T2-03: Conexión PDO
@@ -180,11 +186,15 @@ Se ejecutó la suite automatizada `tests/run_tests.php` cubriendo la totalidad d
 - T2-09: Renderizado con layout común
 - T2-10: Escape HTML contra XSS
 - T2-11: Aislamiento de secretos y .env
-- T2-12: Prueba de regresión de Fase 1
+- T2-12: Prueba de regresión de Fase 1 (integridad de artefactos)
+- T2-13: Aislamiento de rutas técnicas en producción (F2-01)
+- T2-14: Protección perimetral de archivos internos y logs (F2-02)
+- T2-15: Validación estricta fail-fast de configuración de BD (F2-03)
+- T2-16: Regresión funcional de base de datos de Fase 1 en BD temporal (F2-04)
 
 ## 17. RESULTADO DE CADA PRUEBA
 
-Todas las 12 pruebas arrojaron resultado **OK**:
+Todas las 16 pruebas arrojaron resultado **OK**:
 - T2-01: OK (Aplicación inicializada correctamente)
 - T2-02: OK (Configuración cargada sin exponer secretos)
 - T2-03: OK (Conexión PDO establecida con éxito)
@@ -197,18 +207,31 @@ Todas las 12 pruebas arrojaron resultado **OK**:
 - T2-10: OK (Cadena saneada como `&lt;script&gt;alert(1)&lt;/script&gt;`)
 - T2-11: OK (`.env` no versionado en Git y `.env.example` presente)
 - T2-12: OK (Artefactos de base de datos de Fase 1 íntegros y preservados)
+- T2-13: OK (Rutas `/test/*` devuelven 404 en `production` y 200 en `testing`)
+- T2-14: OK (Reglas perimetrales activas y archivos sensibles protegidos contra acceso directo)
+- T2-15: OK (Validación fail-fast activa para 5 parámetros obligatorios sin exponer secretos)
+- T2-16: OK (18/18 pruebas de Fase 1 ejecutadas con 18 exitosas y 0 fallidas en BD temporal aislada)
 
 ## 18. ERRORES ENCONTRADOS
 
-Durante el desarrollo de la prueba de error controlado de conexión (T2-04), se identificó que el mensaje predeterminado de algunas versiones del driver PDO puede concatenar el nombre del host o cadena DSN.
+1. Durante el desarrollo inicial de T2-04, se identificó que el mensaje de ciertas versiones de PDO puede concatenar fragmentos del DSN.
+2. Durante la auditoría externa de Fase 2, se emitieron 4 observaciones técnicas de refuerzo:
+   - F2-01: Rutas técnicas accesibles en producción.
+   - F2-02: Falta de directivas de denegación perimetral explícitas en raíz y storage.
+   - F2-03: Fallbacks silenciosos en `config/database.php`.
+   - F2-04: Ausencia de prueba automatizada de regresión funcional de BD de Fase 1.
 
 ## 19. CORRECCIONES REALIZADAS
 
-Se diseñó la clase `App\Core\DatabaseException` con un método estático de sanitización mediante expresiones regulares (`preg_replace`), que sustituye cualquier patrón de contraseñas o parámetros sensibles por cadenas protegidas (`[PROTEGIDO]`), asegurando que bajo ningún escenario se exponga información confidencial.
+1. **Enmascaramiento de errores:** Se diseñó `App\Core\DatabaseException` con sanitización regex para reemplazar cadenas de contraseñas o parámetros sensibles por `[PROTEGIDO]`.
+2. **Corrección F2-01 (Aislamiento de rutas técnicas):** Se condicionó el registro de `/test/get` y `/test/post` en `App::registerRoutes()` exclusivamente para entornos `development`, `testing` y `local`. En producción retornan 404. Validado mediante prueba automatizada `T2-13`.
+3. **Corrección F2-02 (Protección perimetral multicapa):** Se crearon archivos `.htaccess` en raíz (con bloqueo 403 de directorios y archivos sensibles) y en `storage/` (`Require all denied`). Validado mediante prueba automatizada `T2-14`.
+4. **Corrección F2-03 (Validación estricta fail-fast de BD):** Se removieron valores por omisión en `config/database.php` y se implementó `Database::validateConfig()` que verifica la presencia obligatoria de `DB_HOST`, `DB_PORT` (1-65535), `DB_DATABASE`, `DB_USERNAME` y la clave `DB_PASSWORD`. Validado mediante prueba automatizada `T2-15`.
+5. **Corrección F2-04 (Regresión funcional de BD Fase 1):** Se implementó la prueba automatizada `T2-16` que crea una base de datos temporal aislada (`escuela_fase2_regresion_temp`), ejecuta `schema.sql`, `seed.sql` y `validacion.sql`, comprueba que se cumplan las 18 pruebas (18 exitosas, 0 fallidas) y destruye la base temporal.
 
 ## 20. PROBLEMAS NO RESUELTOS
 
-Ninguno. La infraestructura base opera de forma limpia y reproducible en el entorno validado de PHP 8.2 y MySQL 8.0.
+Ninguno. Todas las observaciones de la auditoría externa fueron resueltas y verificadas.
 
 ## 21. RIESGOS
 
@@ -217,7 +240,9 @@ Ninguno. La infraestructura base opera de forma limpia y reproducible en el ento
 
 ## 22. REGRESIONES
 
-**Ninguna.** Se comprobó mediante la prueba T2-12 que los archivos `database/schema.sql`, `database/seed.sql`, `database/tests/validacion.sql` y la documentación de la Fase 1 no sufrieron modificaciones ni alteraciones de integridad.
+**Ninguna.**
+- Mediante `T2-12` se constató que los artefactos de Fase 1 permanecen físicamente intactos.
+- Mediante `T2-16` se verificó funcionalmente la recreación completa del modelo de 20 tablas y la ejecución limpia de las 18 pruebas de Fase 1 con 0 fallas.
 
 ## 23. TRAZABILIDAD
 

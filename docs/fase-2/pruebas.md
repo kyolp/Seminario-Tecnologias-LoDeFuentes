@@ -26,14 +26,19 @@
 | **T2-09** | Layout | Renderizado de `home.index` embebido en layout maestro `main.php`. | Ensamble coherente de encabezado, contenido y pie de página. | HTML generado incluye `app-header`, `app-main` y `app-footer`. | **OK** |
 | **T2-10** | Escape HTML | Invocación de `e('<script>alert(1)</script>')`. | Cadena saneada sin etiquetas ejecutables de script. | Salida convertida a `&lt;script&gt;alert(1)&lt;/script&gt;`. | **OK** |
 | **T2-11** | Secretos | Inspección de Git (`git ls-files .env`) y verificación de `.env.example`. | Archivo `.env` fuera del control de versiones y plantilla disponible. | `.env` no rastreado por Git y `.env.example` presente. | **OK** |
-| **T2-12** | Regresión Fase 1 | Verificación de existencia e integridad de archivos de base de datos de Fase 1. | `schema.sql`, `seed.sql`, `validacion.sql` e informes intactos. | Todos los artefactos de la Fase 1 preservados y utilizables. | **OK** |
+| **T2-12** | Regresión Fase 1 (Artefactos) | Verificación de existencia e integridad de archivos de base de datos de Fase 1. | `schema.sql`, `seed.sql`, `validacion.sql` e informes intactos. | Todos los artefactos de la Fase 1 preservados y utilizables. | **OK** |
+| **T2-13** | Aislamiento rutas técnicas | Cambio dinámico a `APP_ENV=production` y despacho de solicitudes a `/test/get` y `/test/post`. | Rutas técnicas devuelven HTTP 404 en producción y operan en testing/development. | HTTP 404 en production; HTTP 200 en testing. Aislamiento exitoso. | **OK** |
+| **T2-14** | Protección perimetral | Inspección de reglas `.htaccess` (raíz, storage, public) y despacho sintético a `/.env`, `/config/database.php` y `/storage/logs/app.log`. | Denegación perimetral y respuestas 404/403 sin exposición de código ni secretos. | Reglas perimetrales activas; sin fugas de secretos en respuestas HTTP (404/403). | **OK** |
+| **T2-15** | Validación estricta BD | Invocación de `Database::validateConfig()` con configuraciones incompletas (omisión de host, port, db, user, pass). | Interrupción fail-fast vía `DatabaseException` indicando el parámetro faltante sin exponer contraseñas. | 5 validaciones fail-fast superadas; secretos resguardados; configuración válida aceptada. | **OK** |
+| **T2-16** | Regresión funcional BD Fase 1 | Creación automatizada de base de datos temporal aislada, ejecución secuencial de `schema.sql`, `seed.sql` y `validacion.sql`, verificación de resultados y eliminación. | 18 pruebas automáticas de Fase 1 ejecutadas con 18 exitosas y 0 fallidas en la base temporal. | 18/18 pruebas de Fase 1 ejecutadas con 18 exitosas y 0 fallidas en BD temporal aislada. | **OK** |
 
 ---
 
 ## Resumen cuantitativo
 
-- **Pruebas planificadas:** 12
-- **Pruebas ejecutadas:** 12
-- **Pruebas exitosas:** 12 (100%)
+- **Pruebas planificadas:** 16
+- **Pruebas ejecutadas:** 16
+- **Pruebas exitosas:** 16 (100%)
 - **Pruebas fallidas:** 0 (0%)
-- **Resultado general:** **APROBADA SIN OBSERVACIONES TÉCNICAS**
+- **Resultado general:** **TODAS LAS PRUEBAS SUPERADAS SATISFACTORIAMENTE (16/16)**
+
