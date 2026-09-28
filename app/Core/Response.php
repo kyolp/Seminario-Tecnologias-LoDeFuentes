@@ -61,6 +61,28 @@ class Response
     }
 
     /**
+     * Obtener el valor de una cabecera específica (insensible a mayúsculas/minúsculas).
+     */
+    public function getHeader(string $name, ?string $default = null): ?string
+    {
+        foreach ($this->headers as $headerName => $headerValue) {
+            if (strcasecmp($headerName, $name) === 0) {
+                return $headerValue;
+            }
+        }
+
+        return $default;
+    }
+
+    /**
+     * Crear una respuesta de redirección HTTP.
+     */
+    public static function redirect(string $url, int $statusCode = 302): self
+    {
+        return new self('', $statusCode, ['Location' => $url]);
+    }
+
+    /**
      * Crear una respuesta JSON.
      */
     public static function json(mixed $data, int $statusCode = 200): self

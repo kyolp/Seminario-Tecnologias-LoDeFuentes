@@ -68,8 +68,9 @@ class Request
      *
      * @param array<string, mixed> $query
      * @param array<string, mixed> $post
+     * @param array<string, string> $headers
      */
-    public static function create(string $method, string $uri, array $query = [], array $post = []): self
+    public static function create(string $method, string $uri, array $query = [], array $post = [], array $headers = []): self
     {
         $parsed = parse_url($uri);
         $path = $parsed['path'] ?? '/';
@@ -79,7 +80,7 @@ class Request
             $query = array_merge($urlQuery, $query);
         }
 
-        return new self($method, $path, $query, $post);
+        return new self($method, $path, $query, $post, $headers);
     }
 
     public function getMethod(): string
@@ -139,6 +140,23 @@ class Request
     public function all(): array
     {
         return array_merge($this->query, $this->post);
+    }
+
+    /**
+     * Obtener una cabecera de la solicitud (insensible a mayúsculas/minúsculas).
+     */
+    public function getHeader(string $name, ?string $default = null): ?string
+    {
+        $normalized = str_replace('_', '-', strtolower($name));
+        return $this->headers[$normalized] ?? $default;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getHeaders(): array
+    {
+        return $this->headers;
     }
 
     private static function normalizePath(string $path): string
