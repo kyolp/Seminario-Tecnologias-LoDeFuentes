@@ -7,7 +7,7 @@ declare(strict_types=1);
  * Ejecutable mediante PHP CLI.
  * 
  * Cobertura obligatoria:
- * T2-01 a T2-12
+ * T2-01 a T2-16
  */
 
 // 1. Cargar bootstrap
@@ -48,6 +48,10 @@ class Phase2TestSuite
         $this->testT2_10_HtmlEscaping();
         $this->testT2_11_SecretsNotVersioned();
         $this->testT2_12_RegressionPhase1();
+        $this->testT2_13_IsolatedTechnicalRoutes();
+        $this->testT2_14_InternalFileProtection();
+        $this->testT2_15_MandatoryConfiguration();
+        $this->testT2_16_DatabaseRegressionPhase1();
 
         $this->printSummary();
     }
@@ -380,6 +384,272 @@ class Phase2TestSuite
             $obtained,
             $isOk
         );
+    }
+
+    /**
+     * T2-13 — Aislamiento de rutas técnicas: Validar que /test/get y /test/post no estén disponibles en producción (404) y sí en desarrollo/testing.
+     */
+    private function testT2_13_IsolatedTechnicalRoutes(): void
+    {
+        $app = App::getInstance();
+        $originalEnv = (string) Config::get('app.env', 'testing');
+
+        // 1. Simular entorno de producción
+        Config::set('app.env', 'production');
+        $app->reboot();
+
+        $reqGet = Request::create('GET', '/test/get');
+        $respGetProd = $app->handle($reqGet);
+
+        $reqPost = Request::create('POST', '/test/post', [], ['test' => 1]);
+        $respPostProd = $app->handle($reqPost);
+
+        $blockedInProd = ($respGetProd->getStatusCode() === 404) && ($respPostProd->getStatusCode() === 404);
+
+        // 2. Probar entorno testing / development
+        Config::set('app.env', 'testing');
+        $app->reboot();
+
+        $respGetTest = $app->handle($reqGet);
+        $availableInDev = ($respGetTest->getStatusCode() === 200);
+
+        // Restaurar estado original
+        Config::set('app.env', $originalEnv);
+        $app->reboot();
+
+        $isOk = $blockedInProd && $availableInDev;
+        $obtained = $isOk
+            ? 'Rutas /test/* retornan 404 en production y 200 en testing'
+            : sprintf('Fallo: GET prod=%d, POST prod=%d, GET testing=%d', $respGetProd->getStatusCode(), $respPostProd->getStatusCode(), $respGetTest->getStatusCode());
+
+        $this->record(
+            'T2-13',
+            'Aislamiento de rutas técnicas en producción',
+            'Status 404 en production y accesibles en dev/testing',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T2-14 — Protección perimetral de archivos internos y logs: Bloqueo de .env, app, config, storage y logs.
+     */
+    private function testT2_14_InternalFileProtection(): void
+    {
+        $root = dirname(__DIR__);
+        $rootHtaccess = $root . '/.htaccess';
+        $storageHtaccess = $root . '/storage/.htaccess';
+        $publicHtaccess = $root . '/public/.htaccess';
+
+        $rootHtaccessOk = file_exists($rootHtaccess) && str_contains((string) file_get_contents($rootHtaccess), '\.env');
+        $storageHtaccessOk = file_exists($storageHtaccess) && (str_contains((string) file_get_contents($storageHtaccess), 'Require all denied') || str_contains((string) file_get_contents($storageHtaccess), 'Deny from all'));
+        $publicHtaccessOk = file_exists($publicHtaccess);
+
+        // Simular intento de acceso HTTP mediante Front Controller
+        $app = App::getInstance();
+        $reqEnv = Request::create('GET', '/.env');
+        $respEnv = $app->handle($reqEnv);
+
+        $reqConfig = Request::create('GET', '/config/database.php');
+        $respConfig = $app->handle($reqConfig);
+
+        $reqLog = Request::create('GET', '/storage/logs/app.log');
+        $respLog = $app->handle($reqLog);
+
+        $noLeak = !str_contains($respEnv->getContent(), 'DB_PASSWORD') 
+               && !str_contains($respConfig->getContent(), 'PDO::ATTR_ERRMODE')
+               && ($respEnv->getStatusCode() === 404 || $respEnv->getStatusCode() === 403)
+               && ($respConfig->getStatusCode() === 404 || $respConfig->getStatusCode() === 403);
+
+        $isOk = $rootHtaccessOk && $storageHtaccessOk && $publicHtaccessOk && $noLeak;
+        $obtained = $isOk
+            ? 'Reglas .htaccess perimetrales vigentes y rutas a archivos sensibles no exponen secretos (404/403)'
+            : 'Fallo: Ausencia de reglas .htaccess o fuga en respuestas HTTP';
+
+        $this->record(
+            'T2-14',
+            'Protección perimetral de archivos internos y logs',
+            'Bloqueo perimetral y respuestas 404/403 sin exposición de código/secretos',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T2-15 — Validación estricta de configuración de base de datos: Comprobación fail-fast sin fuga de credenciales.
+     */
+    private function testT2_15_MandatoryConfiguration(): void
+    {
+        $cases = [
+            ['config' => ['port' => 3307, 'database' => 'db', 'username' => 'u', 'password' => 'p'], 'missing' => 'DB_HOST'],
+            ['config' => ['host' => '127.0.0.1', 'database' => 'db', 'username' => 'u', 'password' => 'p'], 'missing' => 'DB_PORT'],
+            ['config' => ['host' => '127.0.0.1', 'port' => 3307, 'username' => 'u', 'password' => 'p'], 'missing' => 'DB_DATABASE'],
+            ['config' => ['host' => '127.0.0.1', 'port' => 3307, 'database' => 'db', 'password' => 'p'], 'missing' => 'DB_USERNAME'],
+            ['config' => ['host' => '127.0.0.1', 'port' => 3307, 'database' => 'db', 'username' => 'u'], 'missing' => 'DB_PASSWORD'],
+        ];
+
+        $allCaught = true;
+        $secretNotExposed = true;
+        $secretSample = 'TopSecretVal_!99';
+
+        foreach ($cases as $case) {
+            try {
+                $testCfg = $case['config'];
+                if (isset($testCfg['password'])) {
+                    $testCfg['password'] = $secretSample;
+                }
+                Database::validateConfig($testCfg);
+                $allCaught = false;
+            } catch (DatabaseException $e) {
+                if (!str_contains($e->getMessage(), $case['missing'])) {
+                    $allCaught = false;
+                }
+                if (str_contains($e->getMessage(), $secretSample)) {
+                    $secretNotExposed = false;
+                }
+            } catch (\Throwable) {
+                $allCaught = false;
+            }
+        }
+
+        // Probar configuración válida
+        $validCfg = [
+            'driver' => 'mysql',
+            'host' => '127.0.0.1',
+            'port' => 3307,
+            'database' => 'escuela_lo_de_fuentes',
+            'username' => 'root',
+            'password' => '',
+        ];
+        $validPassed = true;
+        try {
+            Database::validateConfig($validCfg);
+        } catch (\Throwable) {
+            $validPassed = false;
+        }
+
+        $isOk = $allCaught && $secretNotExposed && $validPassed;
+        $obtained = $isOk
+            ? 'Validación estricta fail-fast activa para 5 parámetros obligatorios sin exposición de secretos'
+            : 'Fallo: Parámetros obligatorios no validados correctamente o fuga de secretos';
+
+        $this->record(
+            'T2-15',
+            'Validación estricta de configuración de base de datos',
+            'DatabaseException ante parámetros faltantes sin exponer credenciales',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T2-16 — Regresión funcional de base de datos de Fase 1: Ejecutar schema, seed y validacion.sql en BD temporal.
+     */
+    private function testT2_16_DatabaseRegressionPhase1(): void
+    {
+        $root = dirname(__DIR__);
+        $mysqlBinary = $this->findMysqlBinary();
+
+        if ($mysqlBinary === null) {
+            $this->record(
+                'T2-16',
+                'Regresión funcional de base de datos de Fase 1',
+                '18 pruebas automáticas ejecutadas exitosamente (18 OK, 0 fallos)',
+                'Fallo: Binario mysql.exe no encontrado en el sistema',
+                false
+            );
+            return;
+        }
+
+        $dbHost = (string) Config::get('database.connections.mysql.host', '127.0.0.1');
+        $dbPort = (int) Config::get('database.connections.mysql.port', 3307);
+        $dbUser = (string) Config::get('database.connections.mysql.username', 'root');
+        $dbPass = (string) Config::get('database.connections.mysql.password', '');
+        $tempDb = 'escuela_fase2_regresion_temp';
+
+        $schemaFile = $root . '/database/schema.sql';
+        $seedFile = $root . '/database/seed.sql';
+        $valFile = $root . '/database/tests/validacion.sql';
+
+        $passParam = $dbPass !== '' ? ' -p' . escapeshellarg($dbPass) : '';
+        $baseCmd = sprintf(
+            '"%s" -h %s -P %d -u %s%s',
+            $mysqlBinary,
+            escapeshellarg($dbHost),
+            $dbPort,
+            escapeshellarg($dbUser),
+            $passParam
+        );
+
+        $isOk = false;
+        $obtained = '';
+
+        try {
+            // 1. Crear base de datos temporal limpia
+            shell_exec($baseCmd . ' -e "DROP DATABASE IF EXISTS ' . $tempDb . '; CREATE DATABASE ' . $tempDb . ' CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1');
+
+            // 2. Ejecutar schema.sql
+            shell_exec($baseCmd . ' ' . $tempDb . ' < "' . $schemaFile . '" 2>&1');
+
+            // 3. Ejecutar seed.sql
+            shell_exec($baseCmd . ' ' . $tempDb . ' < "' . $seedFile . '" 2>&1');
+
+            // 4. Ejecutar validacion.sql
+            $output = (string) shell_exec($baseCmd . ' ' . $tempDb . ' < "' . $valFile . '" 2>&1');
+
+            // 5. Analizar resultado de las 18 pruebas
+            // Salida de MySQL CLI tabulada: pruebas_ejecutadas \t pruebas_exitosas \t pruebas_fallidas \n 18 \t 18 \t 0
+            $matched = preg_match('/pruebas_ejecutadas\s+pruebas_exitosas\s+pruebas_fallidas\s+18\s+18\s+0/i', $output);
+            $hasNoFailureInTable = !preg_match('/\bFALLO\b/i', $output);
+
+            if ($matched && $hasNoFailureInTable) {
+                $isOk = true;
+                $obtained = '18/18 pruebas de Fase 1 ejecutadas con 18 exitosas y 0 fallidas en BD temporal aislada';
+            } else {
+                $isOk = false;
+                $obtained = 'Fallo en salida de validacion.sql: ' . substr(strip_tags($output), -300);
+            }
+        } catch (\Throwable $e) {
+            $isOk = false;
+            $obtained = 'Excepción durante regresión: ' . $e->getMessage();
+        } finally {
+            // 6. Eliminar base de datos temporal
+            shell_exec($baseCmd . ' -e "DROP DATABASE IF EXISTS ' . $tempDb . ';" 2>&1');
+        }
+
+        $this->record(
+            'T2-16',
+            'Regresión funcional de base de datos de Fase 1',
+            '18 pruebas automáticas ejecutadas exitosamente (18 OK, 0 fallos)',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * Localizar el binario de MySQL CLI en el entorno.
+     */
+    private function findMysqlBinary(): ?string
+    {
+        $candidates = [
+            'C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe',
+            'C:\xampp\mysql\bin\mysql.exe',
+        ];
+        foreach ($candidates as $candidate) {
+            if (file_exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        $output = @shell_exec('where mysql 2>nul');
+        if (!empty($output)) {
+            $firstLine = trim(explode("\n", trim($output))[0]);
+            if (file_exists($firstLine)) {
+                return $firstLine;
+            }
+        }
+
+        return null;
     }
 
     private function printSummary(): void
