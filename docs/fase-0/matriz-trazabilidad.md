@@ -169,14 +169,14 @@ La Fase 3 implementa de forma completa y funcional el subsistema de autenticaci�
 
 | Requisitos respaldados | Componentes funcionales creados | Estado de Fase 3 | Evidencia de Fase 3 |
 |---|---|---|---|
-| **RF-01** (Inicio de sesión) | `AuthController::login()`, `AuthService::attempt()`, `UserRepository::findByUsername()`, `views/auth/login.php` | IMPLEMENTADO Y VERIFICADO | Autenticación con `password_verify()`, verificación de estado activo y regeneración de sesión validadas en T3-01 a T3-06. |
-| **RF-02** (Cierre de sesión) | `AuthController::logout()`, `AuthService::logout()`, `Session::destroy()` | IMPLEMENTADO Y VERIFICADO | Destrucción de sesión, invalidación de cookie y revocación de acceso a rutas privadas validadas en T3-12. |
-| **RNF-03** (Seguridad de la información) | `Session.php`, `Csrf.php`, `VerifyCsrfToken.php`, `User.php` | IMPLEMENTADO Y VERIFICADO | BCrypt nativo, mitigación de Session Fixation, validación CSRF obligatoria y confidencialidad estricta validadas en T3-06, T3-14, T3-16. |
-| **RNF-04** (Control de acceso basado en roles) | `RequireRole.php`, `Authenticate.php`, `AdminController.php`, `DocenteController.php` | IMPLEMENTADO Y VERIFICADO | Segregación estricta en backend entre ADMINISTRADOR y DOCENTE, con HTTP 403 y revalidación en tiempo real en BD validadas en T3-07 a T3-11, T3-13, T3-15. |
-| **RF-03** (Recuperación de contraseña) | - | PENDIENTE DE IMPLEMENTACIÓN | Fuera del alcance de la Fase 3; corresponde a una fase posterior autorizada. |
-| **RF-04 a RF-32** (Módulos funcionales de negocio) | - | PENDIENTE DE IMPLEMENTACIÓN FUNCIONAL | Corresponden a las Fases 4 a 14 conforme al plan maestro del proyecto. |
+| **RF-01** (Autenticación: permitir iniciar sesión mediante credenciales a administrativos y docentes; con mecanismo técnico complementario de cierre de sesión seguro) | `AuthController::login()`, `AuthController::logout()`, `AuthService::attempt()`, `AuthService::logout()`, `UserRepository::findByUsername()`, `Session::destroy()`, `views/auth/login.php` | IMPLEMENTADO Y VERIFICADO | Formulario POST `/login`, verificación de credenciales con `password_verify()`, verificación de estado `ACTIVO`, regeneración de sesión CLI y HTTP real validadas en T3-01 a T3-06 y T3-19. Cierre de sesión seguro en POST `/logout` con token CSRF, destrucción de sesión e invalidación de cookies validado en T3-12. |
+| **RF-02** (Roles y permisos: restringir las funciones de acuerdo con el rol del usuario) | `RequireRole.php`, `Authenticate.php`, `AdminController.php`, `DocenteController.php`, `views/errors/403.php` | IMPLEMENTADO Y VERIFICADO | Segregación estricta en backend entre áreas `/administracion` (`ADMINISTRADOR`) y `/docente` (`DOCENTE`), bloqueo con HTTP 403 Forbidden ante accesos no autorizados y revalidación de rol en tiempo real contra base de datos validadas en T3-07 a T3-11, T3-13 y T3-15. |
+| **RNF-03** (Seguridad: contraseñas no almacenadas en texto plano y acceso controlado por roles) | `Session.php`, `Csrf.php`, `VerifyCsrfToken.php`, `User.php`, `App\Core\Helpers` | IMPLEMENTADO Y VERIFICADO | Contraseñas protegidas exclusivamente con BCrypt nativo (`PASSWORD_BCRYPT`), cookies de sesión configuradas con flags seguros (`HttpOnly`, `SameSite=Lax`, `Secure` condicional), mitigación rigurosa de Session Fixation (T3-06 y T3-19), validación CSRF obligatoria (T3-14) y confidencialidad absoluta sin fuga de secretos o hashes (T3-16). |
+| **RNF-04** (Privacidad: datos personales accesibles solo a usuarios autorizados) | Arquitectura base de roles y autenticación (`User`, `UserRepository`, middlewares) | ASIGNADO A FASE 14 | La autenticación y autorización por roles implementadas en Fase 3 constituyen el fundamento técnico para el cumplimiento integral de la privacidad asignado a la Fase 14. |
+| **RF-03** (Recuperación de contraseña: correo electrónico o enlace/código) | - | PENDIENTE DE IMPLEMENTACIÓN | Fuera del alcance de la Fase 3; asignado oficialmente a Fase 13. |
+| **RF-04 a RF-32** (Módulos funcionales de negocio) | - | PENDIENTE DE IMPLEMENTACIÓN FUNCIONAL | Corresponden a las Fases 4 a 12 conforme a la planificación oficial del proyecto. |
 
-La suite automatizada de pruebas y sus 18 resultados se documentan en `docs/fase-3/pruebas.md`.
+La suite automatizada de pruebas y sus 19 resultados se documentan en `docs/fase-3/pruebas.md`.
 
 
 

@@ -31,11 +31,11 @@ Diseñar, implementar y verificar el subsistema funcional de autenticación y au
 
 ## 4. REQUERIMIENTOS TRABAJADOS
 
-- **RF-01 (Inicio de sesión y autenticación):** Implementado y verificado. Formulario `POST /login`, validación de credenciales con `password_verify()`, verificación de estado activo y mensaje genérico de error ante fallos.
-- **RF-02 (Cierre de sesión seguro):** Implementado y verificado. Endpoint `POST /logout` con token CSRF, destrucción de sesión, invalidación de cookies y redirección a login.
-- **RNF-03 (Seguridad de la información):** Implementado y verificado. Contraseñas protegidas con BCrypt nativo, directivas de cookies seguras (`httponly`, `samesite=Lax`, `secure` condicional), mitigación de fijación de sesión, protección CSRF nativa y cero fuga de contraseñas o hashes en vistas o logs.
-- **RNF-04 (Control de acceso basado en roles):** Implementado y verificado. Segregación estricta en backend entre áreas de `ADMINISTRADOR` y `DOCENTE`, emitiendo HTTP 403 Forbidden ante accesos no autorizados.
-- **RF-03 (Recuperación de contraseña):** **PERMANECE PENDIENTE.** Conforme a las reglas de fase, la recuperación de credenciales no fue implementada y corresponde a fases posteriores.
+- **RF-01 (Autenticación):** Implementado y verificado. Permitir iniciar sesión a usuarios administrativos y docentes mediante credenciales seguras. Incluye formulario `POST /login`, validación con `password_verify()`, verificación de estado `ACTIVO`, regeneración de ID de sesión y el mecanismo técnico complementario de cierre de sesión seguro (`POST /logout` con token CSRF, destrucción total de sesión e invalidación de cookies en navegador).
+- **RF-02 (Roles y permisos):** Implementado y verificado. Restringir las funciones de acuerdo con el rol del usuario. Segregación estricta en backend entre áreas de `ADMINISTRADOR` (`/administracion`) y `DOCENTE` (`/docente`), bloqueo con HTTP 403 Forbidden y revalidación en tiempo real del rol contra la base de datos física para impedir escalamiento de privilegios.
+- **RNF-03 (Seguridad):** Implementado y verificado. Contraseñas no almacenadas en texto plano (hashing nativo BCrypt `PASSWORD_BCRYPT`), acceso controlado por roles (junto a RF-02), cookies de sesión blindadas (`HttpOnly`, `SameSite=Lax`, `Secure` condicional), mitigación rigurosa de Session Fixation validada tanto en CLI como por HTTP real con cURL, protección CSRF nativa con tokens de 32 bytes criptoseguros y confidencialidad absoluta (cero fuga de secretos o hashes).
+- **RNF-04 (Privacidad):** Asignado oficialmente a Fase 14 (*"Privacidad. Datos personales accesibles solo a usuarios autorizados"*). La arquitectura de autenticación y autorización por roles construida en Fase 3 sienta las bases técnicas indispensables para garantizar este requerimiento en las fases sucesivas.
+- **RF-03 (Recuperación de contraseña):** **PERMANECE PENDIENTE.** Conforme a la planificación oficial del proyecto, la recuperación de acceso mediante correo electrónico o enlace/código corresponde a la Fase 13.
 
 ---
 
@@ -53,9 +53,9 @@ Diseñar, implementar y verificar el subsistema funcional de autenticación y au
 10. Construcción de vistas `views/auth/login.php`, `views/admin/index.php`, `views/docente/index.php` y `views/errors/403.php`.
 11. Actualización del layout maestro `views/layouts/main.php` para reflejar el estado de autenticación y enlaces correspondientes.
 12. Registro de rutas en `App\Core\App::registerRoutes()`.
-13. Desarrollo y ejecución de la suite automatizada de pruebas `tests/run_tests_fase3.php` con cobertura total T3-01 a T3-18.
-14. Ejecución de pruebas HTTP reales mediante cURL contra el servidor local.
-15. Redacción de documentación técnica en `docs/fase-3/` y actualización de trazabilidad en `docs/fase-0/matriz-trazabilidad.md`.
+13. Desarrollo y ejecución de la suite automatizada de pruebas `tests/run_tests_fase3.php` con cobertura total T3-01 a T3-19.
+14. Ejecución de pruebas HTTP reales mediante cURL contra servidor web temporal para comprobar la regeneración de sesión y emisión de cabeceras Set-Cookie (T3-19).
+15. Redacción de documentación técnica en `docs/fase-3/` y actualización rigurosa de trazabilidad en `docs/fase-0/matriz-trazabilidad.md`.
 
 ---
 
@@ -208,20 +208,20 @@ Ningún controlador ni vista ejecuta sentencias SQL directamente.
 
 ## 19. PRUEBAS REALIZADAS
 
-Se implementó la suite completa `tests/run_tests_fase3.php` abarcando las 18 pruebas obligatorias:
-- T3-01 a T3-18.
+Se implementó la suite completa `tests/run_tests_fase3.php` abarcando las 19 pruebas obligatorias:
+- T3-01 a T3-19.
 
 ---
 
 ## 20. RESULTADO INDIVIDUAL
 
-Todas las 18 pruebas arrojaron resultado **OK (100%)**:
+Todas las 19 pruebas arrojaron resultado **OK (100%)**:
 - **T3-01:** OK (Login válido ADMINISTRADOR -> Redirección 302 a `/administracion`, rol `ADMINISTRACION`/`ADMINISTRADOR`)
 - **T3-02:** OK (Login válido DOCENTE -> Redirección 302 a `/docente`, rol `DOCENTE`)
 - **T3-03:** OK (Usuario inexistente -> Rechazado con HTTP 401 y mensaje `"Credenciales inválidas."`)
 - **T3-04:** OK (Contraseña incorrecta -> Rechazado con HTTP 401 y mensaje `"Credenciales inválidas."`)
 - **T3-05:** OK (Usuario inactivo -> Rechazado con HTTP 401 y mensaje `"Credenciales inválidas."`)
-- **T3-06:** OK (Regeneración de sesión -> ID previo != ID posterior verificado)
+- **T3-06:** OK (Regeneración de sesión -> ID previo != ID posterior verificado en CLI)
 - **T3-07:** OK (Ruta privada sin sesión -> Redirigido a `/login` con HTTP 302)
 - **T3-08:** OK (ADMINISTRADOR accede a ruta administrativa -> HTTP 200 con vista autorizada)
 - **T3-09:** OK (DOCENTE accede a ruta docente -> HTTP 200 con vista autorizada)
@@ -234,6 +234,7 @@ Todas las 18 pruebas arrojaron resultado **OK (100%)**:
 - **T3-16:** OK (Confidencialidad -> Cero contraseñas en claro o hashes en vistas, logs o respuestas)
 - **T3-17:** OK (Regresión Fase 2 -> 16/16 pruebas de Fase 2 superadas con 0 fallos)
 - **T3-18:** OK (Regresión Fase 1 -> 18/18 pruebas de BD ejecutadas en base temporal aislada con 0 fallos)
+- **T3-19:** OK (Regeneración real de sesión mediante HTTP -> Emisión de Set-Cookie con nuevo ID tras login exitoso con 302 a `/administracion` y cierre limpio de procesos)
 
 ---
 
@@ -282,21 +283,23 @@ Ninguno. Todos los requerimientos y pruebas de la Fase 3 se encuentran completad
 ## 27. TRAZABILIDAD
 
 Actualizada formalmente en `docs/fase-0/matriz-trazabilidad.md`:
-- `RF-01`: IMPLEMENTADO Y VERIFICADO.
-- `RF-02`: IMPLEMENTADO Y VERIFICADO.
-- `RNF-03`: IMPLEMENTADO Y VERIFICADO.
-- `RNF-04`: IMPLEMENTADO Y VERIFICADO (en lo relativo a autenticación y autorización base por roles).
-- `RF-03`: PENDIENTE DE IMPLEMENTACIÓN (Recuperación de contraseña).
+- `RF-01`: IMPLEMENTADO Y VERIFICADO (Autenticación: inicio de sesión mediante credenciales seguras para administrativos y docentes; con mecanismo técnico complementario de cierre de sesión seguro).
+- `RF-02`: IMPLEMENTADO Y VERIFICADO (Roles y permisos: restricción de funciones según el rol del usuario, segregación backend `/administracion` y `/docente` con HTTP 403 y revalidación en tiempo real en base de datos).
+- `RNF-03`: IMPLEMENTADO Y VERIFICADO (Seguridad: hashing BCrypt nativo, directivas de cookies seguras, mitigación de session fixation CLI y HTTP real, protección CSRF y cero fuga de secretos).
+- `RNF-04`: ASIGNADO A FASE 14 (Privacidad: datos personales accesibles solo a usuarios autorizados. Respaldado técnicamente por la infraestructura base de roles de Fase 3).
+- `RF-03`: PENDIENTE DE IMPLEMENTACIÓN (Recuperación de contraseña: asignado oficialmente a Fase 13).
 
 ---
 
 ## 28. COMMITS LOCALES
 
-Se registrarán de forma atómica y limpia exclusivamente en el repositorio local (sin push a GitHub):
-1. `feat(fase-3): implementar componentes de sesion, csrf, modelos y repositorios`
-2. `feat(fase-3): implementar servicio de autenticacion, middlewares, controladores y vistas`
-3. `test(fase-3): implementar suite automatizada de pruebas T3-01 a T3-18`
-4. `docs(fase-3): documentar arquitectura, seguridad, pruebas y trazabilidad`
+Se registran de forma atómica y limpia exclusivamente en el repositorio local (sin push a GitHub):
+1. `256c65c` — `feat(fase-3): implementar componentes de sesion, csrf, modelos y repositorios`
+2. `0961211` — `feat(fase-3): implementar servicio de autenticacion, middlewares, controladores y vistas`
+3. `894859d` — `test(fase-3): implementar suite automatizada de pruebas T3-01 a T3-18`
+4. `dd611ec` — `docs(fase-3): documentar arquitectura, seguridad, pruebas y trazabilidad`
+5. `test(fase-3): agregar validacion http real de session fixation T3-19`
+6. `docs(fase-3): corregir trazabilidad oficial de RF y RNF y documentar T3-19`
 
 ---
 

@@ -11,7 +11,7 @@
 
 ---
 
-## Resultados Detallados de las Pruebas (18/18)
+## Resultados Detallados de las Pruebas (19/19)
 
 | ID | Prueba | Procedimiento ejecutado | Resultado esperado | Resultado obtenido | Estado |
 |---|---|---|---|---|---|
@@ -20,7 +20,7 @@
 | **T3-03** | Usuario inexistente | Envío de `POST /login` con usuario inexistente `usuario_fantasma_xyz_999`. | Acceso rechazado con HTTP 401 y mensaje genérico "Credenciales inválidas." | Status 401 con mensaje genérico "Credenciales inválidas." sin sesión creada. | **OK** |
 | **T3-04** | Contraseña incorrecta | Envío de `POST /login` para `admin.demo` con contraseña incorrecta. | Acceso rechazado con HTTP 401 y mensaje genérico "Credenciales inválidas." | Status 401 con mensaje genérico "Credenciales inválidas." sin revelar existencia de usuario. | **OK** |
 | **T3-05** | Usuario inactivo | Envío de `POST /login` para usuario `inactivo.demo` con `estado = 'INACTIVO'`. | Acceso rechazado con HTTP 401 y mensaje genérico sin iniciar sesión. | Status 401: Usuario inactivo rechazado sin iniciar sesión. | **OK** |
-| **T3-06** | Regeneración de sesión | Comparación del ID de sesión antes y después del inicio de sesión exitoso. | Identificador de sesión regenerado (`idBefore != idAfter`). | Antes: `"f68f662236d5af8ae9fd0b4510aab917"` \| Después: `"86abbc847065554bf801f1e55f306ae6"` (Cambió: SÍ). | **OK** |
+| **T3-06** | Regeneración de sesión | Comparación del ID de sesión antes y después del inicio de sesión exitoso. | Identificador de sesión regenerado (`idBefore != idAfter`). | Antes: `"5cdeab4167d79425f995f9b5c9006f26"` \| Después: `"3a9e1b9bcb1bc85d120f1762b60acfbe"` (Cambió: SÍ). | **OK** |
 | **T3-07** | Ruta privada sin autenticación | Solicitud `GET /administracion` y `GET /docente` sin sesión previa iniciada. | Redirección controlada HTTP 302 hacia `/login`. | Rutas `/administracion` y `/docente` redirigen a `/login` con HTTP 302 sin sesión previa. | **OK** |
 | **T3-08** | ADMINISTRADOR accede a admin | Solicitud `GET /administracion` con sesión activa de `admin.demo`. | Acceso concedido con HTTP 200 y vista de área administrativa. | Status 200: Vista "Área administrativa — sesión válida" renderizada correctamente. | **OK** |
 | **T3-09** | DOCENTE accede a docente | Solicitud `GET /docente` con sesión activa de `docente.demo`. | Acceso concedido con HTTP 200 y vista de portal docente. | Status 200: Vista "Portal docente — sesión válida" renderizada correctamente. | **OK** |
@@ -33,12 +33,13 @@
 | **T3-16** | Confidencialidad de contraseñas | Inspección de vistas generadas, logs en disco y respuestas HTTP. | Cero contraseñas en claro o hashes BCrypt expuestos. | Ningún secreto ni hash BCrypt presente en vistas, logs o respuestas. | **OK** |
 | **T3-17** | Regresión completa de Fase 2 | Ejecución automatizada de la suite de Fase 2 (`Phase2TestSuite`). | 16 pruebas ejecutadas y 16 exitosas (0 fallos). | 16/16 pruebas de Fase 2 ejecutadas con 16 OK y 0 fallos. | **OK** |
 | **T3-18** | Regresión completa de Fase 1 | Recreación y validación funcional del modelo relacional de Fase 1 en BD temporal aislada. | 18 pruebas automatizadas ejecutadas con 18 exitosas (0 fallos). | 18/18 pruebas de Fase 1 ejecutadas con 18 exitosas y 0 fallidas en BD temporal aislada. | **OK** |
+| **T3-19** | Regeneración real de sesión mediante HTTP | Despliegue temporal de servidor web PHP en puerto efímero. Captura con cURL de cookie previa (`cookie_before`) y token CSRF en `GET /login`, seguida de `POST /login` con credenciales válidas y cookie previa. Inspección de `Set-Cookie` en respuesta (`cookie_after`). | HTTP 302 hacia `/administracion` y entrega de nueva cookie de sesión con ID diferente (`cookie_before != cookie_after`). | Status 302 -> `/administracion` \| Cookie antes: `"k6eq8e477ghrd2maisetmikgdq"` \| Cookie después: `"1ro3pkcuif7a5n5f9mgoidhd9m"` (Cambió: SÍ). Servidor temporal cerrado limpiamente sin procesos huérfanos. | **OK** |
 
 ---
 
 ## Resumen Cuantitativo
 
-- **Total de pruebas ejecutadas:** 18
-- **Pruebas exitosas (OK):** 18 (100%)
+- **Total de pruebas ejecutadas:** 19
+- **Pruebas exitosas (OK):** 19 (100%)
 - **Pruebas fallidas (FALLO):** 0 (0%)
-- **Resultado general:** **TODAS LAS PRUEBAS DE FASE 3 SUPERADAS SATISFACTORIAMENTE (18/18)**
+- **Resultado general:** **TODAS LAS PRUEBAS DE FASE 3 SUPERADAS SATISFACTORIAMENTE (19/19)**
