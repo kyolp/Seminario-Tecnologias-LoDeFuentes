@@ -1,8 +1,8 @@
-<section class="dashboard-panel" style="max-width: 800px; margin: 2rem auto; padding: 2rem; background: #ffffff; border: 1px solid #d1d5db; border-radius: 8px;">
-    <div style="border-bottom: 2px solid #1e3a8a; padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+<section class="dashboard-panel" style="max-width: 1000px; margin: 2rem auto; padding: 2rem; background: #ffffff; border: 1px solid #d1d5db; border-radius: 8px;">
+    <div style="border-bottom: 2px solid #1e3a8a; padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
         <div>
-            <h2 style="margin: 0; color: #1e3a8a; font-size: 1.5rem;">Área administrativa — sesión válida</h2>
-            <p style="margin: 0.25rem 0 0 0; color: #6b7280; font-size: 0.875rem;">Módulo de control para perfil de Administración</p>
+            <h2 style="margin: 0; color: #1e3a8a; font-size: 1.5rem;">Panel de Administración</h2>
+            <p style="margin: 0.25rem 0 0 0; color: #6b7280; font-size: 0.875rem;">Fase 4 — Administración Básica e Información Institucional</p>
         </div>
         <div>
             <form action="<?= e(url('/logout')) ?>" method="POST" style="margin: 0;">
@@ -14,7 +14,19 @@
         </div>
     </div>
 
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1.25rem; margin-bottom: 1.5rem;">
+    <?php if (!empty($flash_success)): ?>
+        <div style="background: #dcfce7; border: 1px solid #86efac; color: #166534; padding: 0.75rem 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+            <?= e($flash_success) ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($flash_error)): ?>
+        <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 0.75rem 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+            <?= e($flash_error) ?>
+        </div>
+    <?php endif; ?>
+
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1.25rem; margin-bottom: 2rem;">
         <h3 style="margin-top: 0; color: #0f172a; font-size: 1.1rem;">Datos de la Sesión Autorizada</h3>
         <ul style="list-style: none; padding: 0; margin: 0; line-height: 1.8; color: #334155; font-size: 0.95rem;">
             <li><strong>Usuario:</strong> <?= e($user?->nombre_usuario) ?></li>
@@ -25,7 +37,49 @@
         </ul>
     </div>
 
-    <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem; border-radius: 4px; color: #1e40af; font-size: 0.9rem;">
-        <strong>Información:</strong> Esta es una pantalla provisional de validación de autorización por rol correspondiente a la Fase 3. Los módulos funcionales de gestión y administración se implementarán a partir de la Fase 4 conforme al cronograma aprobado.
+    <h3 style="color: #1e3a8a; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1rem;">Módulos de Gestión Institucional</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <h4 style="margin: 0 0 0.5rem 0; color: #1e3a8a; font-size: 1.15rem;">👨‍🏫 Docentes</h4>
+            <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Registro de docentes, credenciales asociadas, estado y código institucional.</p>
+            <a href="<?= e(url('/administracion/docentes')) ?>" style="display: inline-block; padding: 0.4rem 0.8rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">Gestionar Docentes &rarr;</a>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <h4 style="margin: 0 0 0.5rem 0; color: #1e3a8a; font-size: 1.15rem;">🎒 Estudiantes</h4>
+            <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Registro básico de estudiantes, código, datos personales y estado.</p>
+            <a href="<?= e(url('/administracion/estudiantes')) ?>" style="display: inline-block; padding: 0.4rem 0.8rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">Gestionar Estudiantes &rarr;</a>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <h4 style="margin: 0 0 0.5rem 0; color: #1e3a8a; font-size: 1.15rem;">📅 Períodos Escolares</h4>
+            <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Administración de ciclos escolares y control del período activo único.</p>
+            <a href="<?= e(url('/administracion/periodos')) ?>" style="display: inline-block; padding: 0.4rem 0.8rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">Gestionar Períodos &rarr;</a>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <h4 style="margin: 0 0 0.5rem 0; color: #1e3a8a; font-size: 1.15rem;">📚 Grados</h4>
+            <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Catálogo base de grados académicos y orden jerárquico.</p>
+            <a href="<?= e(url('/administracion/grados')) ?>" style="display: inline-block; padding: 0.4rem 0.8rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">Gestionar Grados &rarr;</a>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <h4 style="margin: 0 0 0.5rem 0; color: #1e3a8a; font-size: 1.15rem;">🔗 Grados por Período</h4>
+            <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Asociación y habilitación de grados disponibles para cada ciclo escolar.</p>
+            <a href="<?= e(url('/administracion/grados-periodos')) ?>" style="display: inline-block; padding: 0.4rem 0.8rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">Configurar Grados/Ciclo &rarr;</a>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <h4 style="margin: 0 0 0.5rem 0; color: #1e3a8a; font-size: 1.15rem;">🏢 Secciones y Capacidad</h4>
+            <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Administración de secciones vinculadas y asignación de capacidades estrictas.</p>
+            <a href="<?= e(url('/administracion/secciones')) ?>" style="display: inline-block; padding: 0.4rem 0.8rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">Gestionar Secciones &rarr;</a>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <h4 style="margin: 0 0 0.5rem 0; color: #1e3a8a; font-size: 1.15rem;">🚪 Aulas</h4>
+            <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Catálogo de aulas físicas del centro educativo y ubicación de referencia.</p>
+            <a href="<?= e(url('/administracion/aulas')) ?>" style="display: inline-block; padding: 0.4rem 0.8rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">Gestionar Aulas &rarr;</a>
+        </div>
     </div>
 </section>
