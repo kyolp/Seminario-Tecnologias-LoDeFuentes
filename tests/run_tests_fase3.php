@@ -7,7 +7,7 @@ declare(strict_types=1);
  * Ejecutable mediante PHP CLI.
  * 
  * Cobertura obligatoria:
- * T3-01 a T3-18
+ * T3-01 a T3-19
  */
 
 // 1. Cargar bootstrap
@@ -68,6 +68,7 @@ class Phase3TestSuite
         $this->testT3_16_PasswordNoExpuesta();
         $this->testT3_17_RegresionFase2();
         $this->testT3_18_RegresionFase1();
+        $this->testT3_19_RegeneracionRealSesionHttp();
 
         $this->printSummary();
     }
@@ -711,6 +712,184 @@ class Phase3TestSuite
         }
 
         $this->record('T3-18', 'Regresión completa de Fase 1', '18/18 pruebas automáticas ejecutadas exitosamente (18 OK, 0 fallos)', $obtained, $isOk);
+    }
+
+    /**
+     * T3-19 — Regeneración real de sesión mediante HTTP:
+     * Comprobación en cliente HTTP (cURL) de emisión de Set-Cookie con un identificador
+     * nuevo y diferente tras el inicio de sesión exitoso (mitigación contra Session Fixation).
+     */
+    private function testT3_19_RegeneracionRealSesionHttp(): void
+    {
+        $port = $this->findFreePort(8091, 8099);
+        $phpBin = PHP_BINARY;
+        $docRoot = dirname(__DIR__) . '/public';
+
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w']
+        ];
+
+        $cmd = sprintf('"%s" -S 127.0.0.1:%d -t "%s"', $phpBin, $port, $docRoot);
+        $process = proc_open($cmd, $descriptors, $pipes, dirname(__DIR__));
+
+        if (!is_resource($process)) {
+            $this->record('T3-19', 'Regeneración real de sesión mediante HTTP', 'Cookie regenerada (cookie_before != cookie_after) con redirección 302', 'No se pudo iniciar servidor temporal PHP', false);
+            return;
+        }
+
+        $procStatus = proc_get_status($process);
+        $pid = $procStatus['pid'] ?? 0;
+
+        // Esperar disponibilidad del servidor
+        $connected = false;
+        for ($i = 0; $i < 30; $i++) {
+            $fp = @fsockopen('127.0.0.1', $port, $errno, $errstr, 0.2);
+            if ($fp) {
+                fclose($fp);
+                $connected = true;
+                break;
+            }
+            usleep(100000); // 100ms
+        }
+
+        if (!$connected) {
+            $this->terminateProcess($pid, $process, $pipes);
+            $this->record('T3-19', 'Regeneración real de sesión mediante HTTP', 'Cookie regenerada (cookie_before != cookie_after) con redirección 302', 'El servidor web temporal no respondió a tiempo en el puerto ' . $port, false);
+            return;
+        }
+
+        $cookieFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cookie_test_' . uniqid() . '.txt';
+        $isOk = false;
+        $obtained = '';
+
+        try {
+            // 1. GET /login para capturar cookie inicial y token CSRF
+            $ch = curl_init("http://127.0.0.1:$port/login");
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, true);
+            curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
+            curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
+            $response = curl_exec($ch);
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $headers = substr($response, 0, $headerSize);
+            $body = substr($response, $headerSize);
+            curl_close($ch);
+
+            $cookieBefore = null;
+            if (preg_match('/Set-Cookie:\s*([^;=]+)=([^;]+)/i', $headers, $m)) {
+                $cookieName = $m[1];
+                $cookieBefore = $m[2];
+            } else {
+                $cookieName = 'PHPSESSID';
+            }
+
+            $token = null;
+            if (preg_match('/name=["\']_token["\']\s+value=["\']([^"\']+)["\']/', $body, $m)) {
+                $token = $m[1];
+            }
+
+            if (empty($token)) {
+                throw new \Exception('No se pudo extraer el token CSRF del formulario /login');
+            }
+
+            // 2. POST /login con credenciales válidas enviando cookie previa
+            $postFields = http_build_query([
+                '_token' => $token,
+                'nombre_usuario' => 'admin.demo',
+                'password' => 'Admin.2026!'
+            ]);
+
+            $ch = curl_init("http://127.0.0.1:$port/login");
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
+            curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
+            curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false); // No seguir redirección
+
+            $postResponse = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $postHeaderSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $postHeaders = substr($postResponse, 0, $postHeaderSize);
+            curl_close($ch);
+
+            $cookieAfter = null;
+            if (preg_match_all('/Set-Cookie:\s*([^;=]+)=([^;]+)/i', $postHeaders, $matches, PREG_SET_ORDER)) {
+                foreach ($matches as $match) {
+                    if ($match[1] === $cookieName || stripos($match[1], 'sess') !== false) {
+                        $cookieAfter = $match[2];
+                    }
+                }
+            }
+
+            $location = '';
+            if (preg_match('/Location:\s*([^\r\n]+)/i', $postHeaders, $m)) {
+                $location = trim($m[1]);
+            }
+
+            $statusRedirect = ($httpCode === 302 && str_contains($location, '/administracion'));
+            $cookieChanged = (!empty($cookieBefore) && !empty($cookieAfter) && $cookieBefore !== $cookieAfter);
+
+            $isOk = $statusRedirect && $cookieChanged;
+            $obtained = sprintf(
+                'Status %d -> %s | Cookie antes: "%s" | Cookie después: "%s" (Cambió: %s)',
+                $httpCode,
+                $location,
+                $cookieBefore ?? 'N/D',
+                $cookieAfter ?? 'N/D',
+                $cookieChanged ? 'SÍ' : 'NO'
+            );
+        } catch (\Throwable $e) {
+            $isOk = false;
+            $obtained = 'Excepción en prueba HTTP real: ' . $e->getMessage();
+        } finally {
+            $this->terminateProcess($pid, $process, $pipes);
+            if (file_exists($cookieFile)) {
+                @unlink($cookieFile);
+            }
+        }
+
+        $this->record(
+            'T3-19',
+            'Regeneración real de sesión mediante HTTP',
+            'Cookie de sesión regenerada vía HTTP real tras login exitoso (cookie_before != cookie_after) con redirección 302',
+            $obtained,
+            $isOk
+        );
+    }
+
+    private function findFreePort(int $start = 8091, int $end = 8099): int
+    {
+        for ($p = $start; $p <= $end; $p++) {
+            $fp = @fsockopen('127.0.0.1', $p, $errno, $errstr, 0.1);
+            if (!$fp) {
+                return $p;
+            }
+            fclose($fp);
+        }
+        return $start;
+    }
+
+    private function terminateProcess(int $pid, $process, array $pipes): void
+    {
+        if ($pid > 0 && PHP_OS_FAMILY === 'Windows') {
+            shell_exec("taskkill /F /T /PID $pid 2>nul");
+        } elseif (is_resource($process)) {
+            proc_terminate($process);
+        }
+
+        foreach ($pipes as $pipe) {
+            if (is_resource($pipe)) {
+                fclose($pipe);
+            }
+        }
+
+        if (is_resource($process)) {
+            proc_close($process);
+        }
     }
 
     private function findMysqlBinary(): ?string
