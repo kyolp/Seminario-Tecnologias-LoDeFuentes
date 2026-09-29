@@ -126,7 +126,83 @@ class App
             new \App\Middleware\RequireRole('DOCENTE'),
         ]);
 
-        // 4. Rutas técnicas de prueba: aisladas exclusivamente para entornos de desarrollo y testing
+        // 4. Módulos de Administración Básica (Fase 4)
+        $adminGet = [
+            \App\Middleware\Authenticate::class,
+            new \App\Middleware\RequireRole('ADMINISTRADOR'),
+        ];
+        $adminPost = [
+            \App\Middleware\Authenticate::class,
+            new \App\Middleware\RequireRole('ADMINISTRADOR'),
+            \App\Middleware\VerifyCsrfToken::class,
+        ];
+
+        // Docentes
+        $this->router->get('/administracion/docentes', [\App\Controllers\AdminDocenteController::class, 'index'], $adminGet);
+        $this->router->get('/administracion/docentes/ver', [\App\Controllers\AdminDocenteController::class, 'show'], $adminGet);
+        $this->router->get('/administracion/docentes/crear', [\App\Controllers\AdminDocenteController::class, 'createForm'], $adminGet);
+        $this->router->post('/administracion/docentes/crear', [\App\Controllers\AdminDocenteController::class, 'store'], $adminPost);
+        $this->router->get('/administracion/docentes/editar', [\App\Controllers\AdminDocenteController::class, 'editForm'], $adminGet);
+        $this->router->post('/administracion/docentes/editar', [\App\Controllers\AdminDocenteController::class, 'update'], $adminPost);
+        $this->router->post('/administracion/docentes/estado', [\App\Controllers\AdminDocenteController::class, 'toggleEstado'], $adminPost);
+        $this->router->post('/administracion/docentes/eliminar', [\App\Controllers\AdminDocenteController::class, 'delete'], $adminPost);
+
+        // Estudiantes
+        $this->router->get('/administracion/estudiantes', [\App\Controllers\AdminEstudianteController::class, 'index'], $adminGet);
+        $this->router->get('/administracion/estudiantes/ver', [\App\Controllers\AdminEstudianteController::class, 'show'], $adminGet);
+        $this->router->get('/administracion/estudiantes/crear', [\App\Controllers\AdminEstudianteController::class, 'createForm'], $adminGet);
+        $this->router->post('/administracion/estudiantes/crear', [\App\Controllers\AdminEstudianteController::class, 'store'], $adminPost);
+        $this->router->get('/administracion/estudiantes/editar', [\App\Controllers\AdminEstudianteController::class, 'editForm'], $adminGet);
+        $this->router->post('/administracion/estudiantes/editar', [\App\Controllers\AdminEstudianteController::class, 'update'], $adminPost);
+        $this->router->post('/administracion/estudiantes/estado', [\App\Controllers\AdminEstudianteController::class, 'toggleEstado'], $adminPost);
+        $this->router->post('/administracion/estudiantes/eliminar', [\App\Controllers\AdminEstudianteController::class, 'delete'], $adminPost);
+
+        // Períodos Escolares
+        $this->router->get('/administracion/periodos', [\App\Controllers\AdminPeriodoController::class, 'index'], $adminGet);
+        $this->router->get('/administracion/periodos/ver', [\App\Controllers\AdminPeriodoController::class, 'show'], $adminGet);
+        $this->router->get('/administracion/periodos/crear', [\App\Controllers\AdminPeriodoController::class, 'createForm'], $adminGet);
+        $this->router->post('/administracion/periodos/crear', [\App\Controllers\AdminPeriodoController::class, 'store'], $adminPost);
+        $this->router->get('/administracion/periodos/editar', [\App\Controllers\AdminPeriodoController::class, 'editForm'], $adminGet);
+        $this->router->post('/administracion/periodos/editar', [\App\Controllers\AdminPeriodoController::class, 'update'], $adminPost);
+        $this->router->post('/administracion/periodos/estado', [\App\Controllers\AdminPeriodoController::class, 'toggleEstado'], $adminPost);
+        $this->router->post('/administracion/periodos/eliminar', [\App\Controllers\AdminPeriodoController::class, 'delete'], $adminPost);
+
+        // Grados
+        $this->router->get('/administracion/grados', [\App\Controllers\AdminGradoController::class, 'index'], $adminGet);
+        $this->router->get('/administracion/grados/crear', [\App\Controllers\AdminGradoController::class, 'createForm'], $adminGet);
+        $this->router->post('/administracion/grados/crear', [\App\Controllers\AdminGradoController::class, 'store'], $adminPost);
+        $this->router->get('/administracion/grados/editar', [\App\Controllers\AdminGradoController::class, 'editForm'], $adminGet);
+        $this->router->post('/administracion/grados/editar', [\App\Controllers\AdminGradoController::class, 'update'], $adminPost);
+        $this->router->post('/administracion/grados/estado', [\App\Controllers\AdminGradoController::class, 'toggleActivo'], $adminPost);
+        $this->router->post('/administracion/grados/eliminar', [\App\Controllers\AdminGradoController::class, 'delete'], $adminPost);
+
+        // Grados por Período
+        $this->router->get('/administracion/grados-periodos', [\App\Controllers\AdminGradoPeriodoController::class, 'index'], $adminGet);
+        $this->router->get('/administracion/grados-periodos/crear', [\App\Controllers\AdminGradoPeriodoController::class, 'createForm'], $adminGet);
+        $this->router->post('/administracion/grados-periodos/crear', [\App\Controllers\AdminGradoPeriodoController::class, 'store'], $adminPost);
+        $this->router->post('/administracion/grados-periodos/estado', [\App\Controllers\AdminGradoPeriodoController::class, 'toggleHabilitado'], $adminPost);
+        $this->router->post('/administracion/grados-periodos/eliminar', [\App\Controllers\AdminGradoPeriodoController::class, 'delete'], $adminPost);
+
+        // Secciones
+        $this->router->get('/administracion/secciones', [\App\Controllers\AdminSeccionController::class, 'index'], $adminGet);
+        $this->router->get('/administracion/secciones/ver', [\App\Controllers\AdminSeccionController::class, 'show'], $adminGet);
+        $this->router->get('/administracion/secciones/crear', [\App\Controllers\AdminSeccionController::class, 'createForm'], $adminGet);
+        $this->router->post('/administracion/secciones/crear', [\App\Controllers\AdminSeccionController::class, 'store'], $adminPost);
+        $this->router->get('/administracion/secciones/editar', [\App\Controllers\AdminSeccionController::class, 'editForm'], $adminGet);
+        $this->router->post('/administracion/secciones/editar', [\App\Controllers\AdminSeccionController::class, 'update'], $adminPost);
+        $this->router->post('/administracion/secciones/estado', [\App\Controllers\AdminSeccionController::class, 'toggleHabilitada'], $adminPost);
+        $this->router->post('/administracion/secciones/eliminar', [\App\Controllers\AdminSeccionController::class, 'delete'], $adminPost);
+
+        // Aulas
+        $this->router->get('/administracion/aulas', [\App\Controllers\AdminAulaController::class, 'index'], $adminGet);
+        $this->router->get('/administracion/aulas/crear', [\App\Controllers\AdminAulaController::class, 'createForm'], $adminGet);
+        $this->router->post('/administracion/aulas/crear', [\App\Controllers\AdminAulaController::class, 'store'], $adminPost);
+        $this->router->get('/administracion/aulas/editar', [\App\Controllers\AdminAulaController::class, 'editForm'], $adminGet);
+        $this->router->post('/administracion/aulas/editar', [\App\Controllers\AdminAulaController::class, 'update'], $adminPost);
+        $this->router->post('/administracion/aulas/estado', [\App\Controllers\AdminAulaController::class, 'toggleActiva'], $adminPost);
+        $this->router->post('/administracion/aulas/eliminar', [\App\Controllers\AdminAulaController::class, 'delete'], $adminPost);
+
+        // 5. Rutas técnicas de prueba: aisladas exclusivamente para entornos de desarrollo y testing
         $env = (string) Config::get('app.env', 'development');
         if (in_array(strtolower($env), ['development', 'testing', 'local'], true)) {
             $this->router->get('/test/get', [\App\Controllers\TestController::class, 'testGet']);

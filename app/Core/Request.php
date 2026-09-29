@@ -112,6 +112,11 @@ class Request
         return $this->query[$key] ?? $default;
     }
 
+    public function query(?string $key = null, mixed $default = null): mixed
+    {
+        return $this->getQuery($key, $default);
+    }
+
     public function getPost(?string $key = null, mixed $default = null): mixed
     {
         if ($key === null) {
