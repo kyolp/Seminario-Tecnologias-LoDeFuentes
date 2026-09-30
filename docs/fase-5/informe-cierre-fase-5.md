@@ -3,9 +3,9 @@
 **Proyecto:** Sistema Web para la Escuela Oficial Rural Mixta Lo de Fuentes  
 **Rol:** ANTIGRAVITY — DESARROLLADOR PRINCIPAL  
 **Fase:** Fase 5 — Asignaciones Docentes  
-**Alcance Oficial:** RF-16 ("Asignaciones. Asignar docentes a grados, secciones y aulas")  
+**Alcance Oficial:** RF-16 ("Asignaciones. Asignar docentes a grados, secciones y aulas"), Sección 11 numeral 14 del Documento de Alcance (ref. interna `RN-DOC-14`)  
 **Fecha:** Septiembre 2026  
-**Estado:** COMPLETADA — EN ESPERA DE REVISIÓN EXTERNA  
+**Estado:** COMPLETADA CON OBSERVACIONES CORREGIDAS — EN ESPERA DE REVISIÓN EXTERNA  
 
 ---
 
@@ -13,12 +13,14 @@
 
 Se ha concluido de forma íntegra y rigurosa la **Fase 5 — Asignaciones Docentes** del *Sistema Web para la Escuela Oficial Rural Mixta Lo de Fuentes*, cumpliendo estrictamente con:
 1. El requerimiento funcional oficial **RF-16** del documento de alcance.
-2. La arquitectura desacoplada en capas Controller $\to$ Service $\to$ Repository $\to$ Model $\to$ Views.
-3. La preservación física e histórica de las asignaciones docentes sin eliminaciones destructivas.
-4. La garantía de unicidad de asignación activa mediante la columna generada almacenada `id_seccion_activa` y la restricción `uk_asignaciones_seccion_activa` en MySQL 8.0 / InnoDB.
-5. La operación transaccional atómica con soporte de rollback para el reemplazo docente.
-6. La ejecución y aprobación del 100% de la suite de pruebas automatizadas (25/25 OK) y la ausencia de regresión en las Fases 1, 2, 3 y 4.
-7. El respeto irrestricto de las fronteras de fase, manteniendo en estado `PENDIENTE` el RF-17 (Portal Docente / Listado de estudiantes, reservado para Fase 7), la Matrícula pública y cupos concurrentes (Fase 6) y la Asistencia y geolocalización (Fase 8).
+2. La regla oficial de negocio de la **Sección 11, numeral 14** del Documento de Alcance (*"Los grados, secciones, aulas y asignaciones deberán estar relacionados en la base de datos para que la información de inscripción alimente automáticamente el listado docente."*), referenciada internamente para fines de trazabilidad como `RN-DOC-14`.
+3. La arquitectura desacoplada en capas Controller $\to$ Service $\to$ Repository $\to$ Model $\to$ Views.
+4. La preservación física e histórica de las asignaciones docentes sin eliminaciones destructivas.
+5. La garantía de unicidad de asignación activa mediante la columna generada almacenada `id_seccion_activa` y la restricción `uk_asignaciones_seccion_activa` en MySQL 8.0 / InnoDB.
+6. La demostración de arbitraje ante concurrencia real mediante dos procesos independientes con barrera de sincronización en 5 iteraciones consecutivas (T5-26: 5/5 OK).
+7. La operación transaccional atómica con soporte de rollback para el reemplazo docente.
+8. La ejecución y aprobación del 100% de la suite de pruebas automatizadas (26/26 OK) y la ausencia de regresión en las Fases 1, 2, 3 y 4.
+9. El respeto irrestricto de las fronteras de fase, manteniendo en estado `PENDIENTE` el RF-17 (Portal Docente / Listado de estudiantes, reservado para Fase 7), la Matrícula pública y cupos concurrentes (Fase 6) y la Asistencia y geolocalización (Fase 8).
 
 ---
 
@@ -29,6 +31,7 @@ Se ha concluido de forma íntegra y rigurosa la **Fase 5 — Asignaciones Docent
 - `app/Repositories/AsignacionRepositoryInterface.php`: Contrato formal de persistencia.
 - `app/Repositories/AsignacionRepository.php`: Consultas parametrizadas con PDO, exclusión explícita de `id_seccion_activa` en escrituras y soporte de filtros dinámicos.
 - `app/Services/AsignacionService.php`: Orquestación de validaciones en cascada, unicidad activa, preservación de histórico, reemplazo atómico transaccional y obtención de datos auxiliares para formularios.
+- `tests/worker_asignacion_concurrente.php`: Worker CLI para pruebas de concurrencia y carreras reales multiproceso.
 
 ### 2.2 Control y Presentación
 - `app/Controllers/AdminAsignacionController.php`: Controlador protegido por middlewares de autenticación y rol `ADMINISTRADOR`, filtrado estricto por lista blanca contra *Mass Assignment*, manejo de sesiones flash y patrón PRG.
@@ -54,10 +57,10 @@ La numeración de decisiones técnicas continúa de forma correlativa e ininterr
 
 ---
 
-## 4. Resultados de la Suite de Pruebas (25/25 OK)
+## 4. Resultados de la Suite de Pruebas (26/26 OK)
 
-- **Total ejecutadas:** 25
-- **Aprobadas:** 25 (100%)
+- **Total ejecutadas:** 26
+- **Aprobadas:** 26 (100%)
 - **Fallidas:** 0
 - **Detalle de Fase 5:**
   - T5-01 a T5-03: Control de acceso RBAC y redirección a login (OK).
@@ -70,6 +73,7 @@ La numeración de decisiones técnicas continúa de forma correlativa e ininterr
   - T5-17 y T5-18: Prevención de XSS e integridad referencial limpia (OK).
   - T5-19 y T5-20: Manejo de concurrencia y reemplazo docente atómico con rollback (OK).
   - T5-21: Flujo HTTP real completo end-to-end (OK).
+  - T5-26: Concurrencia real multi-proceso (5 iteraciones consecutivas, 5/5 OK).
 - **Detalle de Regresión:**
   - T5-22: Regresión completa de Fase 4 (27/27 OK).
   - T5-23: Regresión completa de Fase 3 (19/19 OK).
@@ -78,11 +82,12 @@ La numeración de decisiones técnicas continúa de forma correlativa e ininterr
 
 ---
 
-## 5. Trazabilidad de Requerimientos
+## 5. Trazabilidad de Requerimientos y Reglas Oficiales
 
 En `docs/fase-0/matriz-trazabilidad.md`:
-- **RF-16** pasa formalmente de `PENDIENTE` a `IMPLEMENTADO Y VALIDADO`, respaldado por `tests/run_tests_fase5.php` (25/25 pruebas OK).
+- **RF-16** pasa formalmente de `PENDIENTE` a `IMPLEMENTADO Y VALIDADO`, respaldado por `tests/run_tests_fase5.php` (26/26 pruebas OK).
 - **RF-17** se mantiene estrictamente en estado `PENDIENTE` para ser abordado en la Fase 7 (Portal Docente).
+- Se clarifica que la regla de relacionamiento entre grados, secciones, aulas y asignaciones para alimentar el listado docente proviene literalmente de la **Sección 11, numeral 14** del *Documento de Alcance del Proyecto*, cuya referencia técnica interna es `RN-DOC-14`.
 
 ---
 

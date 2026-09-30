@@ -3,17 +3,18 @@
 **Proyecto:** Sistema Web para la Escuela Oficial Rural Mixta Lo de Fuentes  
 **Fase:** Fase 5 — Asignaciones Docentes  
 **Archivo de Suite:** `tests/run_tests_fase5.php`  
-**Total Pruebas:** 25 ejecutadas | 25 exitosas (100% OK) | 0 fallos  
+**Total Pruebas:** 26 ejecutadas | 26 exitosas (100% OK) | 0 fallos  
 **Fecha de Ejecución:** Septiembre 2026  
 
 ---
 
 ## 1. Resumen Ejecutivo de la Suite
 
-La suite de pruebas automatizadas de Fase 5 comprende 25 verificaciones exhaustivas:
+La suite de pruebas automatizadas de Fase 5 comprende 26 verificaciones exhaustivas:
 - **20 Pruebas Unitarias y de Integración (T5-01 a T5-20):** Validan control de acceso RBAC, protección CSRF, validaciones relacionales en cascada, unicidad de asignación activa, columna generada `id_seccion_activa`, preservación histórica, transaccionalidad con rollback en reemplazo docente, protección contra Mass Assignment, integridad referencial y prevención de XSS.
 - **1 Prueba de Flujo HTTP Real Completo (T5-21):** Emula una sesión web completa con cookies, redirecciones 302, validaciones de vista 200, rechazos de duplicidad 422, bloqueo RBAC 403 y mutaciones reales verificadas directamente en la base de datos.
 - **4 Pruebas de Regresión Integral (T5-22 a T5-25):** Ejecutan en subprocesos aislados las suites completas de Fase 4 (27 pruebas), Fase 3 (19 pruebas), Fase 2 (16 pruebas) y Fase 1 (18 pruebas en base de datos temporal), garantizando cero regresión sobre los módulos previos.
+- **1 Prueba de Concurrencia Real entre Procesos Independientes (T5-26):** Ejecuta 5 iteraciones de carreras reales de inserción concurrente entre dos procesos PHP CLI independientes con barrera de sincronización y conexiones PDO aisladas, validando el arbitraje de la restricción `uk_asignaciones_seccion_activa` a nivel de motor MySQL 8.0 / InnoDB.
 
 ---
 
@@ -46,6 +47,7 @@ La suite de pruebas automatizadas de Fase 5 comprende 25 verificaciones exhausti
 | **T5-23** | Regresión completa de Fase 3 | Regresión / Autenticación y Roles | 19 pruebas de Fase 3 ejecutadas y aprobadas | `19/19 pruebas de Fase 3 aprobadas satisfactoriamente` | **OK** |
 | **T5-24** | Regresión completa de Fase 2 | Regresión / Arquitectura Base | 16 pruebas de Fase 2 ejecutadas y aprobadas | `16/16 pruebas de Fase 2 aprobadas satisfactoriamente` | **OK** |
 | **T5-25** | Regresión completa de Fase 1 | Regresión / Base de Datos Relacional | 18 pruebas de validación SQL ejecutadas y aprobadas | `18/18 pruebas de Fase 1 ejecutadas con 18 exitosas y 0 fallidas en BD temporal aislada` | **OK** |
+| **T5-26** | Concurrencia real de asignaciones activas | Concurrencia real / Multi-proceso CLI | 5 iteraciones entre procesos independientes; exactamente 1 activa por iteración; 0 dobles titulares; error 1062 controlado | `5/5 iteraciones OK \| Iter 1: Ganador A (Activas BD: 1) \| Iter 2: Ganador A (Activas BD: 1) \| Iter 3: Ganador B (Activas BD: 1) \| Iter 4: Ganador A (Activas BD: 1) \| Iter 5: Ganador A (Activas BD: 1) \| Error 1062 controlado: SÍ` | **OK** |
 
 ---
 
@@ -75,3 +77,20 @@ La prueba `T5-21` simula la interacción de un navegador web a través del Front
    - Envío `POST /administracion/asignaciones/estado` con acción `cerrar`.
    - Respuesta: HTTP 302.
    - Verificación en BD: `estado = 'INACTIVA'`, `id_seccion_activa = NULL`.
+
+---
+
+## 4. Evidencia de la Prueba de Concurrencia Real Multi-Proceso (T5-26)
+
+La prueba `T5-26` verifica la solidez del motor relacional MySQL 8.0 / InnoDB y la restricción `uk_asignaciones_seccion_activa` ante condiciones de carrera reales:
+
+- **Arquitectura de Prueba:** Dos procesos PHP CLI independientes ejecutados mediante `proc_open()` invocando el script worker `tests/worker_asignacion_concurrente.php`.
+- **Sincronización:** Cada proceso abre su propia conexión PDO independiente, se reporta listo mediante un archivo de señalización (`ready`), y espera en un bucle milimétrico hasta que el orquestador libera la barrera de sincronización (`barrier`).
+- **Carrera Simultánea:** Al retirarse la barrera, ambos procesos ejecutan de inmediato `crearAsignacion()` para la misma sección académica sin conocer previamente el resultado del otro.
+- **Resultados de las 5 Iteraciones:**
+  - **Iteración 1:** Ganador Transacción A (Docente 1). Transacción B rechazada con código 1062 traducido limpiamente a mensaje controlado. Asignaciones activas en BD: 1.
+  - **Iteración 2:** Ganador Transacción A (Docente 1). Transacción B rechazada con mensaje controlado. Asignaciones activas en BD: 1.
+  - **Iteración 3:** Ganador Transacción B (Docente 2). Transacción A rechazada con mensaje controlado. Asignaciones activas en BD: 1.
+  - **Iteración 4:** Ganador Transacción A (Docente 1). Transacción B rechazada con mensaje controlado. Asignaciones activas en BD: 1.
+  - **Iteración 5:** Ganador Transacción A (Docente 1). Transacción B rechazada con mensaje controlado. Asignaciones activas en BD: 1.
+- **Conclusión Técnica:** La alternancia de ganadores (Transacciones A y B ganaron según la micro-latencia del motor) demuestra la existencia de una carrera real. En el 100% de los casos (5/5), la base de datos mantuvo exactamente 1 titular activo, se previno la doble asignación, la restricción física `uk_asignaciones_seccion_activa` actuó de manera ineludible y ningún error interno SQL fue expuesto.

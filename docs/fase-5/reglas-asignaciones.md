@@ -1,8 +1,7 @@
 # Reglas de Negocio e Integridad — Asignaciones Docentes (Fase 5)
 
 **Proyecto:** Sistema Web para la Escuela Oficial Rural Mixta Lo de Fuentes  
-**Fase:** Fase 5 — Asignaciones Docentes  
-**Alcance Oficial:** RF-16, RN-DOC-14  
+**Alcance Oficial:** RF-16 (Regla oficial de negocio: Documento de Alcance, Sección 11, numeral 14 — Ref. interna RN-DOC-14)  
 **Fecha:** Septiembre 2026  
 
 ---
