@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/app/bootstrap.php';
 
+use App\Controllers\AdminDocenteController;
 use App\Core\App;
 use App\Core\Config;
 use App\Core\Csrf;
@@ -140,6 +141,8 @@ class Phase4TestSuite
             $this->testT4_23_RegresionFase3();
             $this->testT4_24_RegresionFase2();
             $this->testT4_25_RegresionFase1();
+            $this->testT4_26_FlujoAdministrativoRealHttp();
+            $this->testT4_27_SeguridadCredencialInicialDocente();
         } finally {
             $this->cleanup();
         }
@@ -186,9 +189,9 @@ class Phase4TestSuite
         $this->db->exec("DELETE FROM grados WHERE codigo LIKE 'GRD-TEST%'");
         $this->db->exec("DELETE FROM periodos_escolares WHERE nombre LIKE 'Ciclo Test%' OR nombre LIKE '%Test%'");
         $this->db->exec("DELETE FROM estudiantes WHERE codigo_estudiante LIKE 'EST-TEST%'");
-        $this->db->exec("DELETE FROM aulas WHERE codigo LIKE 'AUL-TEST%' OR codigo = 'AUL-MASS-01'");
+        $this->db->exec("DELETE FROM aulas WHERE codigo LIKE 'AUL-TEST%' OR codigo = 'AUL-MASS-01' OR codigo LIKE 'AUL-HTTP%'");
         
-        $testUsers = $this->db->query("SELECT id_usuario FROM usuarios WHERE nombre_usuario LIKE 'test_doc_%'")->fetchAll(PDO::FETCH_COLUMN);
+        $testUsers = $this->db->query("SELECT id_usuario FROM usuarios WHERE nombre_usuario LIKE 'test_doc_%' OR nombre_usuario LIKE 'test_cred_%'")->fetchAll(PDO::FETCH_COLUMN);
         if (!empty($testUsers)) {
             $inClause = implode(',', array_map('intval', $testUsers));
             $this->db->exec("DELETE FROM docentes WHERE id_usuario IN ($inClause)");
@@ -1176,6 +1179,384 @@ class Phase4TestSuite
             $obtained,
             $isOk
         );
+    }
+
+    /**
+     * T4-26: Flujo administrativo real mediante HTTP (servidor efímero y cURL).
+     */
+    private function testT4_26_FlujoAdministrativoRealHttp(): void
+    {
+        echo "\n>>> Ejecutando flujo administrativo real mediante HTTP (T4-26)...\n";
+        $port = $this->findFreePort(8091, 8099);
+        $phpBin = PHP_BINARY;
+        $docRoot = dirname(__DIR__) . '/public';
+
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $cmd = sprintf('"%s" -S 127.0.0.1:%d -t "%s"', $phpBin, $port, $docRoot);
+        $process = proc_open($cmd, $descriptors, $pipes, dirname(__DIR__));
+
+        if (!is_resource($process)) {
+            $this->record('T4-26', 'Flujo administrativo real mediante HTTP', 'Flujo administrativo completado vía HTTP', 'No se pudo iniciar servidor temporal PHP', false);
+            return;
+        }
+
+        $procStatus = proc_get_status($process);
+        $pid = $procStatus['pid'] ?? 0;
+
+        // Esperar disponibilidad del servidor
+        $connected = false;
+        for ($i = 0; $i < 30; $i++) {
+            $fp = @fsockopen('127.0.0.1', $port, $errno, $errstr, 0.2);
+            if ($fp) {
+                fclose($fp);
+                $connected = true;
+                break;
+            }
+            usleep(100000); // 100ms
+        }
+
+        if (!$connected) {
+            $this->terminateProcess($pid, $process, $pipes);
+            $this->record('T4-26', 'Flujo administrativo real mediante HTTP', 'Flujo administrativo completado vía HTTP', 'El servidor web temporal no respondió a tiempo en el puerto ' . $port, false);
+            return;
+        }
+
+        $adminCookie = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cookie_admin_' . uniqid() . '.txt';
+        $docenteCookie = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cookie_docente_' . uniqid() . '.txt';
+
+        $httpRequest = function (string $url, string $method = 'GET', ?array $postData = null, ?string $cookieFile = null): array {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+            if ($cookieFile !== null) {
+                curl_setopt($ch, CURLOPT_COOKIEJAR, $cookieFile);
+                curl_setopt($ch, CURLOPT_COOKIEFILE, $cookieFile);
+            }
+            if ($method === 'POST') {
+                curl_setopt($ch, CURLOPT_POST, true);
+                if ($postData !== null) {
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+                }
+            }
+            $raw = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $headers = substr($raw, 0, $headerSize);
+            $body = substr($raw, $headerSize);
+            curl_close($ch);
+
+            $location = '';
+            if (preg_match('/Location:\s*([^\r\n]+)/i', $headers, $m)) {
+                $location = trim($m[1]);
+            }
+
+            return [
+                'code' => $code,
+                'headers' => $headers,
+                'body' => $body,
+                'location' => $location,
+            ];
+        };
+
+        $extractCsrf = function (string $html): ?string {
+            if (preg_match('/name=["\']_token["\']\s+value=["\']([^"\']+)["\']/', $html, $m)) {
+                return $m[1];
+            }
+            return null;
+        };
+
+        $isOk = false;
+        $detalles = [];
+
+        try {
+            // Limpieza preventiva de entidades de prueba
+            $this->db->exec("DELETE FROM aulas WHERE codigo IN ('AUL-HTTP-01', 'AUL-HTTP-BAD')");
+
+            // (A) Admin login real vía HTTP
+            $rLoginGet = $httpRequest("http://127.0.0.1:$port/login", 'GET', null, $adminCookie);
+            $adminCsrf = $extractCsrf($rLoginGet['body']);
+            if (empty($adminCsrf)) {
+                throw new \Exception('No se obtuvo token CSRF en GET /login para admin');
+            }
+
+            $rLoginPost = $httpRequest("http://127.0.0.1:$port/login", 'POST', [
+                'nombre_usuario' => 'admin.demo',
+                'password' => 'Admin.2026!',
+                '_token' => $adminCsrf,
+            ], $adminCookie);
+
+            $loginOk = ($rLoginPost['code'] === 302 && str_contains($rLoginPost['location'], '/administracion'));
+            $rAdminPanel = $httpRequest("http://127.0.0.1:$port/administracion", 'GET', null, $adminCookie);
+            $panelOk = ($rAdminPanel['code'] === 200 && str_contains($rAdminPanel['body'], 'Administraci'));
+            $detalles[] = sprintf('Admin Login: 302->%s (Panel: %d)', $rLoginPost['location'], $rAdminPanel['code']);
+
+            // (B) Creación administrativa real vía POST (Aula AUL-HTTP-01)
+            $rFormCreate = $httpRequest("http://127.0.0.1:$port/administracion/aulas/crear", 'GET', null, $adminCookie);
+            $createCsrf = $extractCsrf($rFormCreate['body']);
+            if (empty($createCsrf)) {
+                throw new \Exception('No se obtuvo token CSRF en GET /administracion/aulas/crear');
+            }
+
+            $rPostCreate = $httpRequest("http://127.0.0.1:$port/administracion/aulas/crear", 'POST', [
+                'codigo' => 'AUL-HTTP-01',
+                'nombre' => 'Aula HTTP 01',
+                'ubicacion_referencia' => 'Edificio Central, Modulo A',
+                'activa' => '1',
+                '_token' => $createCsrf,
+            ], $adminCookie);
+
+            $createRedirect = ($rPostCreate['code'] === 302 && str_contains($rPostCreate['location'], '/administracion/aulas'));
+            $stmtAula = $this->db->prepare("SELECT id_aula, codigo, nombre, ubicacion_referencia, activa FROM aulas WHERE codigo = 'AUL-HTTP-01'");
+            $stmtAula->execute();
+            $aulaRow = $stmtAula->fetch(PDO::FETCH_ASSOC);
+            $aulaCreatedInDb = ($aulaRow !== false && (int)$aulaRow['activa'] === 1);
+            $idAula = $aulaRow ? (int)$aulaRow['id_aula'] : 0;
+            $detalles[] = sprintf('Crear Aula: 302->%s (BD #%d, Activa: %s)', $rPostCreate['location'], $idAula, $aulaRow['activa'] ?? 'N/D');
+
+            // (C) Mutación POST sin CSRF / CSRF inválido rechazada con HTTP 403 y CERO cambios en BD
+            $rBadCsrf = $httpRequest("http://127.0.0.1:$port/administracion/aulas/crear", 'POST', [
+                'codigo' => 'AUL-HTTP-BAD',
+                'nombre' => 'Aula Bad CSRF',
+                'ubicacion_referencia' => 'Inexistente',
+                'activa' => '1',
+                '_token' => 'token_malicioso_ficticio_123',
+            ], $adminCookie);
+
+            $stmtBad = $this->db->query("SELECT COUNT(*) FROM aulas WHERE codigo = 'AUL-HTTP-BAD'");
+            $badInDbCount = (int)$stmtBad->fetchColumn();
+            $csrfRejected = ($rBadCsrf['code'] === 403 && $badInDbCount === 0);
+            $detalles[] = sprintf('Rechazo CSRF: %d (En BD: %d)', $rBadCsrf['code'], $badInDbCount);
+
+            // (D) Docente intenta acceder a GET administrativo -> HTTP 403
+            $rDocLoginGet = $httpRequest("http://127.0.0.1:$port/login", 'GET', null, $docenteCookie);
+            $docCsrf = $extractCsrf($rDocLoginGet['body']);
+            $httpRequest("http://127.0.0.1:$port/login", 'POST', [
+                'nombre_usuario' => 'docente.demo',
+                'password' => 'Docente.2026!',
+                '_token' => $docCsrf,
+            ], $docenteCookie);
+
+            $rDocAdmin = $httpRequest("http://127.0.0.1:$port/administracion", 'GET', null, $docenteCookie);
+            $docenteForbidden = ($rDocAdmin['code'] === 403);
+            $detalles[] = sprintf('Docente a Admin: %d', $rDocAdmin['code']);
+
+            // (E) Usuario no autenticado intenta GET administrativo -> HTTP 302 a /login
+            $rNoAuth = $httpRequest("http://127.0.0.1:$port/administracion", 'GET', null, null);
+            $unauthRedirect = ($rNoAuth['code'] === 302 && str_contains($rNoAuth['location'], '/login'));
+            $detalles[] = sprintf('Sin auth a Admin: 302->%s', $rNoAuth['location']);
+
+            // (F) Edición administrativa real vía HTTP
+            $rEditForm = $httpRequest("http://127.0.0.1:$port/administracion/aulas/editar?id=$idAula", 'GET', null, $adminCookie);
+            $editCsrf = $extractCsrf($rEditForm['body']);
+            if (empty($editCsrf)) {
+                throw new \Exception('No se obtuvo token CSRF en GET /administracion/aulas/editar');
+            }
+
+            $rPostEdit = $httpRequest("http://127.0.0.1:$port/administracion/aulas/editar?id=$idAula", 'POST', [
+                'codigo' => 'AUL-HTTP-01',
+                'nombre' => 'Aula HTTP Modificada',
+                'ubicacion_referencia' => 'Edificio Central, Modulo B',
+                'activa' => '1',
+                '_token' => $editCsrf,
+            ], $adminCookie);
+
+            $stmtUpdated = $this->db->prepare("SELECT nombre, ubicacion_referencia, activa FROM aulas WHERE id_aula = :id");
+            $stmtUpdated->execute([':id' => $idAula]);
+            $updatedAula = $stmtUpdated->fetch(PDO::FETCH_ASSOC);
+            $editOk = ($rPostEdit['code'] === 302 && $updatedAula && $updatedAula['nombre'] === 'Aula HTTP Modificada' && $updatedAula['ubicacion_referencia'] === 'Edificio Central, Modulo B');
+            $detalles[] = sprintf('Editar Aula: 302->%s (Nombre: %s)', $rPostEdit['location'], $updatedAula['nombre'] ?? 'N/D');
+
+            // (G) Cambio de estado real vía HTTP toggle
+            $rListAulas = $httpRequest("http://127.0.0.1:$port/administracion/aulas", 'GET', null, $adminCookie);
+            $listCsrf = $extractCsrf($rListAulas['body']);
+            if (empty($listCsrf)) {
+                $listCsrf = $editCsrf;
+            }
+
+            $rToggle = $httpRequest("http://127.0.0.1:$port/administracion/aulas/estado?id=$idAula", 'POST', [
+                'activa' => '0',
+                '_token' => $listCsrf,
+            ], $adminCookie);
+
+            $stmtToggled = $this->db->prepare("SELECT activa FROM aulas WHERE id_aula = :id");
+            $stmtToggled->execute([':id' => $idAula]);
+            $toggledState = (int)$stmtToggled->fetchColumn();
+            $toggleOk = ($rToggle['code'] === 302 && $toggledState === 0);
+            $detalles[] = sprintf('Toggle Estado: 302 (Activa en BD: %d)', $toggledState);
+
+            $isOk = ($loginOk && $panelOk && $createRedirect && $aulaCreatedInDb && $csrfRejected && $docenteForbidden && $unauthRedirect && $editOk && $toggleOk);
+            $obtained = implode(' | ', $detalles);
+        } catch (\Throwable $e) {
+            $isOk = false;
+            $obtained = 'Excepción en prueba T4-26: ' . $e->getMessage();
+        } finally {
+            // (H) Limpieza
+            $this->terminateProcess($pid, $process, $pipes);
+            $this->db->exec("DELETE FROM aulas WHERE codigo IN ('AUL-HTTP-01', 'AUL-HTTP-BAD')");
+            if (file_exists($adminCookie)) {
+                @unlink($adminCookie);
+            }
+            if (file_exists($docenteCookie)) {
+                @unlink($docenteCookie);
+            }
+        }
+
+        $this->record(
+            'T4-26',
+            'Flujo administrativo real mediante HTTP (login, creación, CSRF 403, docente 403, edición, toggle)',
+            'Flujo HTTP end-to-end verificado contra servidor PHP real y base de datos',
+            $obtained,
+            $isOk
+        );
+    }
+
+    /**
+     * T4-27: Seguridad de credencial inicial docente (hashing BCrypt, no exposición, no password universal).
+     */
+    private function testT4_27_SeguridadCredencialInicialDocente(): void
+    {
+        echo "\n>>> Ejecutando validación de seguridad de credencial docente (T4-27)...\n";
+        Session::destroy();
+        Session::start();
+
+        $testPassword = 'ClaveDocenteSegura.2026!$' . uniqid();
+        $testUsername = 'test_cred_' . substr(uniqid(), 0, 8);
+        $testEmail = $testUsername . '@example.invalid';
+        $testCodigo = 'DOC-SEC-' . substr(uniqid(), 0, 6);
+
+        $input = [
+            'nombres' => 'Docente Credencial',
+            'apellidos' => 'Seguridad Test',
+            'nombre_usuario' => $testUsername,
+            'correo' => $testEmail,
+            'password' => $testPassword,
+            'codigo_docente' => $testCodigo,
+            'fecha_ingreso' => '2026-03-01',
+            'estado' => 'ACTIVO',
+        ];
+
+        $res = $this->docenteService->crearDocente($input);
+        if (!$res['success'] || empty($res['id_docente'])) {
+            $this->record('T4-27', 'Seguridad de credencial inicial docente', 'Docente creado con credencial segura', 'Fallo al crear docente de prueba: ' . ($res['message'] ?? 'Error'), false);
+            return;
+        }
+
+        $idDocente = (int)$res['id_docente'];
+        $detalles = [];
+
+        try {
+            // 1. Verificación en base de datos: nunca texto plano, hash BCrypt válido, password_verify()
+            $stmtUser = $this->db->prepare('SELECT u.id_usuario, u.clave_hash, u.nombre_usuario, u.correo, u.nombres, u.apellidos FROM usuarios u JOIN docentes d ON d.id_usuario = u.id_usuario WHERE d.id_docente = :id');
+            $stmtUser->execute([':id' => $idDocente]);
+            $userRow = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            $idUsuario = $userRow ? (int)$userRow['id_usuario'] : 0;
+            $hashInDb = (string)($userRow['clave_hash'] ?? '');
+
+            $notPlainInDb = ($hashInDb !== $testPassword && !str_contains($hashInDb, $testPassword));
+            $isBcrypt = str_starts_with($hashInDb, '$2y$');
+            $verifyValid = password_verify($testPassword, $hashInDb);
+            $verifyInvalid = !password_verify('ClaveErronea.2026!', $hashInDb);
+
+            $dbOk = $notPlainInDb && $isBcrypt && $verifyValid && $verifyInvalid;
+            $detalles[] = sprintf('BD: BCrypt=%s, VerifyOK=%s, NoTextoPlano=%s', $isBcrypt ? 'SÍ' : 'NO', $verifyValid ? 'SÍ' : 'NO', $notPlainInDb ? 'SÍ' : 'NO');
+
+            // 2. Verificación de no exposición en vistas ante error de validación (store)
+            $controller = new AdminDocenteController($this->docenteService);
+            $failInput = [
+                'nombres' => 'Docente Falla',
+                'apellidos' => 'Validacion',
+                'nombre_usuario' => 'fail_' . substr(uniqid(), 0, 8),
+                'correo' => 'correo-invalido', // Provoca 422
+                'password' => $testPassword,
+            ];
+            $reqStoreFail = Request::create('POST', '/administracion/docentes/crear', [], $failInput);
+            $respStoreFail = $controller->store($reqStoreFail);
+            $storeBody = $respStoreFail->getContent();
+            $storeNoLeak = ($respStoreFail->getStatusCode() === 422 && !str_contains($storeBody, $testPassword));
+            $detalles[] = sprintf('Vista Store 422: NoLeak=%s', $storeNoLeak ? 'SÍ' : 'NO');
+
+            // 3. Verificación de no exposición en vistas ante error de validación (update)
+            $newPassword = 'NuevaClaveSegura.2026!$' . uniqid();
+            $failUpdateInput = [
+                'nombres' => 'Docente Falla Edit',
+                'apellidos' => 'Validacion Edit',
+                'correo' => 'correo-invalido-edit', // Provoca 422
+                'password' => $newPassword,
+            ];
+            $reqUpdateFail = Request::create('POST', '/administracion/docentes/editar?id=' . $idDocente, ['id' => $idDocente], $failUpdateInput);
+            $respUpdateFail = $controller->update($reqUpdateFail);
+            $updateBody = $respUpdateFail->getContent();
+            $updateNoLeak = ($respUpdateFail->getStatusCode() === 422 && !str_contains($updateBody, $newPassword));
+            $detalles[] = sprintf('Vista Update 422: NoLeak=%s', $updateNoLeak ? 'SÍ' : 'NO');
+
+            // 4. Verificación de logs
+            $logPath = dirname(__DIR__) . '/storage/logs/app.log';
+            $logContent = file_exists($logPath) ? (string)file_get_contents($logPath) : '';
+            $logsClean = (!str_contains($logContent, $testPassword) && !str_contains($logContent, $newPassword));
+            $detalles[] = sprintf('Logs: NoLeak=%s', $logsClean ? 'SÍ' : 'NO');
+
+            // 5. Verificación de ausencia de contraseña universal estática
+            // El docente debe poder autenticarse únicamente con su contraseña asignada
+            $authCheck = $this->authService->attempt($testUsername, $testPassword);
+            $authWrong = !$this->authService->attempt($testUsername, 'UniversalPassword2026!');
+            $authOk = $authCheck && $authWrong;
+            $detalles[] = sprintf('Auth: PropiaOK=%s, UniversalRechazada=%s', $authCheck ? 'SÍ' : 'NO', $authWrong ? 'SÍ' : 'NO');
+
+            $isOk = ($dbOk && $storeNoLeak && $updateNoLeak && $logsClean && $authOk);
+            $obtained = implode(' | ', $detalles);
+        } finally {
+            $this->db->exec("DELETE FROM docentes WHERE id_docente = $idDocente");
+            if (isset($idUsuario) && $idUsuario > 0) {
+                $this->db->exec("DELETE FROM usuarios WHERE id_usuario = $idUsuario");
+            }
+            Session::destroy();
+        }
+
+        $this->record(
+            'T4-27',
+            'Seguridad de credencial inicial docente (BCrypt, no exposición en vistas, sanitización de inputs, no password universal)',
+            'Contraseña cifrada con BCrypt, no expuesta en BD, vistas ni logs, y autenticación estricta',
+            $obtained,
+            $isOk
+        );
+    }
+
+    private function findFreePort(int $start = 8091, int $end = 8099): int
+    {
+        for ($p = $start; $p <= $end; $p++) {
+            $fp = @fsockopen('127.0.0.1', $p, $errno, $errstr, 0.1);
+            if (!$fp) {
+                return $p;
+            }
+            fclose($fp);
+        }
+        return $start;
+    }
+
+    private function terminateProcess(int $pid, $process, array $pipes): void
+    {
+        if ($pid > 0 && PHP_OS_FAMILY === 'Windows') {
+            shell_exec("taskkill /F /T /PID $pid 2>nul");
+        } elseif (is_resource($process)) {
+            proc_terminate($process);
+        }
+
+        foreach ($pipes as $pipe) {
+            if (is_resource($pipe)) {
+                fclose($pipe);
+            }
+        }
+
+        if (is_resource($process)) {
+            proc_close($process);
+        }
     }
 
     private function findMysqlBinary(): ?string
