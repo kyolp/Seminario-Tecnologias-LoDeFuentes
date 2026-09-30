@@ -57,7 +57,7 @@
                                 <div style="display: inline-flex; gap: 0.35rem; align-items: center;">
                                     <a href="<?= e(url('/administracion/aulas/editar?id=' . $a->id_aula)) ?>" style="padding: 0.25rem 0.5rem; background: #0d9488; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.8rem;">Editar</a>
                                     
-                                    <form method="POST" action="<?= e(url('/administracion/aulas/toggle?id=' . $a->id_aula)) ?>" style="display: inline;" onsubmit="return confirm('¿Desea cambiar el estado del aula?');">
+                                    <form method="POST" action="<?= e(url('/administracion/aulas/estado?id=' . $a->id_aula)) ?>" style="display: inline;" onsubmit="return confirm('¿Desea cambiar el estado del aula?');">
                                         <?= csrf_field() ?>
                                         <input type="hidden" name="activa" value="<?= $a->isActiva() ? '0' : '1' ?>">
                                         <button type="submit" style="padding: 0.25rem 0.5rem; background: <?= $a->isActiva() ? '#d97706' : '#16a34a' ?>; color: #fff; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">

@@ -82,10 +82,12 @@ class AdminDocenteController extends BaseController
         $result = $this->service->crearDocente($input);
 
         if (!$result['success']) {
+            $old = $input;
+            unset($old['password']);
             $html = View::render('admin.docentes.crear', [
                 'title' => 'Registrar Nuevo Docente',
                 'errors' => $result['errors'] ?? ['general' => $result['message'] ?? 'Error al guardar.'],
-                'old' => $input,
+                'old' => $old,
             ], 'main');
 
             return new Response($html, 422, ['Content-Type' => 'text/html; charset=utf-8']);
@@ -133,11 +135,13 @@ class AdminDocenteController extends BaseController
 
         if (!$result['success']) {
             $docente = $this->service->obtenerDocente($id);
+            $old = array_merge(['id_docente' => $id], $input);
+            unset($old['password']);
             $html = View::render('admin.docentes.editar', [
                 'title' => 'Editar Docente',
                 'docente' => $docente,
                 'errors' => $result['errors'] ?? ['general' => $result['message'] ?? 'Error al actualizar.'],
-                'old' => array_merge(['id_docente' => $id], $input),
+                'old' => $old,
             ], 'main');
 
             return new Response($html, 422, ['Content-Type' => 'text/html; charset=utf-8']);

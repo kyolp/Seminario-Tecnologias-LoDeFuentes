@@ -200,6 +200,7 @@ class App
         $this->router->get('/administracion/aulas/editar', [\App\Controllers\AdminAulaController::class, 'editForm'], $adminGet);
         $this->router->post('/administracion/aulas/editar', [\App\Controllers\AdminAulaController::class, 'update'], $adminPost);
         $this->router->post('/administracion/aulas/estado', [\App\Controllers\AdminAulaController::class, 'toggleActiva'], $adminPost);
+        $this->router->post('/administracion/aulas/toggle', [\App\Controllers\AdminAulaController::class, 'toggleActiva'], $adminPost);
         $this->router->post('/administracion/aulas/eliminar', [\App\Controllers\AdminAulaController::class, 'delete'], $adminPost);
 
         // 5. Rutas técnicas de prueba: aisladas exclusivamente para entornos de desarrollo y testing
