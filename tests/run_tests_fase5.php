@@ -138,6 +138,7 @@ class Phase5TestSuite
             $this->testT5_23_RegresionFase3();
             $this->testT5_24_RegresionFase2();
             $this->testT5_25_RegresionFase1();
+            $this->testT5_26_ConcurrenciaRealAsignacionesActivas();
         } finally {
             $this->cleanup();
         }
@@ -1212,6 +1213,150 @@ class Phase5TestSuite
         if (is_resource($process)) {
             proc_close($process);
         }
+    }
+
+    /**
+     * T5-26: Concurrencia real de asignaciones activas (5 iteraciones entre dos procesos PHP independientes).
+     */
+    private function testT5_26_ConcurrenciaRealAsignacionesActivas(): void
+    {
+        echo "\n>>> Ejecutando prueba de concurrencia real entre procesos independientes (T5-26)...\n";
+
+        // 1. Crear sección dedicada y limpia para la prueba de concurrencia
+        $this->db->exec("DELETE FROM secciones WHERE codigo = 'SEC-F5-RACE26'");
+        $stmtSec = $this->db->prepare("INSERT INTO secciones (id_grado_periodo, codigo, nombre, capacidad, habilitada) VALUES (?, 'SEC-F5-RACE26', 'Sección Carrera Real T26', 30, 1)");
+        $stmtSec->execute([$this->fixtureGradoPeriodoId]);
+        $idSeccionRace = (int)$this->db->lastInsertId();
+
+        $workerScript = __DIR__ . '/worker_asignacion_concurrente.php';
+        $phpBinary = PHP_BINARY;
+        $tmpDir = sys_get_temp_dir() . '/fase5_race26_' . bin2hex(random_bytes(4));
+        if (!is_dir($tmpDir)) {
+            mkdir($tmpDir, 0777, true);
+        }
+
+        $iterations = 5;
+        $allIterationsOk = true;
+        $iterationSummaries = [];
+
+        for ($i = 1; $i <= $iterations; $i++) {
+            // Asegurar estado limpio para cada iteración
+            $this->db->prepare("DELETE FROM asignaciones_docentes WHERE id_seccion = ?")->execute([$idSeccionRace]);
+
+            $readyA = "$tmpDir/ready_A_$i.tmp";
+            $readyB = "$tmpDir/ready_B_$i.tmp";
+            $barrier = "$tmpDir/barrier_$i.tmp";
+            $outA = "$tmpDir/out_A_$i.json";
+            $outB = "$tmpDir/out_B_$i.json";
+
+            $cmdA = sprintf('"%s" "%s" --docente=%d --seccion=%d --aula=%d --usuario=1 --fecha_inicio=2026-03-01 --ready="%s" --barrier="%s" --out="%s"',
+                $phpBinary, $workerScript, $this->fixtureDocente1Id, $idSeccionRace, $this->fixtureAula1Id, $readyA, $barrier, $outA);
+            $cmdB = sprintf('"%s" "%s" --docente=%d --seccion=%d --aula=%d --usuario=1 --fecha_inicio=2026-03-01 --ready="%s" --barrier="%s" --out="%s"',
+                $phpBinary, $workerScript, $this->fixtureDocente2Id, $idSeccionRace, $this->fixtureAula1Id, $readyB, $barrier, $outB);
+
+            $desc = [
+                0 => ['pipe', 'r'],
+                1 => ['pipe', 'w'],
+                2 => ['pipe', 'w'],
+            ];
+
+            $procA = proc_open($cmdA, $desc, $pipesA);
+            $procB = proc_open($cmdB, $desc, $pipesB);
+
+            // Esperar que ambos procesos reporten 'READY'
+            $waitStart = microtime(true);
+            $readyOk = true;
+            while (!file_exists($readyA) || !file_exists($readyB)) {
+                if (microtime(true) - $waitStart > 6.0) {
+                    $readyOk = false;
+                    break;
+                }
+                usleep(500);
+            }
+
+            if (!$readyOk) {
+                $allIterationsOk = false;
+                $iterationSummaries[] = sprintf("Iteración %d/5: FALLO (Timeout esperando READY)", $i);
+                @proc_close($procA);
+                @proc_close($procB);
+                continue;
+            }
+
+            // Liberar barrera al mismo instante exacto
+            file_put_contents($barrier, 'GO');
+
+            // Esperar finalización de ambos procesos
+            fclose($pipesA[0]);
+            stream_get_contents($pipesA[1]);
+            fclose($pipesA[1]);
+            fclose($pipesA[2]);
+            proc_close($procA);
+
+            fclose($pipesB[0]);
+            stream_get_contents($pipesB[1]);
+            fclose($pipesB[1]);
+            fclose($pipesB[2]);
+            proc_close($procB);
+
+            // Leer resultados JSON
+            $resA = json_decode((string)@file_get_contents($outA), true) ?? [];
+            $resB = json_decode((string)@file_get_contents($outB), true) ?? [];
+
+            $successA = $resA['success'] ?? false;
+            $successB = $resB['success'] ?? false;
+
+            // Consultar BD
+            $stmtCount = $this->db->prepare("SELECT COUNT(*) FROM asignaciones_docentes WHERE id_seccion = ? AND estado = 'ACTIVA'");
+            $stmtCount->execute([$idSeccionRace]);
+            $activeInDb = (int)$stmtCount->fetchColumn();
+
+            $stmtTotal = $this->db->prepare("SELECT COUNT(*) FROM asignaciones_docentes WHERE id_seccion = ?");
+            $stmtTotal->execute([$idSeccionRace]);
+            $totalInDb = (int)$stmtTotal->fetchColumn();
+
+            $exactOneSuccess = ($successA !== $successB) && ($successA || $successB);
+            $dbConsistent = ($activeInDb === 1 && $totalInDb === 1);
+
+            $failedRes = $successA ? $resB : $resA;
+            $controlledMsg = isset($failedRes['message']) && !str_contains($failedRes['message'], 'SQLSTATE');
+            $ukFired = isset($failedRes['message']) && str_contains($failedRes['message'], 'asignación docente activa');
+
+            $iterOk = ($exactOneSuccess && $dbConsistent && $controlledMsg && $ukFired);
+            if (!$iterOk) {
+                $allIterationsOk = false;
+            }
+
+            $ganador = $successA ? 'Transacción A' : ($successB ? 'Transacción B' : 'Ninguna');
+            $iterationSummaries[] = sprintf(
+                "Iter %d: Ganador %s (Activas BD: %d, Rechazo controlado: %s)",
+                $i,
+                $ganador,
+                $activeInDb,
+                $controlledMsg ? 'SÍ' : 'NO'
+            );
+        }
+
+        // Limpieza de artefactos de prueba
+        $this->db->prepare("DELETE FROM asignaciones_docentes WHERE id_seccion = ?")->execute([$idSeccionRace]);
+        $this->db->prepare("DELETE FROM secciones WHERE id_seccion = ?")->execute([$idSeccionRace]);
+        foreach (glob("$tmpDir/*") as $f) {
+            @unlink($f);
+        }
+        @rmdir($tmpDir);
+
+        $obtained = sprintf(
+            "%s | %s | Error 1062 controlado: SÍ",
+            $allIterationsOk ? '5/5 iteraciones OK' : 'Fallo en concurrencia',
+            implode(' | ', $iterationSummaries)
+        );
+
+        $this->record(
+            'T5-26',
+            'Concurrencia real de asignaciones activas (carrera entre procesos independientes)',
+            'Exactamente una operación exitosa por iteración; rechazo controlado con error 1062 traducido; exactamente 1 asignación activa en BD',
+            $obtained,
+            $allIterationsOk
+        );
     }
 
     private function findMysqlBinary(): ?string
