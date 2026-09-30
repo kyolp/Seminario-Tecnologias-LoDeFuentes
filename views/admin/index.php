@@ -81,5 +81,11 @@
             <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Catálogo de aulas físicas del centro educativo y ubicación de referencia.</p>
             <a href="<?= e(url('/administracion/aulas')) ?>" style="display: inline-block; padding: 0.4rem 0.8rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">Gestionar Aulas &rarr;</a>
         </div>
+
+        <div style="background: #ffffff; border: 2px solid #3b82f6; border-radius: 8px; padding: 1.25rem; box-shadow: 0 2px 4px rgba(59,130,246,0.1);">
+            <h4 style="margin: 0 0 0.5rem 0; color: #1e3a8a; font-size: 1.15rem;">📋 Asignaciones Docentes</h4>
+            <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Asignación de docentes a grados, secciones y aulas por ciclo escolar (Fase 5 — RF-16).</p>
+            <a href="<?= e(url('/administracion/asignaciones')) ?>" style="display: inline-block; padding: 0.4rem 0.8rem; background: #16a34a; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">Gestionar Asignaciones &rarr;</a>
+        </div>
     </div>
 </section>

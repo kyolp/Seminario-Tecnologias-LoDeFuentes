@@ -203,7 +203,18 @@ class App
         $this->router->post('/administracion/aulas/toggle', [\App\Controllers\AdminAulaController::class, 'toggleActiva'], $adminPost);
         $this->router->post('/administracion/aulas/eliminar', [\App\Controllers\AdminAulaController::class, 'delete'], $adminPost);
 
-        // 5. Rutas técnicas de prueba: aisladas exclusivamente para entornos de desarrollo y testing
+        // 5. Asignaciones Docentes (Fase 5 — RF-16)
+        $this->router->get('/administracion/asignaciones', [\App\Controllers\AdminAsignacionController::class, 'index'], $adminGet);
+        $this->router->get('/administracion/asignaciones/ver', [\App\Controllers\AdminAsignacionController::class, 'show'], $adminGet);
+        $this->router->get('/administracion/asignaciones/crear', [\App\Controllers\AdminAsignacionController::class, 'createForm'], $adminGet);
+        $this->router->post('/administracion/asignaciones/crear', [\App\Controllers\AdminAsignacionController::class, 'store'], $adminPost);
+        $this->router->get('/administracion/asignaciones/editar', [\App\Controllers\AdminAsignacionController::class, 'editForm'], $adminGet);
+        $this->router->post('/administracion/asignaciones/editar', [\App\Controllers\AdminAsignacionController::class, 'update'], $adminPost);
+        $this->router->post('/administracion/asignaciones/estado', [\App\Controllers\AdminAsignacionController::class, 'toggleEstado'], $adminPost);
+        $this->router->get('/administracion/asignaciones/reemplazar', [\App\Controllers\AdminAsignacionController::class, 'reemplazarForm'], $adminGet);
+        $this->router->post('/administracion/asignaciones/reemplazar', [\App\Controllers\AdminAsignacionController::class, 'reemplazar'], $adminPost);
+
+        // 6. Rutas técnicas de prueba: aisladas exclusivamente para entornos de desarrollo y testing
         $env = (string) Config::get('app.env', 'development');
         if (in_array(strtolower($env), ['development', 'testing', 'local'], true)) {
             $this->router->get('/test/get', [\App\Controllers\TestController::class, 'testGet']);
