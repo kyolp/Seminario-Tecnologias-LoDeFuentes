@@ -3,13 +3,13 @@
 **Sistema Web para la Escuela Oficial Rural Mixta Lo de Fuentes**  
 **Fase 4: Administración Básica**  
 **Responsable Técnico:** Antigravity — Desarrollador Principal  
-**Fecha:** Septiembre 2026  
+**Fecha:** Septiembre 2026 (Actualizado tras corrección controlada)
 
 ---
 
-## 1. Cobertura de Pruebas Automatizadas
+## 1. Cobertura de Pruebas Automatizadas (27/27)
 
-El archivo ejecutable `tests/run_tests_fase4.php` cubre de forma integral los 25 casos de prueba obligatorios correspondientes a la Fase 4:
+El archivo ejecutable `tests/run_tests_fase4.php` cubre de forma integral los 27 casos de prueba obligatorios correspondientes a la Fase 4:
 
 | Identificador | Caso de Prueba | Tipo de Validación | Resultado |
 |---|---|---|:---:|
@@ -38,28 +38,30 @@ El archivo ejecutable `tests/run_tests_fase4.php` cubre de forma integral los 25
 | **T4-23** | Regresión completa de Fase 3 (Autenticación y Roles) | Regresión / 19 de 19 pruebas de Fase 3 exitosas | **OK** |
 | **T4-24** | Regresión completa de Fase 2 (Arquitectura Base) | Regresión / 16 de 16 pruebas de Fase 2 exitosas | **OK** |
 | **T4-25** | Regresión completa de Fase 1 (Base de Datos) | Regresión / 18 de 18 pruebas relacionales en BD temporal | **OK** |
+| **T4-26** | Flujo administrativo real mediante HTTP | HTTP real / Servidor efímero CLI y cliente cURL | **OK** |
+| **T4-27** | Seguridad de credencial inicial docente | Seguridad / Hashing BCrypt, no exposición, no pwd universal | **OK** |
 
 ---
 
-## 2. Evidencia de Pruebas HTTP Reales (Cliente cURL y Servidor PHP)
+## 2. Detalle de Pruebas Agregadas (F4-02 y F4-03)
 
-Se ejecutó una prueba de navegación HTTP real con servidor efímero PHP CLI (`php -S 127.0.0.1:8097 -t public`) y cURL, obteniendo:
-- `POST /login` $\to$ `HTTP 302` (Autenticación de `admin.demo` exitosa con cookie de sesión emitida y token CSRF validado).
-- `GET /administracion` $\to$ `HTTP 200`
-- `GET /administracion/docentes` $\to$ `HTTP 200`
-- `GET /administracion/docentes/crear` $\to$ `HTTP 200`
-- `GET /administracion/estudiantes` $\to$ `HTTP 200`
-- `GET /administracion/estudiantes/crear` $\to$ `HTTP 200`
-- `GET /administracion/periodos` $\to$ `HTTP 200`
-- `GET /administracion/periodos/crear` $\to$ `HTTP 200`
-- `GET /administracion/grados` $\to$ `HTTP 200`
-- `GET /administracion/grados/crear` $\to$ `HTTP 200`
-- `GET /administracion/grados-periodos` $\to$ `HTTP 200`
-- `GET /administracion/grados-periodos/crear` $\to$ `HTTP 200`
-- `GET /administracion/secciones` $\to$ `HTTP 200`
-- `GET /administracion/secciones/crear` $\to$ `HTTP 200`
-- `GET /administracion/aulas` $\to$ `HTTP 200`
-- `GET /administracion/aulas/crear` $\to$ `HTTP 200`
+### T4-26 — Flujo administrativo real mediante HTTP
+Validación end-to-end con servidor PHP CLI efímero (`php -S 127.0.0.1:<puerto> -t public`) y cURL:
+- **(A) Login de administrador:** GET `/login` (captura de cookie de sesión y token CSRF), POST `/login` con `admin.demo` / `Admin.2026!` $\to$ `HTTP 302` con `Location: /administracion`. GET `/administracion` con cookie de sesión $\to$ `HTTP 200` y renderizado de módulos administrativos.
+- **(B) Creación administrativa real vía POST:** GET `/administracion/aulas/crear` (extracción de token CSRF), POST `/administracion/aulas/crear` con `codigo = AUL-HTTP-01`, `nombre = Aula HTTP 01`, `ubicacion_referencia = Edificio Central, Modulo A`, `activa = 1` $\to$ `HTTP 302` a `/administracion/aulas`. Verificación en base de datos: registro existente con `id_aula`, `codigo = AUL-HTTP-01` y `activa = 1`.
+- **(C) Mutación POST sin CSRF / con CSRF inválido:** POST `/administracion/aulas/crear` con token falsificado $\to$ `HTTP 403 Forbidden`. Verificación en base de datos: `AUL-HTTP-BAD` no existe en `aulas` (CERO mutaciones).
+- **(D) Intento de acceso administrativo por Docente:** Login HTTP con `docente.demo`, seguido de GET `/administracion` $\to$ `HTTP 403 Forbidden` (bloqueo RBAC estricto).
+- **(E) Intento de acceso administrativo por usuario no autenticado:** GET `/administracion` sin cookies $\to$ `HTTP 302` hacia `/login`.
+- **(F) Edición administrativa real vía HTTP:** GET `/administracion/aulas/editar?id=<id>` (extracción de token CSRF), POST `/administracion/aulas/editar?id=<id>` con `nombre = Aula HTTP Modificada`, `ubicacion_referencia = Edificio Central, Modulo B` $\to$ `HTTP 302`. Verificación en base de datos: campos actualizados.
+- **(G) Cambio de estado real vía HTTP toggle:** POST `/administracion/aulas/estado?id=<id>` con `activa = 0` y token CSRF $\to$ `HTTP 302`. Verificación en base de datos: `activa = 0`.
+- **(H) Limpieza y finalización:** Eliminación de entidades de prueba en MySQL, eliminación de archivos temporales de cookies y terminación forzosa y limpia del proceso del servidor temporal (`taskkill`).
+
+### T4-27 — Seguridad de credencial inicial docente
+- **(1) Ausencia de contraseña universal estática:** El sistema exige que el administrador ingrese una contraseña individual para cada docente al momento del registro (mínimo 8 caracteres); no existe ninguna contraseña por defecto preconfigurada en código.
+- **(2) Hashing seguro con BCrypt:** La contraseña viaja al servicio `DocenteService`, donde se aplica `password_hash($password, PASSWORD_BCRYPT)`. En base de datos se almacena exclusivamente el hash con prefijo `$2y$`. Verificación con `password_verify()` es satisfactoria con la clave asignada y rechaza claves inválidas o universales.
+- **(3) No almacenamiento en texto plano:** Se verifica en la tabla `usuarios` que el campo `clave_hash` no coincide ni contiene la contraseña en texto plano, ni tampoco ninguna otra columna.
+- **(4) No exposición en vistas ante error de validación:** Si un formulario de registro o edición de docente falla la validación (por ejemplo, correo inválido devolviendo `HTTP 422`), el controlador `AdminDocenteController` elimina explícitamente el campo `password` del arreglo `$old` (`unset($old['password'])`), garantizando que la vista devuelta no incluya la contraseña ni en inputs ocultos ni en el código HTML.
+- **(5) No exposición en archivos de registro (logs):** Se verifica que el archivo de logs del sistema (`storage/logs/app.log`) no contiene la contraseña en texto plano ni el hash.
 
 ---
 
@@ -68,5 +70,5 @@ Se ejecutó una prueba de navegación HTTP real con servidor efímero PHP CLI (`
 - **Fase 1 (Base de Datos):** 18/18 pruebas aprobadas en base de datos temporal aislada.
 - **Fase 2 (Infraestructura):** 16/16 pruebas aprobadas en proceso independiente.
 - **Fase 3 (Autenticación y Roles):** 19/19 pruebas aprobadas en proceso independiente.
-- **Fase 4 (Administración Básica):** 25/25 pruebas aprobadas satisfactoriamente.
-- **Total de pruebas en suite combinada:** 78 pruebas ejecutadas, **78 exitosas, 0 fallidas**.
+- **Fase 4 (Administración Básica):** 27/27 pruebas aprobadas satisfactoriamente.
+- **Total de pruebas en suite combinada:** 80 pruebas ejecutadas, **80 exitosas, 0 fallidas**.
