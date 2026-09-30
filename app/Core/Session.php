@@ -176,6 +176,19 @@ class Session
     }
 
     /**
+     * Helper dual para establecer u obtener un mensaje flash.
+     */
+    public static function flash(string $key, mixed $value = null): mixed
+    {
+        if ($value !== null) {
+            self::setFlash($key, $value);
+            return null;
+        }
+
+        return self::getFlash($key);
+    }
+
+    /**
      * Obtener y eliminar un mensaje flash.
      */
     public static function getFlash(string $key, mixed $default = null): mixed

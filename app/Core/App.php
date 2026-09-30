@@ -98,6 +98,14 @@ class App
     }
 
     /**
+     * Alias compatible de handle para ejecución de solicitudes programáticas en pruebas.
+     */
+    public function handleRequest(?Request $request = null): Response
+    {
+        return $this->handle($request);
+    }
+
+    /**
      * Registrar las rutas base de infraestructura y módulos autorizados.
      */
     public function registerRoutes(): void
@@ -214,7 +222,19 @@ class App
         $this->router->get('/administracion/asignaciones/reemplazar', [\App\Controllers\AdminAsignacionController::class, 'reemplazarForm'], $adminGet);
         $this->router->post('/administracion/asignaciones/reemplazar', [\App\Controllers\AdminAsignacionController::class, 'reemplazar'], $adminPost);
 
-        // 6. Rutas técnicas de prueba: aisladas exclusivamente para entornos de desarrollo y testing
+        // 6. Módulo Público de Inscripciones y Cupos (Fase 6 — RF-05, RF-09, RF-10, RF-11, RF-12, RF-14, RF-32)
+        $this->router->get('/inscripcion', [\App\Controllers\InscripcionPublicaController::class, 'createForm']);
+        $this->router->get('/inscripcion/secciones-disponibles', [\App\Controllers\InscripcionPublicaController::class, 'getSeccionesDisponibles']);
+        $this->router->post('/inscripcion', [\App\Controllers\InscripcionPublicaController::class, 'store'], [
+            \App\Middleware\VerifyCsrfToken::class,
+        ]);
+        $this->router->get('/inscripcion/exito', [\App\Controllers\InscripcionPublicaController::class, 'success']);
+        $this->router->get('/inscripcion/consultar', [\App\Controllers\InscripcionPublicaController::class, 'consultarForm']);
+        $this->router->post('/inscripcion/consultar', [\App\Controllers\InscripcionPublicaController::class, 'consultar'], [
+            \App\Middleware\VerifyCsrfToken::class,
+        ]);
+
+        // 7. Rutas técnicas de prueba: aisladas exclusivamente para entornos de desarrollo y testing
         $env = (string) Config::get('app.env', 'development');
         if (in_array(strtolower($env), ['development', 'testing', 'local'], true)) {
             $this->router->get('/test/get', [\App\Controllers\TestController::class, 'testGet']);

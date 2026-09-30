@@ -40,6 +40,11 @@ class Response
         return $this->content;
     }
 
+    public function getBody(): string
+    {
+        return $this->content;
+    }
+
     public function setContent(string $content): self
     {
         $this->content = $content;

@@ -15,6 +15,8 @@
             </div>
             <nav class="main-nav">
                 <a href="<?= e(url()) ?>" class="nav-link">Inicio</a>
+                <a href="<?= e(url('inscripcion')) ?>" class="nav-link">Inscripción en Línea</a>
+                <a href="<?= e(url('inscripcion/consultar')) ?>" class="nav-link">Consultar Inscripción</a>
                 <a href="<?= e(url('status')) ?>" class="nav-link" target="_blank">Estado JSON</a>
                 <?php if (auth()->check()): ?>
                     <?php $currentUser = auth()->user(); ?>
