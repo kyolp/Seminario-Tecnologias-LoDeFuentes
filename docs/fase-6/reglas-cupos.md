@@ -32,6 +32,9 @@ $$\text{Cupos Disponibles} = \max(0, \text{capacidad} - \text{ocupación})$$
 
 ## 3. Matriz de Reglas de Negocio (RN)
 
+> [!NOTE]
+> Los identificadores `RN-CUP-*` y `RN-DOC-*` son referencias técnicas internas de trazabilidad del proyecto y no constituyen identificadores codificados literalmente en el documento oficial de alcance de la institución. Las reglas provienen del alcance funcional aprobado y se formulan para control estricto de ingeniería.
+
 | Identificador | Nombre de la Regla | Descripción y Comportamiento en el Sistema | Mecanismo de Control |
 |---|---|---|---|
 | **RN-CUP-01** | Invariante de Capacidad Máxima | No se permite registrar una inscripción si la ocupación actual es igual o mayor a la capacidad configurada de la sección. | Bloqueo pesimista `SELECT ... FOR UPDATE` + verificación previa a la inserción en `InscripcionService`. |

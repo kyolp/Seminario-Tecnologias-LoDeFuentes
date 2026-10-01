@@ -70,6 +70,9 @@ El módulo de inscripciones escolares y consulta de estado es la primera funcion
   - El método `InscripcionService::consultarInscripcionPorCodigo()` filtra la respuesta devolviendo únicamente datos públicos y humanamente comprensibles (nombre, grado, sección, ciclo escolar, parentesco, fecha y estado).
   - Se eliminan explícitamente todas las claves primarias (`id_*`), llaves foráneas y contraseñas.
   - La consulta exige coincidencia exacta contra el código alfanumérico no secuencial `INS-YYYY-XXXXXXXX` generado criptográficamente, haciendo inviable la enumeración o el rastreo no autorizado (validado en T6-08, T6-09 y T6-24).
+- **Precisión Metodológica sobre RNF-04:**
+  > [!NOTE]
+  > La Fase 6 aporta evidencia empírica específica sobre la privacidad en la consulta pública por código (ocultamiento de IDs internos, ausencia de contraseñas/hashes y exposición mínima de información). No obstante, el requerimiento no funcional **RNF-04 («Privacidad. Datos personales accesibles solo a usuarios autorizados»)** mantiene su validación integral a nivel institucional formalmente programada y pendiente para la **Fase 14 — Seguridad y Endurecimiento**.
 
 ---
 

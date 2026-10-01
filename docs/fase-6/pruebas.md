@@ -42,7 +42,7 @@ La suite de pruebas automatizadas de Fase 6 cubre de extremo a extremo las funci
 | **T6-21** | Concurrencia real del último cupo (10 iteraciones multiproceso) | RF-32, Concurrencia | 10/10 iteraciones sin sobrecupos \| Ocupación final: 2/2 \| Ganadores alternados por micro-latencia InnoDB | **OK** |
 | **T6-22** | Protección contra doble submit | Seguridad Web | Primer submit: OK \| Segundo submit: OK (Rechazado) \| Inscripciones vigentes en BD: 1 | **OK** |
 | **T6-23** | Manejo de colisión y regeneración de código único | RF-12, Robustez | Código colisionado detectado \| Nuevo código generado con reintento seguro | **OK** |
-| **T6-24** | Privacidad en consulta pública | RNF-04, Seguridad | IDs internos de BD ocultos: SÍ \| Hashes ocultos: SÍ \| Datos proyectados mínimos necesarios | **OK** |
+| **T6-24** | Privacidad en consulta pública | RNF-04 (Evidencia parcial en Fase 6; validación integral en Fase 14), Seguridad | IDs internos de BD ocultos: SÍ \| Hashes ocultos: SÍ \| Datos proyectados mínimos necesarios | **OK** |
 | **T6-25** | Flujo HTTP público real completo | Integración Web | GET Form: 200 \| API Secciones: 200 \| POST Inscripción: 302 PRG \| GET Éxito: 200 \| POST Consulta: 200 | **OK** |
 | **T6-26** | Regresión completa de Fase 5 | Regresión Histórica | 26 / 26 pruebas de Fase 5 (Asignaciones Docentes) aprobadas | **OK** |
 | **T6-27** | Regresión completa de Fase 4 | Regresión Histórica | 27 / 27 pruebas de Fase 4 (Administración Básica) aprobadas | **OK** |

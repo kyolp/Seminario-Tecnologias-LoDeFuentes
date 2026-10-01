@@ -34,6 +34,7 @@ Se declara que la **Fase 6 — Inscripciones y Cupos** ha sido completada en su 
 4. **Consulta Pública de Estado y Protección de Privacidad (RF-14, RNF-04):**
    - Endpoint público de consulta por código de comprobante.
    - Sanitización estricta que oculta claves primarias (`id_*`), llaves foráneas y datos sensibles, proyectando únicamente información institucional legible.
+   - **Alcance de RNF-04:** EVIDENCIA PARCIAL VERIFICADA EN FASE 6 (consulta pública por código, ocultamiento de IDs internos, ausencia de contraseñas/hashes y exposición mínima de información). La validación integral de RNF-04 a nivel institucional permanece formalmente programada y pendiente para la **Fase 14 — Seguridad y Endurecimiento**.
 
 5. **Integridad Relacional Normalizada (RF-05, RF-11):**
    - Manejo desacoplado en tercera forma normal (3NF) de las entidades `estudiantes`, `encargados` y la tabla asociativa `estudiantes_encargados`.
@@ -53,7 +54,7 @@ Se declara que la **Fase 6 — Inscripciones y Cupos** ha sido completada en su 
 - **DT-37:** Transacción ACID y Bloqueo Pesimista con `SELECT ... FOR UPDATE` para Garantizar Cero Sobrecupos (RF-32, RN-DOC-02).
 - **DT-38:** Generación Criptográfica y Unicidad del Código de Confirmación con Bucle Anticolisión (RF-12).
 - **DT-39:** Desacoplamiento de Entidades Relacionales `Estudiante`, `Encargado` y Vínculo Compuesto N:M `estudiantes_encargados` (RF-05, RF-11).
-- **DT-40:** Protección de Privacidad en Consulta Pública y Ocultamiento de Metadatos Internos (RF-14, RNF-04).
+- **DT-40:** Protección de Privacidad en Consulta Pública y Ocultamiento de Metadatos Internos (RF-14, RNF-04 [evidencia parcial; validación integral en Fase 14]).
 - **DT-41:** Arquitectura Pública de Inscripciones: Desacoplamiento Controller-Service-Repository y Mitigación de Vectores Web.
 - **DT-42:** Delimitación Estricta de Fase 6 y Protección de Límites Funcionales hacia Fases Posteriores.
 

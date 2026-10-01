@@ -76,7 +76,7 @@
     ];
     ```
   - La vista `views/inscripciones/consultar.php` escapa todas las variables mediante `e()` antes de renderizarlas en el DOM.
-- **Justificación e Impacto:** Cumple plenamente con la normativa de privacidad y protección de datos estudiantiles, impidiendo que terceros deduzcan volúmenes de registros internos o ejecuten minería de metadatos mediante herramientas automatizadas.
+- **Justificación e Impacto:** Cumple plenamente con la normativa de privacidad y protección de datos estudiantiles, impidiendo que terceros deduzcan volúmenes de registros internos o ejecuten minería de metadatos mediante herramientas automatizadas. Esta decisión aporta evidencia empírica verificable sobre la privacidad en la consulta pública por código (ocultamiento de IDs y hashes); no obstante, la validación integral institucional del requerimiento no funcional **RNF-04 («Privacidad. Datos personales accesibles solo a usuarios autorizados»)** permanece formalmente programada y pendiente para la **Fase 14 — Seguridad y Endurecimiento**.
 
 ---
 
