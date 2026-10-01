@@ -28,7 +28,7 @@ trazabilidad y ningún requisito funcional ha sido implementado o validado.
 | RF-14 | **Consulta por código.** Permitir al encargado consultar la información básica mediante el código sin crear una cuenta. | 6 | `app/Controllers/InscripcionPublicaController.php`, `app/Services/InscripcionService.php`, `views/inscripciones/consultar.php` | `inscripciones`, `estudiantes`, `encargados`, `secciones` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase6.php` (T6-08, T6-09, T6-24, T6-25) | APROBADO (30/30) |
 | RF-15 | **Gestión de docentes.** Registrar y administrar la información de docentes. | 4 | `app/Controllers/AdminDocenteController.php`, `app/Services/DocenteService.php`, `app/Repositories/DocenteRepository.php` | `docentes`, `usuarios` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase4.php` (T4-05 a T4-08) | APROBADO (27/27) |
 | RF-16 | **Asignaciones.** Asignar docentes a grados, secciones y aulas. | 5 | `AdminAsignacionController.php`, `AsignacionService.php`, `AsignacionRepository.php`, `AsignacionDocente.php` | `asignaciones_docentes`, `docentes`, `secciones`, `grados_periodos`, `aulas` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase5.php` (T5-01 a T5-26) | APROBADO (26/26) |
-| RF-17 | **Listado de estudiantes.** Permitir al docente consultar estudiantes de su sección asignada. | 7 | Por definir en Fase 7 | Por definir en Fase 1 | PENDIENTE | No ejecutada | Pendiente |
+| RF-17 | **Listado de estudiantes.** Permitir al docente consultar estudiantes de su sección asignada. | 7 | `app/Controllers/DocenteController.php`, `app/Services/PortalDocenteService.php`, `app/Repositories/PortalDocenteRepository.php`, `views/docente/index.php` | `asignaciones_docentes`, `secciones`, `inscripciones`, `estudiantes` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase7.php` (T7-01 a T7-21) | APROBADO (27/27) |
 | RF-18 | **Configuración de ubicación.** Definir la ubicación de la institución y el radio permitido para el marcaje. | 8 | Por definir en Fase 8 | Por definir en Fase 1 | PENDIENTE | No ejecutada | Pendiente |
 | RF-19 | **Validación geográfica.** Validar que el dispositivo esté dentro del área autorizada antes del marcaje. | 8 | Por definir en Fase 8 | Por definir en Fase 1 | PENDIENTE | No ejecutada | Pendiente |
 | RF-20 | **Marcaje de entrada.** Registrar la entrada mediante un botón cuando se cumpla la validación de ubicación. | 8 | Por definir en Fase 8 | Por definir en Fase 1 | PENDIENTE | No ejecutada | Pendiente |
@@ -42,7 +42,7 @@ trazabilidad y ningún requisito funcional ha sido implementado o validado.
 | RF-28 | **Estado de solicitud.** Permitir al docente consultar el estado e historial de sus solicitudes. | 9 | Por definir en Fase 9 | Por definir en Fase 1 | PENDIENTE | No ejecutada | Pendiente |
 | RF-29 | **Reporte de asistencia.** Generar reportes por docente y período. | 12 | Por definir en Fase 12 | Por definir en Fase 1 | PENDIENTE | No ejecutada | Pendiente |
 | RF-30 | **Consulta de inscripciones.** Consultar estudiantes inscritos, grado, sección y estado de cupo. | 12 | Por definir en Fase 12 | Por definir en Fase 1 | PENDIENTE | No ejecutada | Pendiente |
-| RF-31 | **Integración de módulos.** Actualizar el listado de la sección mediante inscripciones confirmadas. | 6/7 | Por definir en Fases 6 y 7 | Por definir en Fase 1 | PENDIENTE | No ejecutada | Pendiente |
+| RF-31 | **Integración de módulos.** Actualizar el listado de la sección mediante inscripciones confirmadas. | 6/7 | `app/Repositories/PortalDocenteRepository.php`, `app/Services/InscripcionService.php` | `inscripciones`, `secciones`, `estudiantes`, `asignaciones_docentes` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase7.php` (T7-19, T7-20), `tests/run_tests_fase6.php` | APROBADO (27/27) |
 | RF-32 | **Integridad de cupos.** Evitar que operaciones concurrentes superen la capacidad de una sección. | 6 | `app/Services/InscripcionService.php`, `app/Repositories/InscripcionRepository.php` | `inscripciones`, `secciones` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase6.php` (T6-20, T6-21) | APROBADO (30/30) |
 
 **Conteo verificado:** 32 RF únicos, rango continuo RF-01 a RF-32, sin
@@ -55,7 +55,7 @@ duplicados ni requisitos añadidos.
 | RNF-01 | **Usabilidad.** Formularios, botones claros y mensajes comprensibles para usuarios no técnicos. | 2/15 | Por definir | No aplica | PENDIENTE | No ejecutada | Pendiente |
 | RNF-02 | **Compatibilidad.** Funcionamiento en navegadores modernos y dispositivos compatibles con geolocalización. | 2/15 | Por definir | No aplica | PENDIENTE | No ejecutada | Pendiente |
 | RNF-03 | **Seguridad.** Contraseñas no almacenadas en texto plano y acceso controlado por roles. | 3/14 | `app/Services/AuthService.php`, `app/Middleware/RequireRole.php` | `usuarios`, `roles` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase3.php` (T3-01 a T3-16) | APROBADO (19/19) |
-| RNF-04 | **Privacidad.** Datos personales accesibles solo a usuarios autorizados. | 14 | `app/Services/InscripcionService.php`, `views/inscripciones/consultar.php` (Fase 6) / Alcance global en Fase 14 | `estudiantes`, `encargados`, `inscripciones` | PENDIENTE | `tests/run_tests_fase6.php` (T6-08, T6-24) [Evidencia parcial en Fase 6] | EVIDENCIA PARCIAL VERIFICADA EN FASE 6. Validación integral pendiente para Fase 14. |
+| RNF-04 | **Privacidad.** Datos personales accesibles solo a usuarios autorizados. | 14 | `app/Services/InscripcionService.php`, `views/inscripciones/consultar.php` (Fase 6), `app/Repositories/PortalDocenteRepository.php`, `views/docente/index.php` (Fase 7) / Alcance global en Fase 14 | `estudiantes`, `encargados`, `inscripciones` | PENDIENTE | `tests/run_tests_fase6.php` (T6-08, T6-24), `tests/run_tests_fase7.php` (T7-08, T7-10, T7-16) [Evidencia parcial en Fases 6 y 7] | EVIDENCIA PARCIAL VERIFICADA EN FASES 6 Y 7. Validación integral pendiente para Fase 14. |
 | RNF-05 | **Integridad.** Relaciones consistentes para inscripción, cupos y asistencia. | 1/14 | `database/schema.sql`, `database/tests/validacion.sql` | 20 tablas relacionales | IMPLEMENTADO Y VALIDADO | `database/tests/validacion.sql` (Fase 1) | APROBADO (18/18) |
 | RNF-06 | **Trazabilidad.** Fecha y usuario asociado en asistencia y decisiones sobre permisos. | 8/9/14 | Por definir | Por definir en Fase 1 | PENDIENTE | No ejecutada | Pendiente |
 | RNF-07 | **Rendimiento.** Respuesta en tiempo razonable bajo la carga prevista. | 15 | Por definir | No aplica | PENDIENTE | No ejecutada | Pendiente |
@@ -177,6 +177,19 @@ La Fase 3 implementa de forma completa y funcional el subsistema de autenticaci�
 | **RF-04 a RF-32** (Módulos funcionales de negocio) | - | PENDIENTE DE IMPLEMENTACIÓN FUNCIONAL | Corresponden a las Fases 4 a 12 conforme a la planificación oficial del proyecto. |
 
 La suite automatizada de pruebas y sus 19 resultados se documentan en `docs/fase-3/pruebas.md`.
+
+## Actualización controlada del Portal Docente — Fase 7
+
+La Fase 7 transforma el área docente provisional en un portal de producción robusto, enfocado en la consulta de nóminas de estudiantes por sección asignada y su integración canónica con las inscripciones en línea.
+
+| Requisitos respaldados | Componentes funcionales creados | Estado de Fase 7 | Evidencia de Fase 7 |
+|---|---|---|---|
+| **RF-17** (Listado de estudiantes: permitir al docente consultar los estudiantes de su sección asignada) | `DocenteController::index()`, `PortalDocenteService::getPortalData()`, `PortalDocenteRepository::findEstudiantesBySeccionDocente()`, `views/docente/index.php` | IMPLEMENTADO Y VALIDADO | Aislamiento horizontal estricto de dos capas (controlador HTTP 403 y JOIN SQL obligatorio `ad.id_docente`), identidad derivada exclusivamente de sesión (`auth_user_id`), soporte de multiasignación y degradación elegante ante docentes sin sección asignada. Verificado en T7-01 a T7-18 y T7-21. |
+| **RF-31** (Integración de módulos: actualizar el listado de la sección mediante inscripciones confirmadas) | `PortalDocenteRepository::findEstudiantesBySeccionDocente()`, `PortalDocenteRepository::countEstudiantesBySeccionDocente()`, flujo transaccional de Fase 6 | IMPLEMENTADO Y VALIDADO | Integración canónica directa sin duplicación de datos: cualquier inscripción confirmada (`CONFIRMADA`) en Fase 6 se refleja inmediatamente en el portal del docente titular, excluyendo inscripciones canceladas. Verificado en T7-19 y T7-20. |
+| **RNF-04** (Privacidad: datos personales accesibles solo a usuarios autorizados) | `PortalDocenteRepository` (proyección selectiva), `views/docente/index.php` | EVIDENCIA PARCIAL VERIFICADA EN FASE 7 | Minimización de datos en nómina escolar docente: solo se exponen datos estrictamente pedagógicos (`codigo_estudiante`, `nombres`, `apellidos`, `fecha_nacimiento`, `estado_inscripcion`). Se aíslan y omiten registros de encargados, teléfonos, emails, direcciones domiciliarias, contraseñas e IDs internos. Verificado en T7-08, T7-10 y T7-16. Validación integral de privacidad permanece en estado `PENDIENTE` para Fase 14. |
+| **RN-DOC-04, RN-DOC-12, RN-DOC-14, CA-DOC-04, CA-DOC-10** | Módulo Portal Docente | IMPLEMENTADO Y VALIDADO | Cumplimiento estricto de reglas de negocio institucionales y criterios de aceptación del documento de alcance. |
+
+La suite automatizada de pruebas y sus 27 resultados se documentan en `docs/fase-7/pruebas.md`.
 
 
 
