@@ -126,6 +126,11 @@ class Request
         return $this->post[$key] ?? $default;
     }
 
+    public function post(?string $key = null, mixed $default = null): mixed
+    {
+        return $this->getPost($key, $default);
+    }
+
     public function input(string $key, mixed $default = null): mixed
     {
         if (array_key_exists($key, $this->post)) {
@@ -154,6 +159,11 @@ class Request
     {
         $normalized = str_replace('_', '-', strtolower($name));
         return $this->headers[$normalized] ?? $default;
+    }
+
+    public function header(string $name, ?string $default = null): ?string
+    {
+        return $this->getHeader($name, $default);
     }
 
     /**

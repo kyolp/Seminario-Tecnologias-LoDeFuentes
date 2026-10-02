@@ -24,7 +24,11 @@
                 <h1 style="margin: 0.5rem 0 0.25rem 0; font-size: 1.75rem; font-weight: 700;">Bienvenido, <?= e($docente->getNombreCompleto()) ?></h1>
                 <p style="margin: 0; color: #bfdbfe; font-size: 0.9rem;">Escuela Oficial Rural Mixta Lo de Fuentes</p>
             </div>
-            <div>
+            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                <a href="<?= e(url('/docente/asistencia')) ?>" style="background: #10b981; color: #ffffff; border: none; border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
+                    Marcaje de Asistencia (RF-20, RF-21)
+                </a>
                 <form action="<?= e(url('/logout')) ?>" method="POST" style="margin: 0;">
                     <?= csrf_field() ?>
                     <button type="submit" style="background: #dc2626; color: #ffffff; border: none; border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">

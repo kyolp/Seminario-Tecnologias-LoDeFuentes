@@ -129,10 +129,21 @@ class App
             new \App\Middleware\RequireRole('ADMINISTRADOR'),
         ]);
 
-        $this->router->get('/docente', [\App\Controllers\DocenteController::class, 'index'], [
+        $docenteGet = [
             \App\Middleware\Authenticate::class,
             new \App\Middleware\RequireRole('DOCENTE'),
-        ]);
+        ];
+        $docentePost = [
+            \App\Middleware\Authenticate::class,
+            new \App\Middleware\RequireRole('DOCENTE'),
+            \App\Middleware\VerifyCsrfToken::class,
+        ];
+
+        $this->router->get('/docente', [\App\Controllers\DocenteController::class, 'index'], $docenteGet);
+        $this->router->get('/docente/asistencia', [\App\Controllers\DocenteAsistenciaController::class, 'index'], $docenteGet);
+        $this->router->post('/docente/asistencia/entrada', [\App\Controllers\DocenteAsistenciaController::class, 'marcarEntrada'], $docentePost);
+        $this->router->post('/docente/asistencia/salida', [\App\Controllers\DocenteAsistenciaController::class, 'marcarSalida'], $docentePost);
+        $this->router->get('/docente/asistencia/historial', [\App\Controllers\DocenteAsistenciaController::class, 'historial'], $docenteGet);
 
         // 4. Módulos de Administración Básica (Fase 4)
         $adminGet = [
@@ -222,7 +233,12 @@ class App
         $this->router->get('/administracion/asignaciones/reemplazar', [\App\Controllers\AdminAsignacionController::class, 'reemplazarForm'], $adminGet);
         $this->router->post('/administracion/asignaciones/reemplazar', [\App\Controllers\AdminAsignacionController::class, 'reemplazar'], $adminPost);
 
-        // 6. Módulo Público de Inscripciones y Cupos (Fase 6 — RF-05, RF-09, RF-10, RF-11, RF-12, RF-14, RF-32)
+        // 6. Configuración de Ubicación Institucional (Fase 8 — RF-18, RF-19)
+        $this->router->get('/administracion/ubicacion', [\App\Controllers\AdminUbicacionController::class, 'index'], $adminGet);
+        $this->router->get('/administracion/ubicacion/configurar', [\App\Controllers\AdminUbicacionController::class, 'createForm'], $adminGet);
+        $this->router->post('/administracion/ubicacion/configurar', [\App\Controllers\AdminUbicacionController::class, 'store'], $adminPost);
+
+        // 7. Módulo Público de Inscripciones y Cupos (Fase 6 — RF-05, RF-09, RF-10, RF-11, RF-12, RF-14, RF-32)
         $this->router->get('/inscripcion', [\App\Controllers\InscripcionPublicaController::class, 'createForm']);
         $this->router->get('/inscripcion/secciones-disponibles', [\App\Controllers\InscripcionPublicaController::class, 'getSeccionesDisponibles']);
         $this->router->post('/inscripcion', [\App\Controllers\InscripcionPublicaController::class, 'store'], [
