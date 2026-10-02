@@ -150,6 +150,7 @@ class Phase7TestSuite
             $this->testT7_25_RegresionFase3();
             $this->testT7_26_RegresionFase2();
             $this->testT7_27_RegresionFase1();
+            $this->testT7_28_SeguridadHttpReal();
         } finally {
             $this->cleanup();
         }
@@ -1286,6 +1287,249 @@ class Phase7TestSuite
             $obtained,
             $isOk
         );
+    }
+
+    /**
+     * T7-28: Seguridad HTTP real del Portal Docente.
+     * Evalúa con servidor PHP efímero y cURL real los 6 escenarios de autorización y privacidad:
+     * - Escenario A: Docente propio -> HTTP 200 con propia asignación y estudiantes.
+     * - Escenario B: Manipulación de sección ajena -> HTTP 403, 0 datos de Docente B, 0 estudiantes expuestos.
+     * - Escenario C: Parámetro id_docente manipulado -> ignorado, sesión resuelve Docente A.
+     * - Escenario D: Administrador -> HTTP 403.
+     * - Escenario E: Usuario anónimo -> HTTP 302 -> /login.
+     * - Escenario F: Asignación inactiva -> rechazo HTTP 403, cero nómina asociada.
+     */
+    private function testT7_28_SeguridadHttpReal(): void
+    {
+        echo "\n>>> Iniciando servidor web PHP embebido para prueba de seguridad HTTP real T7-28...\n";
+
+        $port = 8094;
+        $phpBin = PHP_BINARY;
+        $docRoot = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'public';
+
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $cmd = sprintf('"%s" -S 127.0.0.1:%d -t "%s"', $phpBin, $port, $docRoot);
+        $process = proc_open($cmd, $descriptors, $pipes, dirname(__DIR__));
+
+        if (!is_resource($process)) {
+            $this->record('T7-28', 'Seguridad HTTP real del Portal Docente', 'Prueba de seguridad HTTP real superada', 'No se pudo iniciar servidor PHP embebido', false);
+            return;
+        }
+
+        $procStatus = proc_get_status($process);
+        $pid = $procStatus['pid'] ?? 0;
+
+        // Esperar disponibilidad del servidor
+        $connected = false;
+        for ($i = 0; $i < 30; $i++) {
+            $fp = @fsockopen('127.0.0.1', $port, $errno, $errstr, 0.2);
+            if ($fp) {
+                fclose($fp);
+                $connected = true;
+                break;
+            }
+            usleep(100000); // 100ms
+        }
+
+        if (!$connected) {
+            $this->terminateProcess($pid, $process, $pipes);
+            $this->record('T7-28', 'Seguridad HTTP real del Portal Docente', 'Prueba de seguridad HTTP real superada', 'El servidor web no respondió a tiempo', false);
+            return;
+        }
+
+        $cookieFileDocA = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cookie_docA_' . uniqid() . '.txt';
+        $cookieFileAdmin = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cookie_adm_' . uniqid() . '.txt';
+
+        $httpRequest = function (string $url, string $method = 'GET', ?array $postData = null, ?string $cookie = null): array {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+            if ($cookie !== null) {
+                curl_setopt($ch, CURLOPT_COOKIEJAR, $cookie);
+                curl_setopt($ch, CURLOPT_COOKIEFILE, $cookie);
+            }
+            if ($method === 'POST') {
+                curl_setopt($ch, CURLOPT_POST, true);
+                if ($postData !== null) {
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+                }
+            }
+            $raw = curl_exec($ch);
+            $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $headerSize = (int)curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $headers = substr($raw, 0, $headerSize);
+            $body = substr($raw, $headerSize);
+            curl_close($ch);
+
+            $location = '';
+            if (preg_match('/Location:\s*([^\r\n]+)/i', $headers, $m)) {
+                $location = trim($m[1]);
+            }
+
+            return ['code' => $code, 'headers' => $headers, 'body' => $body, 'location' => $location];
+        };
+
+        $loginUser = function (string $username, string $password, string $cookieFile) use ($httpRequest, $port): bool {
+            $resGet = $httpRequest(sprintf('http://127.0.0.1:%d/login', $port), 'GET', null, $cookieFile);
+            $token = '';
+            if (preg_match('/name=["\']_token["\']\s+value=["\']([^"\']+)["\']/i', $resGet['body'], $m)) {
+                $token = $m[1];
+            }
+            if ($token === '') {
+                return false;
+            }
+            $resPost = $httpRequest(sprintf('http://127.0.0.1:%d/login', $port), 'POST', [
+                '_token' => $token,
+                'nombre_usuario' => $username,
+                'password' => $password,
+            ], $cookieFile);
+
+            return $resPost['code'] === 302;
+        };
+
+        $tempSecInacId = null;
+        $tempAsigInacId = null;
+        $tempEstId = null;
+        $tempInsId = null;
+
+        try {
+            // =========================================================================
+            // ESCENARIO A — DOCENTE PROPIO
+            // =========================================================================
+            $u1Data = $this->userRepo->findById($this->fixtureUserDocente1Id);
+            $okLoginDocA = $loginUser($u1Data->nombre_usuario, 'DocenteFase7Pass!', $cookieFileDocA);
+
+            $resA = $httpRequest(sprintf('http://127.0.0.1:%d/docente?seccion=%d', $port, $this->fixtureSeccionAId), 'GET', null, $cookieFileDocA);
+            $scenA_code = ($resA['code'] === 200);
+            $scenA_showsOwnTeacher = str_contains($resA['body'], 'Marta Elena');
+            $scenA_showsOwnSection = str_contains($resA['body'], 'Sección A');
+            $scenA_showsOwnStudent = str_contains($resA['body'], 'Alejandro') && str_contains($resA['body'], 'Álvarez Gómez');
+            $scenA = $okLoginDocA && $scenA_code && $scenA_showsOwnTeacher && $scenA_showsOwnSection && $scenA_showsOwnStudent;
+
+            // =========================================================================
+            // ESCENARIO B — MANIPULACIÓN DE SECCIÓN AJENA
+            // =========================================================================
+            // Docente A intenta acceder a Sección C (asignada a Docente 2 / Carlos Andrés)
+            $resB = $httpRequest(sprintf('http://127.0.0.1:%d/docente?seccion=%d', $port, $this->fixtureSeccionCId), 'GET', null, $cookieFileDocA);
+            $scenB_code = ($resB['code'] === 403);
+            $scenB_noStudentB = !str_contains($resB['body'], 'Guillermo') && !str_contains($resB['body'], 'Hernández Castillo');
+            $scenB_noDocB = !str_contains($resB['body'], 'Carlos Andrés') && !str_contains($resB['body'], 'Pérez Ramos');
+            $scenB_noSensitive = !str_contains($resB['body'], '55551234') && !str_contains($resB['body'], 'encargado@test.com');
+            $scenB = $scenB_code && $scenB_noStudentB && $scenB_noDocB && $scenB_noSensitive;
+
+            // =========================================================================
+            // ESCENARIO C — id_docente MANIPULADO
+            // =========================================================================
+            // Docente A envía id_docente ajeno en query string
+            $resC1 = $httpRequest(sprintf('http://127.0.0.1:%d/docente?seccion=%d&id_docente=%d', $port, $this->fixtureSeccionAId, $this->fixtureDocente2Id), 'GET', null, $cookieFileDocA);
+            $resC2 = $httpRequest(sprintf('http://127.0.0.1:%d/docente?id_docente=99999', $port), 'GET', null, $cookieFileDocA);
+            $scenC_code1 = ($resC1['code'] === 200);
+            $scenC_code2 = ($resC2['code'] === 200);
+            $scenC_stillDocA = str_contains($resC1['body'], 'Marta Elena') && str_contains($resC2['body'], 'Marta Elena');
+            $scenC_neverDocB = !str_contains($resC1['body'], 'Carlos Andrés') && !str_contains($resC2['body'], 'Carlos Andrés');
+            $scenC_hasOwnStudent = str_contains($resC1['body'], 'Alejandro');
+            $scenC = $scenC_code1 && $scenC_code2 && $scenC_stillDocA && $scenC_neverDocB && $scenC_hasOwnStudent;
+
+            // =========================================================================
+            // ESCENARIO D — ADMINISTRADOR
+            // =========================================================================
+            $uAdminData = $this->userRepo->findById($this->fixtureUserAdminId);
+            $okLoginAdmin = $loginUser($uAdminData->nombre_usuario, 'DocenteFase7Pass!', $cookieFileAdmin);
+
+            $resD = $httpRequest(sprintf('http://127.0.0.1:%d/docente', $port), 'GET', null, $cookieFileAdmin);
+            $scenD_code = ($resD['code'] === 403);
+            $scenD = $okLoginAdmin && $scenD_code;
+
+            // =========================================================================
+            // ESCENARIO E — USUARIO ANÓNIMO
+            // =========================================================================
+            $resE = $httpRequest(sprintf('http://127.0.0.1:%d/docente', $port), 'GET', null, null);
+            $scenE_code = ($resE['code'] === 302);
+            $scenE_redirect = str_contains($resE['location'], '/login');
+            $scenE = $scenE_code && $scenE_redirect;
+
+            // =========================================================================
+            // ESCENARIO F — ASIGNACIÓN INACTIVA / HISTÓRICA
+            // =========================================================================
+            // Crear una sección inactiva y asignación inactiva específica para Docente 1
+            $stmtSec = $this->db->prepare('INSERT INTO secciones (id_grado_periodo, codigo, nombre, capacidad, habilitada) VALUES (:gp, "H", "Sección H Histórica Inactiva", 30, 0)');
+            $stmtSec->execute([':gp' => $this->fixtureGradoPeriodoId]);
+            $tempSecInacId = (int)$this->db->lastInsertId();
+
+            $stmtAsigInac = $this->db->prepare('INSERT INTO asignaciones_docentes (id_docente, id_seccion, id_aula, id_usuario_creador, fecha_inicio, fecha_fin, estado) VALUES (:d, :s, :a, :u, "2024-01-15", "2024-10-31", "INACTIVA")');
+            $stmtAsigInac->execute([':d' => $this->fixtureDocente1Id, ':s' => $tempSecInacId, ':a' => $this->fixtureAula1Id, ':u' => $this->fixtureUserAdminId]);
+            $tempAsigInacId = (int)$this->db->lastInsertId();
+
+            $encId = (int)$this->db->query("SELECT id_encargado FROM encargados LIMIT 1")->fetchColumn();
+            if ($encId === 0) {
+                $this->db->exec('INSERT INTO encargados (nombres, apellidos, telefono) VALUES ("Enc", "Prueba", "55550000")');
+                $encId = (int)$this->db->lastInsertId();
+            }
+
+            $stmtEstTemp = $this->db->prepare('INSERT INTO estudiantes (codigo_estudiante, nombres, apellidos, fecha_nacimiento, estado) VALUES (:c, "Estudiante", "Histórico Inactivo", "2015-05-05", "ACTIVO")');
+            $codEstHist = 'EST-F7-HIST-' . uniqid();
+            $stmtEstTemp->execute([':c' => $codEstHist]);
+            $tempEstId = (int)$this->db->lastInsertId();
+
+            $this->db->exec("INSERT INTO estudiantes_encargados (id_estudiante, id_encargado, parentesco, es_principal) VALUES ($tempEstId, $encId, 'MADRE', 1)");
+
+            $stmtInsTemp = $this->db->prepare('INSERT INTO inscripciones (id_estudiante, id_seccion, id_encargado, codigo_confirmacion, estado, fecha_confirmacion) VALUES (:est, :sec, :enc, :cod, "CONFIRMADA", "2024-02-01 08:00:00")');
+            $stmtInsTemp->execute([':est' => $tempEstId, ':sec' => $tempSecInacId, ':enc' => $encId, ':cod' => 'CONF-HIST-' . uniqid()]);
+            $tempInsId = (int)$this->db->lastInsertId();
+
+            $resF = $httpRequest(sprintf('http://127.0.0.1:%d/docente?seccion=%d', $port, $tempSecInacId), 'GET', null, $cookieFileDocA);
+            $scenF_rejected = ($resF['code'] === 403);
+            $scenF_noStudent = !str_contains($resF['body'], 'Histórico Inactivo');
+            $scenF = $scenF_rejected && $scenF_noStudent;
+
+            $passed = $scenA && $scenB && $scenC && $scenD && $scenE && $scenF;
+
+            $obtained = sprintf(
+                'A(200 propio): %s | B(403 ajena): %s | C(id_docente ignorado): %s | D(admin 403): %s | E(anónimo 302): %s | F(inactiva 403): %s',
+                $scenA ? 'OK' : 'FALLO',
+                $scenB ? 'OK' : 'FALLO',
+                $scenC ? 'OK' : 'FALLO',
+                $scenD ? 'OK' : 'FALLO',
+                $scenE ? 'OK' : 'FALLO',
+                $scenF ? 'OK' : 'FALLO'
+            );
+
+            $this->record(
+                'T7-28',
+                'Seguridad HTTP real del Portal Docente',
+                'A:200, B:403 (sin fugas), C:id_docente ignorado, D:admin 403, E:anónimo 302, F:inactiva 403',
+                $obtained,
+                $passed
+            );
+        } finally {
+            if ($tempInsId !== null) {
+                $this->db->exec("DELETE FROM inscripciones WHERE id_inscripcion = $tempInsId");
+            }
+            if ($tempEstId !== null) {
+                $this->db->exec("DELETE FROM estudiantes_encargados WHERE id_estudiante = $tempEstId");
+                $this->db->exec("DELETE FROM estudiantes WHERE id_estudiante = $tempEstId");
+            }
+            if ($tempAsigInacId !== null) {
+                $this->db->exec("DELETE FROM asignaciones_docentes WHERE id_asignacion_docente = $tempAsigInacId");
+            }
+            if ($tempSecInacId !== null) {
+                $this->db->exec("DELETE FROM secciones WHERE id_seccion = $tempSecInacId");
+            }
+
+            $this->terminateProcess($pid, $process, $pipes);
+            if (file_exists($cookieFileDocA)) {
+                @unlink($cookieFileDocA);
+            }
+            if (file_exists($cookieFileAdmin)) {
+                @unlink($cookieFileAdmin);
+            }
+        }
     }
 
     private function findMysqlBinary(): ?string
