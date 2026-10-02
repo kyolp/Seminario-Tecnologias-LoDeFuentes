@@ -3,7 +3,7 @@
 **Proyecto:** Sistema Web para la Escuela Oficial Rural Mixta Lo de Fuentes  
 **Fase:** Fase 8 — Asistencia Docente y Geolocalización  
 **Rol:** ANTIGRAVITY — DESARROLLADOR PRINCIPAL  
-**Estado:** **COMPLETADA Y VALIDADA AL 100% (37/37 PRUEBAS OK)**  
+**Estado:** **COMPLETADA Y VALIDADA AL 100% (40/40 PRUEBAS OK — TRAS CORRECCIÓN CONTROLADA)**  
 
 ---
 
@@ -45,12 +45,25 @@ En estricto apego a las directivas de autorización y al `Documento_Alcance_Escu
 
 ---
 
-## 3. Verificación y Resultados de Pruebas
+## 3. Resolución de Observaciones de Revisión Externa (F8-01 a F8-05)
+
+| Observación | Descripción | Acción Ejecutada y Verificación Técnica |
+| :---: | :--- | :--- |
+| **F8-01** | Prueba CSRF Negativa Real en Marcajes | Implementada prueba **`T8-38`** con servidor PHP embebido en puerto 8096 y cURL. Se evaluaron Casos A, B y C comprobando HTTP 403 y 0 persistencia en base de datos. El Caso D con token legítimo confirmó HTTP 200 y persistencia de 1 registro. |
+| **F8-02** | Manejo de Errores de Geolocation API | Implementada prueba **`T8-39`** con harness Node.js (`tests/harness_geolocation.js`) verificando manejo en cliente de códigos 1 (`PERMISSION_DENIED`), 2 (`POSITION_UNAVAILABLE`), 3 (`TIMEOUT`) e incompatibilidad. En backend se verificó rechazo de coordenadas vacías con HTTP 422 y cero fallbacks ficticios. |
+| **F8-03** | Validación Estricta de Coordenadas Recibidas | Implementada prueba **`T8-40`** evaluando 13 combinaciones de coordenadas inválidas ($\text{lat} \notin [-90, 90]$, $\text{lon} \notin [-180, 180]$, strings no numéricos, vacíos, nulos, INF, NAN, campos omitidos). En el 100% de los casos se retornó HTTP 422, cero persistencia y cero trazas o errores SQL expuestos. |
+| **F8-04** | Ampliar Evidencia de T8-29 | Ampliada prueba **`T8-29`** para ejecutar y registrar explícitamente 13 comprobaciones en flujo HTTP real: login, formulario, extracción CSRF, entrada 200, persistencia en BD, duplicado 422, salida 200, historial 200, descarte de spoofing de id_docente, rechazo fuera de radio 422, 0 persistencia fuera, admin 403, anónimo 302 y cierre limpio. |
+| **F8-05** | Demostración Matemática y Evidencia Cuantitativa de Haversine | Documentada en `docs/fase-8/geolocalizacion.md` evidencia cuantitativa reproducible para punto idéntico ($d=0.00\text{ m}$), interior ($d=20.66\text{ m} < 100.0\text{ m}$), frontera exacta ($d=100.00\text{ m} \le 100.0\text{ m}$), exterior ($d=1,118.20\text{ m} > 100.0\text{ m}$) y calibración ($5,269.41\text{ m}$ frente a $5,269.40\text{ m}$, error $< 0.0004\%$). |
+
+---
+
+## 4. Verificación y Resultados de Pruebas
 
 Se ejecutó la suite automatizada completa `tests/run_tests_fase8.php`, obteniendo:
-- **Total ejecutadas:** 37
-- **Total exitosas (OK):** 37 (100% GREEN)
+- **Total ejecutadas:** 40
+- **Total exitosas (OK):** 40 (100% GREEN)
 - **Total fallidas:** 0
-- **Prueba HTTP real (T8-29):** Exitosa con servidor PHP embebido y cURL real.
-- **Prueba de seguridad ante spoofing (T8-30):** Exitosa con descarte de parámetros maliciosos.
-- **Regresiones de Fases 1 a 7 (T8-31 a T8-37):** 100% aprobadas sin impacto colateral.
+- **Pruebas unitarias, de servicio y de controladores:** T8-01 a T8-28 (28 pruebas).
+- **Pruebas de flujo HTTP real e inyección de parámetros:** T8-29 y T8-30 (2 pruebas).
+- **Regresiones históricas de Fases 1 a 7:** T8-31 a T8-37 (7 suites, 164 pruebas acumuladas).
+- **Pruebas de corrección externa:** T8-38, T8-39 y T8-40 (3 pruebas).
