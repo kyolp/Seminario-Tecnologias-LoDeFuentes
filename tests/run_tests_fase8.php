@@ -17,7 +17,10 @@ declare(strict_types=1);
  * T8-35: Regresión completa de Fase 3 (Autenticación y Roles: 19/19).
  * T8-36: Regresión completa de Fase 2 (Arquitectura Base: 16/16).
  * T8-37: Regresión completa de Fase 1 (Base de Datos: 18/18).
- * Total: 37 pruebas automatizadas.
+ * T8-38: Protección CSRF real en marcajes de asistencia (F8-01).
+ * T8-39: Manejo de errores de Geolocation API (F8-02).
+ * T8-40: Validación estricta de coordenadas recibidas en marcaje (F8-03).
+ * Total: 40 pruebas automatizadas.
  */
 
 require_once dirname(__DIR__) . '/app/bootstrap.php';
@@ -150,6 +153,11 @@ class Phase8TestSuite
             $this->testT8_35_RegresionFase3();
             $this->testT8_36_RegresionFase2();
             $this->testT8_37_RegresionFase1();
+
+            // Bloque 7: Observaciones de Corrección Fase 8 (F8-01, F8-02, F8-03)
+            $this->testT8_38_ProteccionCsrfReal();
+            $this->testT8_39_ManejoErroresGeolocationApi();
+            $this->testT8_40_ValidacionEstrictaCoordenadas();
 
         } finally {
             $this->cleanup();
@@ -1164,7 +1172,8 @@ class Phase8TestSuite
             return;
         }
 
-        $cookieFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cookie_asistencia_' . uniqid() . '.txt';
+        $cookieFileDocente = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cookie_asistencia_doc_' . uniqid() . '.txt';
+        $cookieFileAdmin = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cookie_asistencia_adm_' . uniqid() . '.txt';
 
         $httpRequest = function (string $url, string $method = 'GET', ?array $postData = null, ?string $cookie = null, array $headers = []): array {
             $ch = curl_init($url);
@@ -1200,96 +1209,172 @@ class Phase8TestSuite
         };
 
         try {
-            // 1. GET /login para obtener CSRF token y cookie
-            $resLoginGet = $httpRequest(sprintf('http://127.0.0.1:%d/login', $port), 'GET', null, $cookieFile);
-            $csrfToken = '';
+            // 1. GET /login para obtener CSRF token y cookie para Docente 1
+            $resLoginGet = $httpRequest(sprintf('http://127.0.0.1:%d/login', $port), 'GET', null, $cookieFileDocente);
+            $csrfTokenLogin = '';
             if (preg_match('/name=["\']_token["\']\s+value=["\']([^"\']+)["\']/i', $resLoginGet['body'], $m)) {
-                $csrfToken = $m[1];
+                $csrfTokenLogin = $m[1];
             }
 
-            // 2. POST /login con credenciales de Docente 1
+            // 1. Login DOCENTE
             $u1 = $this->userRepo->findById($this->fixtureUserDocente1Id);
             $resLoginPost = $httpRequest(sprintf('http://127.0.0.1:%d/login', $port), 'POST', [
-                '_token' => $csrfToken,
+                '_token' => $csrfTokenLogin,
                 'nombre_usuario' => $u1->nombre_usuario,
                 'password' => 'PassFase8Test!',
-            ], $cookieFile);
-
+            ], $cookieFileDocente);
             $loginOk = ($resLoginPost['code'] === 302 && str_contains($resLoginPost['location'], '/docente'));
 
-            // 3. GET /docente/asistencia (HTTP 200 con formulario y geocerca)
-            $resAsistenciaGet = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia', $port), 'GET', null, $cookieFile);
+            // 2. GET /docente/asistencia (HTTP 200 con formulario y geocerca)
+            $resAsistenciaGet = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia', $port), 'GET', null, $cookieFileDocente);
             $get200 = ($resAsistenciaGet['code'] === 200 && str_contains($resAsistenciaGet['body'], 'Control de Asistencia Docente'));
 
-            // Obtener CSRF token del formulario de asistencia
+            // 3. Extracción de token CSRF del formulario
             $csrfAsistencia = '';
             if (preg_match('/name=["\']_token["\']\s+value=["\']([^"\']+)["\']/i', $resAsistenciaGet['body'], $m)) {
                 $csrfAsistencia = $m[1];
             }
+            $csrfOk = !empty($csrfAsistencia);
 
-            // 4. POST /docente/asistencia/salida para cerrar el estado del Docente 1 si tenía entrada previa
-            // Para asegurar secuencia limpia, consultamos el estado y cerramos si es necesario
+            // Asegurar estado inicial limpio para Docente 1
             $ultimo = $this->asistenciaRepo->findUltimoMarcajeDocente($this->fixtureDocente1Id);
             if ($ultimo !== null && $ultimo->isEntrada()) {
                 $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia/salida', $port), 'POST', [
                     '_token' => $csrfAsistencia,
                     'latitud' => self::ESCUELA_LAT,
                     'longitud' => self::ESCUELA_LON,
-                ], $cookieFile);
+                ], $cookieFileDocente);
             }
 
-            // 5. POST /docente/asistencia/entrada via AJAX (Accept: application/json)
+            // 4. POST /docente/asistencia/entrada dentro del radio
             $resEntradaAjax = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia/entrada', $port), 'POST', [
                 '_token' => $csrfAsistencia,
                 'latitud' => self::ESCUELA_LAT,
                 'longitud' => self::ESCUELA_LON,
-                'precision' => 12.0,
-            ], $cookieFile, ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
-
+                'precision' => 10.0,
+            ], $cookieFileDocente, ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
             $entradaJson = json_decode($resEntradaAjax['body'], true);
             $entradaOk = ($resEntradaAjax['code'] === 200 && ($entradaJson['exito'] ?? false) === true);
 
-            // 6. POST duplicado de entrada -> HTTP 422 JSON
+            // 5. Verificación de persistencia en BD
+            $stmtPersist = $this->db->prepare('SELECT * FROM marcajes_asistencia WHERE id_docente = :d ORDER BY id_marcaje_asistencia DESC LIMIT 1');
+            $stmtPersist->execute([':d' => $this->fixtureDocente1Id]);
+            $rowEntrada = $stmtPersist->fetch(\PDO::FETCH_ASSOC);
+            $persistenciaOk = ($rowEntrada !== false
+                && $rowEntrada['tipo'] === 'ENTRADA'
+                && (int) $rowEntrada['dentro_radio'] === 1
+                && (float) $rowEntrada['distancia_metros'] <= self::ESCUELA_RADIO);
+            if ($rowEntrada) {
+                $this->createdMarcajeIds[] = (int) $rowEntrada['id_marcaje_asistencia'];
+            }
+
+            // 6. Intento de doble entrada consecutiva (secuencia inválida) -> 422 JSON
             $resDobleEntrada = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia/entrada', $port), 'POST', [
                 '_token' => $csrfAsistencia,
                 'latitud' => self::ESCUELA_LAT,
                 'longitud' => self::ESCUELA_LON,
-            ], $cookieFile, ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
-
+            ], $cookieFileDocente, ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
             $dobleEntradaRechazada = ($resDobleEntrada['code'] === 422);
 
-            // 7. POST /docente/asistencia/salida con coordenadas FUERA DE RADIO -> HTTP 422 JSON
-            $resSalidaFuera = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia/salida', $port), 'POST', [
-                '_token' => $csrfAsistencia,
-                'latitud' => self::ESCUELA_LAT + 0.05,
-                'longitud' => self::ESCUELA_LON + 0.05,
-            ], $cookieFile, ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
-
-            $fueraRadioRechazado = ($resSalidaFuera['code'] === 422);
-
-            // 8. POST /docente/asistencia/salida DENTRO DE RADIO -> HTTP 200 JSON
+            // 7. POST /docente/asistencia/salida dentro del radio -> 200 JSON
             $resSalidaValida = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia/salida', $port), 'POST', [
                 '_token' => $csrfAsistencia,
                 'latitud' => self::ESCUELA_LAT,
                 'longitud' => self::ESCUELA_LON,
-            ], $cookieFile, ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
-
+            ], $cookieFileDocente, ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
             $salidaJson = json_decode($resSalidaValida['body'], true);
             $salidaOk = ($resSalidaValida['code'] === 200 && ($salidaJson['exito'] ?? false) === true);
+            if ($salidaOk) {
+                $ultimoSalida = $this->asistenciaRepo->findUltimoMarcajeDocente($this->fixtureDocente1Id);
+                if ($ultimoSalida !== null) {
+                    $this->createdMarcajeIds[] = $ultimoSalida->id_marcaje_asistencia;
+                }
+            }
 
-            $passed = ($loginOk && $get200 && $entradaOk && $dobleEntradaRechazada && $fueraRadioRechazado && $salidaOk);
+            // 8. Consulta GET de historial personal del docente -> HTTP 200 renderizando historial
+            $resHistorialGet = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia', $port), 'GET', null, $cookieFileDocente);
+            $historialOk = ($resHistorialGet['code'] === 200 && (str_contains($resHistorialGet['body'], 'Historial Reciente') || str_contains($resHistorialGet['body'], 'Mi Historial')));
+
+            // 9. Intento de manipulación de id_docente en payload (spoofing ignorado)
+            $countDoc2Antes = (int) $this->db->query("SELECT COUNT(*) FROM marcajes_asistencia WHERE id_docente = {$this->fixtureDocente2Id}")->fetchColumn();
+            $resSpoof = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia/entrada', $port), 'POST', [
+                '_token' => $csrfAsistencia,
+                'latitud' => self::ESCUELA_LAT,
+                'longitud' => self::ESCUELA_LON,
+                'id_docente' => $this->fixtureDocente2Id, // Intento de spoofing
+            ], $cookieFileDocente, ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
+            $countDoc2Despues = (int) $this->db->query("SELECT COUNT(*) FROM marcajes_asistencia WHERE id_docente = {$this->fixtureDocente2Id}")->fetchColumn();
+            $spoofIgnorado = ($countDoc2Despues === $countDoc2Antes); // Docente 2 no fue afectado
+            $ultimoDoc1 = $this->asistenciaRepo->findUltimoMarcajeDocente($this->fixtureDocente1Id);
+            if ($ultimoDoc1 && $ultimoDoc1->isEntrada()) {
+                $this->createdMarcajeIds[] = $ultimoDoc1->id_marcaje_asistencia;
+                // Cerrar salida para dejar estado consistente
+                $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia/salida', $port), 'POST', [
+                    '_token' => $csrfAsistencia,
+                    'latitud' => self::ESCUELA_LAT,
+                    'longitud' => self::ESCUELA_LON,
+                ], $cookieFileDocente);
+                $ultimoSalida2 = $this->asistenciaRepo->findUltimoMarcajeDocente($this->fixtureDocente1Id);
+                if ($ultimoSalida2) {
+                    $this->createdMarcajeIds[] = $ultimoSalida2->id_marcaje_asistencia;
+                }
+            }
+
+            // 10. POST con coordenadas fuera del radio -> 422 JSON
+            $countTotalAntesFuera = (int) $this->db->query("SELECT COUNT(*) FROM marcajes_asistencia")->fetchColumn();
+            $resFueraRadio = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia/entrada', $port), 'POST', [
+                '_token' => $csrfAsistencia,
+                'latitud' => self::ESCUELA_LAT + 0.05,
+                'longitud' => self::ESCUELA_LON + 0.05,
+            ], $cookieFileDocente, ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
+            $fueraRadioRechazado = ($resFueraRadio['code'] === 422);
+
+            // 11. Comprobación de no persistencia en BD para coordenadas fuera de radio
+            $countTotalDespuesFuera = (int) $this->db->query("SELECT COUNT(*) FROM marcajes_asistencia")->fetchColumn();
+            $ceroPersistenciaFuera = ($countTotalDespuesFuera === $countTotalAntesFuera);
+
+            // 12. Usuario con rol ADMINISTRADOR intenta acceder a /docente/asistencia -> HTTP 403
+            $resLoginAdmGet = $httpRequest(sprintf('http://127.0.0.1:%d/login', $port), 'GET', null, $cookieFileAdmin);
+            $csrfTokenAdm = '';
+            if (preg_match('/name=["\']_token["\']\s+value=["\']([^"\']+)["\']/i', $resLoginAdmGet['body'], $m)) {
+                $csrfTokenAdm = $m[1];
+            }
+            $uAdm = $this->userRepo->findById($this->fixtureUserAdminId);
+            $httpRequest(sprintf('http://127.0.0.1:%d/login', $port), 'POST', [
+                '_token' => $csrfTokenAdm,
+                'nombre_usuario' => $uAdm->nombre_usuario,
+                'password' => 'PassFase8Test!',
+            ], $cookieFileAdmin);
+            $resAdminDocente = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia', $port), 'GET', null, $cookieFileAdmin);
+            $adminRechazado403 = ($resAdminDocente['code'] === 403);
+
+            // 13. Usuario anónimo intenta acceder -> Redirección HTTP 302 a /login
+            $resAnonimo = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia', $port), 'GET', null, null);
+            $anonimoRedirigido302 = ($resAnonimo['code'] === 302 && str_contains($resAnonimo['location'], '/login'));
+
+            $passed = ($loginOk && $get200 && $csrfOk && $entradaOk && $persistenciaOk
+                && $dobleEntradaRechazada && $salidaOk && $historialOk && $spoofIgnorado
+                && $fueraRadioRechazado && $ceroPersistenciaFuera && $adminRechazado403 && $anonimoRedirigido302);
 
             $this->record(
                 'T8-29',
-                'Flujo HTTP real completo de asistencia docente mediante cURL y servidor local',
-                'Login 302 -> GET 200 -> Entrada 200 JSON -> Doble Entrada 422 -> Fuera de radio 422 -> Salida 200 JSON',
-                sprintf('Login: %s, GET: %s, Entrada: %s, DobleEntrada: %s, FueraRadio: %s, Salida: %s', $loginOk ? 'OK' : 'ERR', $get200 ? 'OK' : 'ERR', $entradaOk ? 'OK' : 'ERR', $dobleEntradaRechazada ? 'OK' : 'ERR', $fueraRadioRechazado ? 'OK' : 'ERR', $salidaOk ? 'OK' : 'ERR'),
+                'Flujo HTTP real completo de asistencia docente mediante cURL y servidor local (13 verificaciones)',
+                'Login 302 -> GET 200 -> CSRF OK -> Entrada 200 JSON -> Persistencia BD OK -> Doble Entrada 422 -> Salida 200 JSON -> Historial 200 -> Spoofing ignorado -> Fuera de radio 422 -> 0 persistencia -> Admin 403 -> Anónimo 302',
+                sprintf('Login: %s, GET: %s, CSRF: %s, Entrada: %s, Persist: %s, Doble: %s, Salida: %s, Hist: %s, Spoof: %s, Fuera: %s, 0Persist: %s, Admin403: %s, Anon302: %s',
+                    $loginOk ? 'OK' : 'ERR', $get200 ? 'OK' : 'ERR', $csrfOk ? 'OK' : 'ERR', $entradaOk ? 'OK' : 'ERR',
+                    $persistenciaOk ? 'OK' : 'ERR', $dobleEntradaRechazada ? 'OK' : 'ERR', $salidaOk ? 'OK' : 'ERR',
+                    $historialOk ? 'OK' : 'ERR', $spoofIgnorado ? 'OK' : 'ERR', $fueraRadioRechazado ? 'OK' : 'ERR',
+                    $ceroPersistenciaFuera ? 'OK' : 'ERR', $adminRechazado403 ? 'OK' : 'ERR', $anonimoRedirigido302 ? 'OK' : 'ERR'
+                ),
                 $passed
             );
         } finally {
             $this->terminateProcess($pid, $process, $pipes);
-            if (file_exists($cookieFile)) {
-                @unlink($cookieFile);
+            if (file_exists($cookieFileDocente)) {
+                @unlink($cookieFileDocente);
+            }
+            if (file_exists($cookieFileAdmin)) {
+                @unlink($cookieFileAdmin);
             }
         }
     }
@@ -1547,6 +1632,359 @@ class Phase8TestSuite
             $isOk
         );
     }
+
+    // =========================================================================
+    // BLOQUE 7: CORRECCIONES DE REVISIÓN EXTERNA (F8-01, F8-02, F8-03)
+    // =========================================================================
+
+    /**
+     * T8-38: Protección CSRF real en marcajes de asistencia (F8-01).
+     * Servidor web PHP embebido y cURL:
+     * Caso A: POST /docente/asistencia/entrada sin token -> 403, 0 persistencia.
+     * Caso B: POST /docente/asistencia/entrada con token manipulado -> 403, 0 persistencia.
+     * Caso C: POST /docente/asistencia/salida sin token válido -> 403, 0 persistencia.
+     * Caso D: POST /docente/asistencia/entrada con token válido -> 200, 1 persistencia confirmada.
+     */
+    private function testT8_38_ProteccionCsrfReal(): void
+    {
+        echo "\n>>> Iniciando servidor web PHP embebido para prueba CSRF real T8-38...\n";
+
+        $port = 8096;
+        $phpBin = PHP_BINARY;
+        $docRoot = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'public';
+
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $cmd = sprintf('"%s" -S 127.0.0.1:%d -t "%s"', $phpBin, $port, $docRoot);
+        $process = proc_open($cmd, $descriptors, $pipes, dirname(__DIR__));
+
+        if (!is_resource($process)) {
+            $this->record('T8-38', 'Protección CSRF real en marcajes de asistencia', 'Servidor iniciado', 'No se pudo iniciar servidor PHP embebido en puerto ' . $port, false);
+            return;
+        }
+
+        $procStatus = proc_get_status($process);
+        $pid = $procStatus['pid'] ?? 0;
+
+        $connected = false;
+        for ($i = 0; $i < 30; $i++) {
+            $fp = @fsockopen('127.0.0.1', $port, $errno, $errstr, 0.2);
+            if ($fp) {
+                fclose($fp);
+                $connected = true;
+                break;
+            }
+            usleep(100000);
+        }
+
+        if (!$connected) {
+            $this->terminateProcess($pid, $process, $pipes);
+            $this->record('T8-38', 'Protección CSRF real en marcajes de asistencia', 'Servidor conectado', 'El servidor web no respondió a tiempo', false);
+            return;
+        }
+
+        $cookieDocente = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'cookie_csrf_doc_' . uniqid() . '.txt';
+
+        $httpRequest = function (string $url, string $method = 'GET', ?array $postData = null, ?string $cookie = null, array $headers = []): array {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+            if ($cookie !== null) {
+                curl_setopt($ch, CURLOPT_COOKIEJAR, $cookie);
+                curl_setopt($ch, CURLOPT_COOKIEFILE, $cookie);
+            }
+            if (!empty($headers)) {
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            }
+            if ($method === 'POST') {
+                curl_setopt($ch, CURLOPT_POST, true);
+                if ($postData !== null) {
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+                }
+            }
+            $raw = curl_exec($ch);
+            $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $headerSize = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $respHeaders = substr($raw, 0, $headerSize);
+            $body = substr($raw, $headerSize);
+            curl_close($ch);
+
+            $location = '';
+            if (preg_match('/Location:\s*([^\r\n]+)/i', $respHeaders, $m)) {
+                $location = trim($m[1]);
+            }
+
+            return ['code' => $code, 'headers' => $respHeaders, 'body' => $body, 'location' => $location];
+        };
+
+        try {
+            // Autenticar Docente 1 para obtener cookie de sesión válida
+            $resLoginGet = $httpRequest(sprintf('http://127.0.0.1:%d/login', $port), 'GET', null, $cookieDocente);
+            $csrfTokenLogin = '';
+            if (preg_match('/name=["\']_token["\']\s+value=["\']([^"\']+)["\']/i', $resLoginGet['body'], $m)) {
+                $csrfTokenLogin = $m[1];
+            }
+            $u1 = $this->userRepo->findById($this->fixtureUserDocente1Id);
+            $httpRequest(sprintf('http://127.0.0.1:%d/login', $port), 'POST', [
+                '_token' => $csrfTokenLogin,
+                'nombre_usuario' => $u1->nombre_usuario,
+                'password' => 'PassFase8Test!',
+            ], $cookieDocente);
+
+            // Asegurarse de que Docente 1 no tenga entrada pendiente para no chocar con la máquina de estados
+            $ultimo = $this->asistenciaRepo->findUltimoMarcajeDocente($this->fixtureDocente1Id);
+            if ($ultimo !== null && $ultimo->isEntrada()) {
+                $this->asistenciaService->registrarSalida($this->fixtureDocente1Id, $this->fixtureUserDocente1Id, [
+                    'latitud' => self::ESCUELA_LAT,
+                    'longitud' => self::ESCUELA_LON,
+                ]);
+            }
+
+            $countInicial = (int) $this->db->query("SELECT COUNT(*) FROM marcajes_asistencia WHERE id_docente = {$this->fixtureDocente1Id}")->fetchColumn();
+
+            // CASO A: POST /docente/asistencia/entrada sin token CSRF
+            $resCasoA = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia/entrada', $port), 'POST', [
+                'latitud' => self::ESCUELA_LAT,
+                'longitud' => self::ESCUELA_LON,
+            ], $cookieDocente);
+            $countCasoA = (int) $this->db->query("SELECT COUNT(*) FROM marcajes_asistencia WHERE id_docente = {$this->fixtureDocente1Id}")->fetchColumn();
+            $casoAOk = ($resCasoA['code'] === 403 && $countCasoA === $countInicial);
+
+            // CASO B: POST /docente/asistencia/entrada con token manipulado
+            $resCasoB = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia/entrada', $port), 'POST', [
+                '_token' => 'token_manipulado_invalido_fase8_xyz',
+                'latitud' => self::ESCUELA_LAT,
+                'longitud' => self::ESCUELA_LON,
+            ], $cookieDocente);
+            $countCasoB = (int) $this->db->query("SELECT COUNT(*) FROM marcajes_asistencia WHERE id_docente = {$this->fixtureDocente1Id}")->fetchColumn();
+            $casoBOk = ($resCasoB['code'] === 403 && $countCasoB === $countInicial);
+
+            // CASO C: POST /docente/asistencia/salida sin token válido
+            $resCasoC = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia/salida', $port), 'POST', [
+                '_token' => 'token_falso_salida_123',
+                'latitud' => self::ESCUELA_LAT,
+                'longitud' => self::ESCUELA_LON,
+            ], $cookieDocente);
+            $countCasoC = (int) $this->db->query("SELECT COUNT(*) FROM marcajes_asistencia WHERE id_docente = {$this->fixtureDocente1Id}")->fetchColumn();
+            $casoCOk = ($resCasoC['code'] === 403 && $countCasoC === $countInicial);
+
+            // CASO D: POST /docente/asistencia/entrada con token CSRF válido
+            $resFormGet = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia', $port), 'GET', null, $cookieDocente);
+            $csrfValido = '';
+            if (preg_match('/name=["\']_token["\']\s+value=["\']([^"\']+)["\']/i', $resFormGet['body'], $m)) {
+                $csrfValido = $m[1];
+            }
+
+            $resCasoD = $httpRequest(sprintf('http://127.0.0.1:%d/docente/asistencia/entrada', $port), 'POST', [
+                '_token' => $csrfValido,
+                'latitud' => self::ESCUELA_LAT,
+                'longitud' => self::ESCUELA_LON,
+                'precision' => 10.0,
+            ], $cookieDocente, ['Accept: application/json', 'X-Requested-With: XMLHttpRequest']);
+            $countCasoD = (int) $this->db->query("SELECT COUNT(*) FROM marcajes_asistencia WHERE id_docente = {$this->fixtureDocente1Id}")->fetchColumn();
+            $jsonCasoD = json_decode($resCasoD['body'], true);
+            $casoDOk = ($resCasoD['code'] === 200 && ($jsonCasoD['exito'] ?? false) === true && $countCasoD === $countInicial + 1);
+
+            if ($casoDOk) {
+                $ultimoPersist = $this->asistenciaRepo->findUltimoMarcajeDocente($this->fixtureDocente1Id);
+                if ($ultimoPersist) {
+                    $this->createdMarcajeIds[] = $ultimoPersist->id_marcaje_asistencia;
+                }
+            }
+
+            $allOk = ($casoAOk && $casoBOk && $casoCOk && $casoDOk);
+
+            $this->record(
+                'T8-38',
+                'Protección CSRF real en marcajes de asistencia (F8-01)',
+                'Sin token: 403 (0 persistencia) -> Token manipulado: 403 (0 persistencia) -> Salida sin token: 403 (0 persistencia) -> Token legítimo: 200 (1 persistencia)',
+                sprintf('Caso A: %s (HTTP %d, BD: %d), Caso B: %s (HTTP %d, BD: %d), Caso C: %s (HTTP %d, BD: %d), Caso D: %s (HTTP %d, BD: %d)',
+                    $casoAOk ? 'OK' : 'ERR', $resCasoA['code'], $countCasoA - $countInicial,
+                    $casoBOk ? 'OK' : 'ERR', $resCasoB['code'], $countCasoB - $countInicial,
+                    $casoCOk ? 'OK' : 'ERR', $resCasoC['code'], $countCasoC - $countInicial,
+                    $casoDOk ? 'OK' : 'ERR', $resCasoD['code'], $countCasoD - $countInicial
+                ),
+                $allOk
+            );
+        } finally {
+            $this->terminateProcess($pid, $process, $pipes);
+            if (file_exists($cookieDocente)) {
+                @unlink($cookieDocente);
+            }
+        }
+    }
+
+    /**
+     * T8-39: Manejo de errores de Geolocation API (F8-02).
+     * Verificación en frontend (harness JS) de:
+     * - PERMISSION_DENIED (código 1) -> mensaje claro, formulario no enviado, botones re-habilitados.
+     * - POSITION_UNAVAILABLE (código 2) -> mensaje claro, formulario no enviado.
+     * - TIMEOUT (código 3) -> mensaje claro, formulario no enviado.
+     * - Incompatibilidad de navigator.geolocation -> advertencia clara al usuario.
+     * Y verificación en backend de que solicitudes sin coordenadas son rechazadas (HTTP 422, sin fallback simulado).
+     */
+    private function testT8_39_ManejoErroresGeolocationApi(): void
+    {
+        // 1. Ejecutar harness JavaScript en Node.js
+        $harnessPath = dirname(__DIR__) . '/tests/harness_geolocation.js';
+        $nodeCmd = 'node "' . $harnessPath . '"';
+        $output = (string) @shell_exec($nodeCmd);
+        $json = json_decode(trim($output), true);
+
+        $jsOk = ($json !== null && ($json['ok'] ?? false) === true);
+        $caseA = $json['results']['caseA'] ?? false; // PERMISSION_DENIED
+        $caseB = $json['results']['caseB'] ?? false; // POSITION_UNAVAILABLE
+        $caseC = $json['results']['caseC'] ?? false; // TIMEOUT
+        $caseD = $json['results']['caseD'] ?? false; // Incompatibilidad API
+
+        // 2. Verificación en backend: el servidor rechaza peticiones sin coordenadas y no aplica fallback ficticio
+        $controller = new DocenteAsistenciaController($this->authService, $this->asistenciaService, $this->portalDocenteService);
+        $this->loginAsUser($this->fixtureUserDocente1Id);
+
+        $countInicial = (int) $this->db->query("SELECT COUNT(*) FROM marcajes_asistencia WHERE id_docente = {$this->fixtureDocente1Id}")->fetchColumn();
+
+        // Petición con campos vacíos
+        $reqVacio = new Request('POST', '/docente/asistencia/entrada', [], ['latitud' => '', 'longitud' => ''], [
+            'accept' => 'application/json',
+            'x-requested-with' => 'xmlhttprequest',
+        ]);
+        $resVacio = $controller->marcarEntrada($reqVacio);
+        $bodyVacio = json_decode($resVacio->getContent(), true);
+
+        // Petición completamente sin coordenadas
+        $reqAusente = new Request('POST', '/docente/asistencia/entrada', [], [], [
+            'accept' => 'application/json',
+            'x-requested-with' => 'xmlhttprequest',
+        ]);
+        $resAusente = $controller->marcarEntrada($reqAusente);
+        $bodyAusente = json_decode($resAusente->getContent(), true);
+
+        $countFinal = (int) $this->db->query("SELECT COUNT(*) FROM marcajes_asistencia WHERE id_docente = {$this->fixtureDocente1Id}")->fetchColumn();
+
+        $backendOk = ($resVacio->getStatusCode() === 422
+            && ($bodyVacio['exito'] ?? false) === false
+            && $resAusente->getStatusCode() === 422
+            && ($bodyAusente['exito'] ?? false) === false
+            && $countFinal === $countInicial);
+
+        $isOk = ($jsOk && $backendOk);
+
+        $this->record(
+            'T8-39',
+            'Manejo de errores de Geolocation API en cliente y backend sin fallback ficticio (F8-02)',
+            'JS maneja PERMISSION_DENIED, POSITION_UNAVAILABLE, TIMEOUT y sin soporte; backend rechaza coordenadas vacías con HTTP 422 y 0 persistencia',
+            sprintf('JS: CaseA=%s, CaseB=%s, CaseC=%s, CaseD=%s | Backend: Vacio=%d, Ausente=%d, Persistencia=%d',
+                $caseA ? 'OK' : 'ERR', $caseB ? 'OK' : 'ERR', $caseC ? 'OK' : 'ERR', $caseD ? 'OK' : 'ERR',
+                $resVacio->getStatusCode(), $resAusente->getStatusCode(), $countFinal - $countInicial
+            ),
+            $isOk
+        );
+    }
+
+    /**
+     * T8-40: Validación estricta de coordenadas recibidas en marcaje (F8-03).
+     * Casos evaluados:
+     * - Latitud > 90, Latitud < -90
+     * - Longitud > 180, Longitud < -180
+     * - Latitud / Longitud cadenas alfanuméricas no numéricas
+     * - Latitud / Longitud cadenas vacías
+     * - Latitud / Longitud null
+     * - Latitud / Longitud INF / NAN
+     * - Coordenadas ausentes
+     * Verificación:
+     * - Código HTTP 422 en todos los casos
+     * - exito: false con mensaje controlado
+     * - 0 persistencia en marcajes_asistencia
+     * - 0 exposición de trazas internas o errores SQL
+     */
+    private function testT8_40_ValidacionEstrictaCoordenadas(): void
+    {
+        $controller = new DocenteAsistenciaController($this->authService, $this->asistenciaService, $this->portalDocenteService);
+        $this->loginAsUser($this->fixtureUserDocente1Id);
+
+        // Asegurar que no haya entrada pendiente
+        $ultimo = $this->asistenciaRepo->findUltimoMarcajeDocente($this->fixtureDocente1Id);
+        if ($ultimo !== null && $ultimo->isEntrada()) {
+            $this->asistenciaService->registrarSalida($this->fixtureDocente1Id, $this->fixtureUserDocente1Id, [
+                'latitud' => self::ESCUELA_LAT,
+                'longitud' => self::ESCUELA_LON,
+            ]);
+        }
+
+        $casos = [
+            'lat > 90' => ['latitud' => 90.000001, 'longitud' => -90.506882],
+            'lat < -90' => ['latitud' => -90.000001, 'longitud' => -90.506882],
+            'lon > 180' => ['latitud' => 14.634915, 'longitud' => 180.000001],
+            'lon < -180' => ['latitud' => 14.634915, 'longitud' => -180.000001],
+            'lat string no numérico' => ['latitud' => 'no_valida', 'longitud' => -90.506882],
+            'lon string no numérico' => ['latitud' => 14.634915, 'longitud' => 'invalida_lon'],
+            'lat cadena vacía' => ['latitud' => '', 'longitud' => -90.506882],
+            'lon cadena vacía' => ['latitud' => 14.634915, 'longitud' => ''],
+            'lat null' => ['latitud' => null, 'longitud' => -90.506882],
+            'lon null' => ['latitud' => 14.634915, 'longitud' => null],
+            'lat INF' => ['latitud' => 'INF', 'longitud' => -90.506882],
+            'lon NAN' => ['latitud' => 14.634915, 'longitud' => 'NAN'],
+            'campos ausentes' => [],
+        ];
+
+        $countInicial = (int) $this->db->query("SELECT COUNT(*) FROM marcajes_asistencia WHERE id_docente = {$this->fixtureDocente1Id}")->fetchColumn();
+
+        $fallas = [];
+        $totalCasos = count($casos);
+        $casosSuperados = 0;
+
+        foreach ($casos as $nombreCaso => $payload) {
+            $req = new Request('POST', '/docente/asistencia/entrada', [], $payload, [
+                'accept' => 'application/json',
+                'x-requested-with' => 'xmlhttprequest',
+            ]);
+            $res = $controller->marcarEntrada($req);
+            $content = $res->getContent();
+            $body = json_decode($content, true);
+
+            $es422 = ($res->getStatusCode() === 422);
+            $esExitoFalso = ($body !== null && ($body['exito'] ?? null) === false);
+            $tieneMensaje = !empty($body['error'] ?? '');
+            $sinTraza = !str_contains($content, 'Stack trace')
+                && !str_contains($content, 'PDOException')
+                && !str_contains($content, 'SQLSTATE');
+
+            if ($es422 && $esExitoFalso && $tieneMensaje && $sinTraza) {
+                $casosSuperados++;
+            } else {
+                $fallas[] = sprintf('%s (HTTP %d, exito=%s, sinTraza=%s)',
+                    $nombreCaso,
+                    $res->getStatusCode(),
+                    var_export($body['exito'] ?? null, true),
+                    $sinTraza ? 'OK' : 'ERR'
+                );
+            }
+        }
+
+        $countFinal = (int) $this->db->query("SELECT COUNT(*) FROM marcajes_asistencia WHERE id_docente = {$this->fixtureDocente1Id}")->fetchColumn();
+        $persistenciaCero = ($countFinal === $countInicial);
+
+        $isOk = ($casosSuperados === $totalCasos && $persistenciaCero && empty($fallas));
+
+        $this->record(
+            'T8-40',
+            'Validación estricta de coordenadas recibidas en marcaje (F8-03)',
+            '13/13 casos inválidos devuelven HTTP 422 con error controlado, 0 persistencia y 0 trazas expuestas',
+            sprintf('%d/%d casos superados, persistencia en BD: %d, fallas: %s',
+                $casosSuperados,
+                $totalCasos,
+                $countFinal - $countInicial,
+                empty($fallas) ? 'Ninguna' : implode('; ', $fallas)
+            ),
+            $isOk
+        );
+    }
+
 
     private function findMysqlBinary(): ?string
     {
