@@ -5,7 +5,7 @@
 **Rol:** ANTIGRAVITY — DESARROLLADOR PRINCIPAL  
 **Fecha de Cierre:** Octubre 2026  
 **Requisitos Satisfechos:** RF-17 (Listado de estudiantes por sección asignada), RF-31 (Integración con inscripciones en línea), RNF-04 (Evidencia parcial de privacidad de datos)  
-**Estado:** IMPLEMENTACIÓN COMPLETADA Y VERIFICADA (27/27 OK)
+**Estado:** IMPLEMENTACIÓN COMPLETADA Y VERIFICADA (28/28 OK)
 
 ---
 
@@ -29,12 +29,12 @@ La implementación se rigió bajo los estándares más estrictos de seguridad de
 3. `app/Services/PortalDocenteService.php`: Capa de lógica de negocio que orquesta la resolución de identidad, validación de titularidad y estructuración de nóminas.
 4. `app/Controllers/DocenteController.php`: Controlador robusto con revalidación de rol en tiempo real, detección de parameter tampering (HTTP 403) y renderizado seguro.
 5. `views/docente/index.php`: Interfaz gráfica institucional accesible, protegida contra XSS mediante `e()`, con insignia de retrocompatibilidad `Portal docente — sesión válida`.
-6. `tests/run_tests_fase7.php`: Suite automatizada completa con 27 pruebas de cobertura integral (T7-01 a T7-27).
+6. `tests/run_tests_fase7.php`: Suite automatizada completa con 28 pruebas de cobertura integral (T7-01 a T7-28).
 7. `docs/fase-7/`: Documentación técnica exhaustiva que incluye arquitectura, reglas de acceso, minimización de datos, decisiones técnicas (DT-43 a DT-48) y matriz de pruebas.
 
 ---
 
-## 3. RESULTADOS DE LA SUITE DE PRUEBAS DE FASE 7 (27/27)
+## 3. RESULTADOS DE LA SUITE DE PRUEBAS DE FASE 7 (28/28)
 
 - **T7-01 a T7-20 (Unitarias, Funcionales, Seguridad y Aislamiento):** **20/20 OK**
 - **T7-21 (Flujo HTTP Real con Servidor Embebido y cURL):** **1/1 OK**
@@ -44,8 +44,9 @@ La implementación se rigió bajo los estándares más estrictos de seguridad de
 - **T7-25 (Regresión Fase 3 — Autenticación y Roles):** **19/19 OK**
 - **T7-26 (Regresión Fase 2 — Arquitectura Base):** **16/16 OK**
 - **T7-27 (Regresión Fase 1 — Base de Datos Relacional):** **18/18 OK**
+- **T7-28 (Seguridad HTTP Real del Portal Docente — 6 Escenarios A a F):** **1/1 OK**
 
-**Resultado Total de la Fase:** **27/27 pruebas automatizadas superadas satisfactoriamente (100% OK, 0 fallos).**
+**Resultado Total de la Fase:** **28/28 pruebas automatizadas superadas satisfactoriamente (100% OK, 0 fallos).**
 
 ---
 
@@ -57,7 +58,20 @@ La implementación se rigió bajo los estándares más estrictos de seguridad de
 
 ---
 
-## 5. CONCLUSIÓN Y PRÓXIMOS PASOS
+## 5. LÍMITES Y NO INVASIÓN DE FASES POSTERIORES
+
+En estricto cumplimiento del principio fase por fase:
+1. **Fase 8 — Marcaje de Asistencia y Geolocalización:** No iniciada. No se implementaron marcajes, coordenadas GPS ni geocercas.
+2. **Fase 9 — Solicitudes y gestión de permisos:** No iniciada. No se crearon formularios ni flujos de permisos docentes.
+3. **Fase 10 — Notificaciones:** No iniciada. No se implementaron alertas ni despachadores de notificación.
+4. **Fase 11 — Comprobantes PDF:** No iniciada. No se incluyeron librerías ni generación de PDF.
+5. **Fase 12 — Reportes:** No iniciada. No se crearon reportes gerenciales de asistencia o inscripciones.
+6. **Fase 13 — Recuperación de contraseña:** No iniciada.
+7. **Fase 14 — Validación Integral de Privacidad y Auditoría:** La evidencia de Fase 7 es parcial y pedagógica; la validación integral global permanece formalmente PENDIENTE para Fase 14.
+
+---
+
+## 6. CONCLUSIÓN Y PRÓXIMOS PASOS
 
 La Fase 7 — Portal Docente se encuentra técnicamente completada, verificada y documentada. No se han iniciado labores correspondientes a la Fase 8 (Asistencia y Geolocalización) ni fases posteriores.
 

@@ -4,8 +4,8 @@
 **Fase:** Fase 7 — Portal Docente  
 **Rol:** ANTIGRAVITY — DESARROLLADOR PRINCIPAL  
 **Script de Ejecución:** `tests/run_tests_fase7.php`  
-**Total de Pruebas:** 27 pruebas automatizadas  
-**Resultado:** 27/27 OK (100% de éxito, 0 fallos)
+**Total de Pruebas:** 28 pruebas automatizadas  
+**Resultado:** 28/28 OK (100% de éxito, 0 fallos)
 
 ---
 
@@ -40,12 +40,13 @@
 | **T7-25** | Regresión | Regresión completa de Fase 3 (Autenticación y Roles) | 19/19 pruebas superadas con 0 fallos | **OK** |
 | **T7-26** | Regresión | Regresión completa de Fase 2 (Arquitectura Base) | 16/16 pruebas superadas con 0 fallos | **OK** |
 | **T7-27** | Regresión | Regresión completa de Fase 1 (Base de Datos Relacional) | 18/18 pruebas superadas con 0 fallos en BD temporal aislada | **OK** |
+| **T7-28** | Seguridad / Integración | Seguridad HTTP real del Portal Docente (6 escenarios: A-Docente propio 200, B-Sección ajena 403 sin fugas, C-id_docente ignorado, D-Admin 403, E-Anónimo 302 /login, F-Inactiva 403) | Servidor embebido efímero y cURL: validación de los 6 escenarios de autorización y privacidad en capas HTTP/sesión reales | **OK** |
 
 ---
 
 ## 2. RESULTADOS GLOBALES DE REGRESIÓN ACUMULADA
 
-- Pruebas propias de Fase 7: **21/21 OK**
+- Pruebas propias de Fase 7: **22/22 OK**
 - Regresiones de Fases 1 a 6: **6/6 suites aprobadas**
   - Fase 6: 30/30 OK
   - Fase 5: 26/26 OK
@@ -53,4 +54,4 @@
   - Fase 3: 19/19 OK
   - Fase 2: 16/16 OK
   - Fase 1: 18/18 OK
-- **Total de pruebas verificadas en el ciclo:** **157 pruebas acumuladas en verde**.
+- **Total de pruebas verificadas en el ciclo:** **158 pruebas acumuladas en verde**.
