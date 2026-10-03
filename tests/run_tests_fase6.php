@@ -164,9 +164,11 @@ class Phase6TestSuite
     private function cleanPreviousArtifacts(): void
     {
         $this->db->exec("DELETE FROM inscripciones WHERE codigo_confirmacion LIKE 'INS-F6%' OR codigo_confirmacion LIKE 'INS-TEST%'");
-        $this->db->exec("DELETE FROM estudiantes_encargados WHERE id_estudiante IN (SELECT id_estudiante FROM estudiantes WHERE codigo_estudiante LIKE 'EST-F6%' OR nombres LIKE 'TestF6%')");
-        $this->db->exec("DELETE FROM estudiantes WHERE codigo_estudiante LIKE 'EST-F6%' OR nombres LIKE 'TestF6%'");
-        $this->db->exec("DELETE FROM encargados WHERE nombres LIKE 'TestF6%'");
+        $this->db->exec("DELETE FROM inscripciones WHERE id_estudiante IN (SELECT id_estudiante FROM estudiantes WHERE codigo_estudiante LIKE 'EST-F6%' OR codigo_estudiante = 'EST-HUERFANO-01' OR nombres LIKE 'TestF6%' OR nombres LIKE '%Huerfano%')");
+        $this->db->exec("DELETE FROM estudiantes_encargados WHERE id_estudiante IN (SELECT id_estudiante FROM estudiantes WHERE codigo_estudiante LIKE 'EST-F6%' OR codigo_estudiante = 'EST-HUERFANO-01' OR nombres LIKE 'TestF6%' OR nombres LIKE '%Huerfano%')");
+        $this->db->exec("DELETE FROM estudiantes WHERE codigo_estudiante LIKE 'EST-F6%' OR codigo_estudiante = 'EST-HUERFANO-01' OR nombres LIKE 'TestF6%' OR nombres LIKE '%Huerfano%'");
+        $this->db->exec("DELETE FROM encargados WHERE nombres LIKE 'TestF6%' OR nombres LIKE '%Huerfano%'");
+        $this->db->exec("DELETE FROM inscripciones WHERE id_seccion IN (SELECT id_seccion FROM secciones WHERE codigo LIKE 'F6-%' OR codigo LIKE 'F6RACE-%')");
         $this->db->exec("DELETE FROM secciones WHERE codigo LIKE 'F6-%' OR codigo LIKE 'F6RACE-%'");
         $this->db->exec("DELETE FROM grados_periodos WHERE id_grado IN (SELECT id_grado FROM grados WHERE codigo LIKE 'GRD-F6%')");
         $this->db->exec("DELETE FROM grados WHERE codigo LIKE 'GRD-F6%'");

@@ -1138,10 +1138,11 @@ class Phase8TestSuite
         $phpBin = PHP_BINARY;
         $docRoot = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'public';
 
+        $serverLog = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'php_server_f8_' . uniqid() . '.log';
         $descriptors = [
             0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
+            1 => ['file', $serverLog, 'a'],
+            2 => ['file', $serverLog, 'a'],
         ];
 
         $cmd = sprintf('"%s" -S 127.0.0.1:%d -t "%s"', $phpBin, $port, $docRoot);
@@ -1370,6 +1371,7 @@ class Phase8TestSuite
             );
         } finally {
             $this->terminateProcess($pid, $process, $pipes);
+            @unlink($serverLog);
             if (file_exists($cookieFileDocente)) {
                 @unlink($cookieFileDocente);
             }
@@ -1653,10 +1655,11 @@ class Phase8TestSuite
         $phpBin = PHP_BINARY;
         $docRoot = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'public';
 
+        $serverLog = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'php_server_f8_csrf_' . uniqid() . '.log';
         $descriptors = [
             0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
+            1 => ['file', $serverLog, 'a'],
+            2 => ['file', $serverLog, 'a'],
         ];
 
         $cmd = sprintf('"%s" -S 127.0.0.1:%d -t "%s"', $phpBin, $port, $docRoot);
@@ -1813,6 +1816,7 @@ class Phase8TestSuite
             );
         } finally {
             $this->terminateProcess($pid, $process, $pipes);
+            @unlink($serverLog);
             if (file_exists($cookieDocente)) {
                 @unlink($cookieDocente);
             }

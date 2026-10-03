@@ -17,19 +17,32 @@ class Request
     private array $post;
     /** @var array<string, string> */
     private array $headers;
+    /** @var array<string, mixed> */
+    private array $files;
 
     /**
      * @param array<string, mixed> $query
      * @param array<string, mixed> $post
      * @param array<string, string> $headers
+     * @param array<string, mixed> $files
      */
-    public function __construct(string $method, string $path, array $query = [], array $post = [], array $headers = [])
+    public function __construct(string $method, string $path, array $query = [], array $post = [], array $headers = [], array $files = [])
     {
         $this->method = strtoupper($method);
         $this->path = self::normalizePath($path);
         $this->query = $query;
         $this->post = $post;
-        $this->headers = $headers;
+
+        $normalizedHeaders = [];
+        foreach ($headers as $k => $v) {
+            $headerName = str_replace('_', '-', strtolower((string)$k));
+            if (str_starts_with($headerName, 'http-')) {
+                $headerName = substr($headerName, 5);
+            }
+            $normalizedHeaders[$headerName] = (string) $v;
+        }
+        $this->headers = $normalizedHeaders;
+        $this->files = $files;
     }
 
     /**
@@ -60,7 +73,7 @@ class Request
             }
         }
 
-        return new self($method, $path, $_GET, $_POST, $headers);
+        return new self($method, $path, $_GET, $_POST, $headers, $_FILES);
     }
 
     /**
@@ -69,8 +82,9 @@ class Request
      * @param array<string, mixed> $query
      * @param array<string, mixed> $post
      * @param array<string, string> $headers
+     * @param array<string, mixed> $files
      */
-    public static function create(string $method, string $uri, array $query = [], array $post = [], array $headers = []): self
+    public static function create(string $method, string $uri, array $query = [], array $post = [], array $headers = [], array $files = []): self
     {
         $parsed = parse_url($uri);
         $path = $parsed['path'] ?? '/';
@@ -80,7 +94,7 @@ class Request
             $query = array_merge($urlQuery, $query);
         }
 
-        return new self($method, $path, $query, $post, $headers);
+        return new self($method, $path, $query, $post, $headers, $files);
     }
 
     public function getMethod(): string
@@ -172,6 +186,45 @@ class Request
     public function getHeaders(): array
     {
         return $this->headers;
+    }
+
+    /**
+     * Obtener archivo adjunto por clave.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function file(string $key): ?array
+    {
+        return $this->files[$key] ?? null;
+    }
+
+    /**
+     * Alias de file().
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getFile(string $key): ?array
+    {
+        return $this->file($key);
+    }
+
+    /**
+     * Comprobar si se envió un archivo válido en la solicitud.
+     */
+    public function hasFile(string $key): bool
+    {
+        return isset($this->files[$key])
+            && is_array($this->files[$key])
+            && isset($this->files[$key]['error'])
+            && (int) $this->files[$key]['error'] !== UPLOAD_ERR_NO_FILE;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getFiles(): array
+    {
+        return $this->files;
     }
 
     private static function normalizePath(string $path): string

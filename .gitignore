@@ -11,6 +11,9 @@
 # Logs y almacenamiento temporal
 storage/logs/*.log
 !storage/logs/.gitkeep
+storage/permisos/*
+!storage/permisos/.gitkeep
+!storage/permisos/.htaccess
 *.log
 *.tmp
 

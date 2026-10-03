@@ -145,6 +145,13 @@ class App
         $this->router->post('/docente/asistencia/salida', [\App\Controllers\DocenteAsistenciaController::class, 'marcarSalida'], $docentePost);
         $this->router->get('/docente/asistencia/historial', [\App\Controllers\DocenteAsistenciaController::class, 'historial'], $docenteGet);
 
+        // Permisos Docentes (Fase 9 — RF-24, RF-25, RF-28)
+        $this->router->get('/docente/permisos', [\App\Controllers\DocentePermisoController::class, 'index'], $docenteGet);
+        $this->router->get('/docente/permisos/crear', [\App\Controllers\DocentePermisoController::class, 'createForm'], $docenteGet);
+        $this->router->post('/docente/permisos/crear', [\App\Controllers\DocentePermisoController::class, 'store'], $docentePost);
+        $this->router->get('/docente/permisos/ver', [\App\Controllers\DocentePermisoController::class, 'show'], $docenteGet);
+        $this->router->get('/docente/permisos/documento', [\App\Controllers\DocentePermisoController::class, 'descargarDocumento'], $docenteGet);
+
         // 4. Módulos de Administración Básica (Fase 4)
         $adminGet = [
             \App\Middleware\Authenticate::class,
@@ -237,6 +244,13 @@ class App
         $this->router->get('/administracion/ubicacion', [\App\Controllers\AdminUbicacionController::class, 'index'], $adminGet);
         $this->router->get('/administracion/ubicacion/configurar', [\App\Controllers\AdminUbicacionController::class, 'createForm'], $adminGet);
         $this->router->post('/administracion/ubicacion/configurar', [\App\Controllers\AdminUbicacionController::class, 'store'], $adminPost);
+
+        // 7. Gestión de Permisos Docentes (Fase 9 — RF-27, RNF-06)
+        $this->router->get('/administracion/permisos', [\App\Controllers\AdminPermisoController::class, 'index'], $adminGet);
+        $this->router->get('/administracion/permisos/ver', [\App\Controllers\AdminPermisoController::class, 'show'], $adminGet);
+        $this->router->post('/administracion/permisos/aprobar', [\App\Controllers\AdminPermisoController::class, 'aprobar'], $adminPost);
+        $this->router->post('/administracion/permisos/rechazar', [\App\Controllers\AdminPermisoController::class, 'rechazar'], $adminPost);
+        $this->router->get('/administracion/permisos/documento', [\App\Controllers\AdminPermisoController::class, 'descargarDocumento'], $adminGet);
 
         // 7. Módulo Público de Inscripciones y Cupos (Fase 6 — RF-05, RF-09, RF-10, RF-11, RF-12, RF-14, RF-32)
         $this->router->get('/inscripcion', [\App\Controllers\InscripcionPublicaController::class, 'createForm']);

@@ -1,0 +1,7 @@
+# Bloqueo total de acceso HTTP a documentos y archivos de soporte de permisos
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Deny from all
+</IfModule>

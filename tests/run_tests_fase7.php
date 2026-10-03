@@ -1005,10 +1005,11 @@ class Phase7TestSuite
         $phpBin = PHP_BINARY;
         $docRoot = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'public';
 
+        $serverLog = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'php_server_f7_' . uniqid() . '.log';
         $descriptors = [
             0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
+            1 => ['file', $serverLog, 'a'],
+            2 => ['file', $serverLog, 'a'],
         ];
 
         $cmd = sprintf('"%s" -S 127.0.0.1:%d -t "%s"', $phpBin, $port, $docRoot);
@@ -1108,6 +1109,7 @@ class Phase7TestSuite
             );
         } finally {
             $this->terminateProcess($pid, $process, $pipes);
+            @unlink($serverLog);
             if (file_exists($cookieFile)) {
                 @unlink($cookieFile);
             }
@@ -1307,10 +1309,11 @@ class Phase7TestSuite
         $phpBin = PHP_BINARY;
         $docRoot = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'public';
 
+        $serverLog = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'php_server_f7_sec_' . uniqid() . '.log';
         $descriptors = [
             0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
+            1 => ['file', $serverLog, 'a'],
+            2 => ['file', $serverLog, 'a'],
         ];
 
         $cmd = sprintf('"%s" -S 127.0.0.1:%d -t "%s"', $phpBin, $port, $docRoot);
@@ -1523,6 +1526,7 @@ class Phase7TestSuite
             }
 
             $this->terminateProcess($pid, $process, $pipes);
+            @unlink($serverLog);
             if (file_exists($cookieFileDocA)) {
                 @unlink($cookieFileDocA);
             }
