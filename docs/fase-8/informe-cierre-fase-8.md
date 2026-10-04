@@ -11,17 +11,17 @@
 
 En estricto apego a las directivas de autorización y al `Documento_Alcance_Escuela_Lo_De_Fuentes.md`, se ha completado e integrado en su totalidad la funcionalidad correspondiente a la **Fase 8**:
 
-1. **RF-18 (Configuración de Ubicación Institucional):**  
+1. **RF-18 (Configuración de ubicación):**  
    Módulo administrativo para registrar y versionar las coordenadas centrales ($\text{latitud} \in [-90, 90]$, $\text{longitud} \in [-180, 180]$) y el radio de tolerancia ($\text{radio} > 0$ metros) de la escuela.
-2. **RF-19 (Validación Geográfica):**  
+2. **RF-19 (Validación geográfica):**  
    Cálculo geodésico autoritativo de distancia en el backend mediante la fórmula de Haversine ($R = 6,371,000$ metros) y regla de frontera inclusiva ($\text{distancia} \le \text{radio}$). Rechazo sin persistencia de marcajes fuera del radio institucional.
-3. **RF-20 (Marcaje de Entrada Docente):**  
+3. **RF-20 (Marcaje de entrada):**  
    Registro de asistencia inicial para docentes activos dentro del radio institucional, con validación de secuencia lógica (prohíbe doble entrada sin salida previa).
-4. **RF-21 (Marcaje de Salida Docente):**  
+4. **RF-21 (Marcaje de salida):**  
    Registro de finalización de jornada laboral, exigiendo la existencia de un marcaje de entrada previo (prohíbe salidas huérfanas o salidas duplicadas).
-5. **RF-22 (Registro Autoritativo de Fecha y Hora):**  
+5. **RF-22 (Registro de fecha y hora):**  
    Marca temporal generada unívocamente por el motor de base de datos relacional mediante `CURRENT_TIMESTAMP(6)`, ignorando cualquier valor provisto por el cliente.
-6. **RF-23 (Historial Personal de Asistencia):**  
+6. **RF-23 (Historial de asistencia):**  
    Visualización para el docente de sus propios registros cronológicos descendentes (`fecha_hora DESC`), con aislamiento horizontal absoluto respecto a otros docentes.
 7. **RNF-06 (Trazabilidad y No Repudio):**  
    Inmutabilidad técnica de los registros de asistencia (sin métodos de modificación ni borrado) y restricción de integridad física en base de datos (`chk_marcajes_dentro_radio`).

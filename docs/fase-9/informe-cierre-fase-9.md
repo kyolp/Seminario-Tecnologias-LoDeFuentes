@@ -4,7 +4,7 @@
 **Fase:** Fase 9 — Gestión de Permisos Docentes  
 **Rol:** ANTIGRAVITY — DESARROLLADOR PRINCIPAL  
 **Fecha de Cierre:** Octubre 2026  
-**Requisitos Satisfechos:** RF-24 (Registro de solicitudes de permiso), RF-25 (Documentos de soporte y justificación), RF-27 (Aprobación y resolución administrativa), RF-28 (Consulta y trazabilidad de estado), RNF-06 (Evidencia de auditoría e inmutabilidad de transiciones), RN-DOC-05 a RN-DOC-07, CA-DOC-07 a CA-DOC-09  
+**Requisitos Satisfechos:** RF-24 (Solicitud de permiso), RF-25 (Documento de respaldo), RF-27 (Aprobación/rechazo), RF-28 (Estado de solicitud), RNF-06 (Evidencia de auditoría e inmutabilidad de transiciones), RN-DOC-05 a RN-DOC-07, CA-DOC-07 a CA-DOC-09  
 **Requisito Excluido por Alcance:** RF-26 (Notificación de permiso) — PENDIENTE PARA FASE 10  
 **Estado:** IMPLEMENTACIÓN COMPLETADA Y VERIFICADA (46/46 OK — 100% GREEN)
 
@@ -140,11 +140,11 @@ De conformidad con las instrucciones de control del proyecto y la matriz de traz
 
 ## 6. MATRIZ DE REQUISITOS DEL SISTEMA (FASE 9)
 
-- **RF-24 (Registro de solicitudes de permiso):** **IMPLEMENTADO Y VERIFICADO**
-- **RF-25 (Documentos de soporte y justificación):** **IMPLEMENTADO Y VERIFICADO**
+- **RF-24 (Solicitud de permiso):** **IMPLEMENTADO Y VERIFICADO**
+- **RF-25 (Documento de respaldo):** **IMPLEMENTADO Y VERIFICADO**
 - **RF-26 (Notificación de permiso):** **PENDIENTE PARA FASE 10** (Cero invasión en Fase 9).
-- **RF-27 (Aprobación y resolución de permisos):** **IMPLEMENTADO Y VERIFICADO**
-- **RF-28 (Consulta de estado de solicitudes):** **IMPLEMENTADO Y VERIFICADO**
+- **RF-27 (Aprobación/rechazo):** **IMPLEMENTADO Y VERIFICADO**
+- **RF-28 (Estado de solicitud):** **IMPLEMENTADO Y VERIFICADO**
 - **RNF-06 (Trazabilidad y auditoría de operaciones clave):** **EVIDENCIA PARCIAL VERIFICADA EN FASE 9** (Historial inmutable append-only implementado para el ciclo de vida de permisos).
 
 ---
