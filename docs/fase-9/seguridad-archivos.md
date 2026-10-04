@@ -71,12 +71,13 @@ if (preg_match('/<\?(php|=)/i', $contenidoInicio)) {
    # storage/permisos/.htaccess
    Require all denied
    ```
-3. **Ofuscación Criptográfica de Nombres:**
-   El nombre de archivo en disco se genera con entropía criptográfica unívoca:
-   `bin2hex(random_bytes(16)) . '_' . time() . '.' . $extension`
-   Esto impide predecir rutas, enumerar archivos o sobrescribir documentos de otros usuarios.
+3. **Ofuscación Criptográfica y Nombres Impredecibles por Carga (DT-63):**
+   El nombre de archivo en disco se genera con entropía criptográfica unívoca mediante CSPRNG:
+   `'permiso_' . bin2hex(random_bytes(32)) . '.' . $extension`
+   Esto produce un identificador hexadecimal de 64 caracteres ($2^{256}$ combinaciones posibles), garantizando que incluso cargas simultáneas o consecutivas de archivos con contenido idéntico reciban rutas físicas completamente independientes en disco, impidiendo la predicción de rutas, enumeración de archivos o sobrescritura de documentos.
 4. **Saneamiento contra Directory Traversal:**
    Se aplican `basename()` y `realpath()` garantizando que la ruta resuelta permanezca estrictamente confinada dentro de `storage/permisos/`.
+   El nombre original provisto por el cliente jamás se utiliza como ruta física en disco.
 
 ---
 

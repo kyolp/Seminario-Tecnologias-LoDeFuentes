@@ -147,7 +147,7 @@ class PermisoService
                     }
                 }
 
-                $nombreGuardado = 'permiso_' . bin2hex(random_bytes(16)) . '.' . $datosArchivo['extension'];
+                $nombreGuardado = 'permiso_' . bin2hex(random_bytes(32)) . '.' . $datosArchivo['extension'];
                 $rutaDestinoFisica = $dirDestino . DIRECTORY_SEPARATOR . $nombreGuardado;
                 $rutaRelativaAlmacenamiento = self::CARPETA_ALMACENAMIENTO . '/' . $nombreGuardado;
 

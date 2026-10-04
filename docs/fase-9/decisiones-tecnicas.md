@@ -95,3 +95,16 @@
   2. Se adquiere un bloqueo pesimista exclusivo a nivel de fila mediante `SELECT * FROM solicitudes_permiso WHERE id_solicitud_permiso = :id FOR UPDATE`.
   3. Se verifica bajo el lock que la solicitud continúe en estado `PENDIENTE`. Si otro proceso ya la resolvió, se rechaza la operación inmediatamente con excepción de dominio y se efectúa `rollBack()`.
 - **Consecuencias:** Prevención de condiciones de carrera, garantizando que una solicitud sólo pueda ser aprobada o rechazada exactamente una vez.
+
+---
+
+## DT-63: Nombre Físico Criptográficamente Aleatorio e Impredecible por Cada Carga de Archivo
+
+- **Estado:** IMPLEMENTADA Y VALIDADA.
+- **Contexto:** Si se utilizara un hash derivado únicamente del contenido o un timestamp predecible, cargas idénticas de archivos o colisiones accidentales podrían provocar sobreescrituras en el almacenamiento o permitir enumeración y predicción de rutas en el sistema de archivos.
+- **Decisión:**
+  1. Cada archivo de soporte almacenado en `storage/permisos/` recibe un nombre físico generado exclusivamente mediante un generador de números pseudoaleatorios criptográficamente seguro (CSPRNG): `bin2hex(random_bytes(32))` produciendo una cadena hexadecimal de 64 caracteres con formato `permiso_<64-hex>.<ext>`.
+  2. Dos cargas sucesivas o simultáneas de un archivo con contenido byte a byte idéntico generan nombres físicos totalmente distintos e independientes en el disco.
+  3. El nombre original provisto por el cliente jamás se utiliza como ruta en el sistema de archivos físico; se almacena de forma sanitizada únicamente como metadato en la columna `nombre_original` de la base de datos.
+- **Consecuencias:** Impredecibilidad criptográfica ($2^{256}$ combinaciones), prevención de colisiones en cargas concurrentes de archivos idénticos y neutralización de ataques de path traversal y sobreescritura maliciosa.
+

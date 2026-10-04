@@ -3,20 +3,20 @@
 **Proyecto:** Sistema Web para la Escuela Oficial Rural Mixta Lo de Fuentes  
 **Fase:** Fase 9 — Gestión de Permisos Docentes  
 **Rol:** ANTIGRAVITY — DESARROLLADOR PRINCIPAL  
-**Estado:** **100% GREEN (44/44 PRUEBAS SUPERADAS SATISFACTORIAMENTE)**  
+**Estado:** **100% GREEN (46/46 PRUEBAS SUPERADAS SATISFACTORIAMENTE)**  
 
 ---
 
 ## 1. Resumen Ejecutivo de la Suite de Pruebas
 
-El archivo de pruebas automatizadas `tests/run_tests_fase9.php` contiene 44 pruebas exhaustivas que cubren de extremo a extremo las reglas de negocio, integridad de base de datos relacional, seguridad de archivos, control de concurrencia y regresión total de las fases previas.
+El archivo de pruebas automatizadas `tests/run_tests_fase9.php` contiene 46 pruebas exhaustivas que cubren de extremo a extremo las reglas de negocio, integridad de base de datos relacional, seguridad de archivos, control de concurrencia y regresión total de las fases previas.
 
 ```
 ============================================================
-RESUMEN DE PRUEBAS DE FASE 9: PERMISOS DOCENTES
+RESUMEN DE PRUEBAS DE FASE 9: GESTIÓN DE PERMISOS DOCENTES
 ============================================================
-Total ejecutadas : 44
-Exitosas (OK)    : 44
+Total ejecutadas : 46
+Exitosas (OK)    : 46
 Fallidas (FALLO) : 0
 ============================================================
 RESULTADO: TODAS LAS PRUEBAS DE FASE 9 SUPERADAS SATISFACTORIAMENTE (100% GREEN).
@@ -41,7 +41,7 @@ RESULTADO: TODAS LAS PRUEBAS DE FASE 9 SUPERADAS SATISFACTORIAMENTE (100% GREEN)
 - **`T9-10` [OK]:** Carga y validación exitosa de imagen PNG legítima.
 - **`T9-11` [OK]:** Rechazo estricto de archivo ejecutable o script PHP camuflado con extensión permitida (`malicioso.php.png` o binario con tags PHP).
 - **`T9-12` [OK]:** Rechazo estricto de documento que excede la cuota de 5.0 MB ($5,242,880$ bytes).
-- **`T9-13` [OK]:** Almacenamiento seguro en disco con nombre hasheado unívoco (`random_bytes`) y saneamiento contra directory traversal.
+- **`T9-13` [OK]:** Almacenamiento seguro en disco con nombre único impredecible (`random_bytes`) y saneamiento contra directory traversal.
 - **`T9-14` [OK]:** Verificación de inaccesibilidad directa vía HTTP de archivos almacenados en `storage/permisos/` (HTTP 404 / 403).
 - **`T9-15` [OK]:** Descarga autorizada de documento por el docente propietario con headers de seguridad (`nosniff`, `Content-Disposition`).
 - **`T9-16` [OK]:** Aislamiento horizontal: Docente ajeno no puede descargar el documento de soporte de otro docente (HTTP 403 Forbidden).
@@ -52,7 +52,7 @@ RESULTADO: TODAS LAS PRUEBAS DE FASE 9 SUPERADAS SATISFACTORIAMENTE (100% GREEN)
 - **`T9-19` [OK]:** Detalle de permiso: Denegación de acceso a solicitud ajena para rol docente (HTTP 403).
 - **`T9-20` [OK]:** Bandeja administrativa global con filtros combinados por estado (`PENDIENTE`, `APROBADO`, `RECHAZADO`) y por docente.
 - **`T9-21` [OK]:** Aprobación administrativa de solicitud de permiso con registro de comentario directivo.
-- **`T9-22` [OK]:** Rechazo administrativo de solicitud de permiso con justificación obligatoria.
+- **`T9-22` [OK]:** Rechazo administrativo de solicitud de permiso con justificación.
 - **`T9-23` [OK]:** Inserción inmutable de la transición en `historial_solicitudes_permiso` con `id_usuario_actor` y `CURRENT_TIMESTAMP(6)`.
 - **`T9-24` [OK]:** Inmutabilidad de estado terminal: solicitudes en estado `APROBADO` o `RECHAZADO` no admiten mutaciones posteriores.
 - **`T9-25` [OK]:** Control de roles (RBAC): Docente no puede ejecutar endpoints administrativos de resolución (HTTP 403).
@@ -65,13 +65,28 @@ RESULTADO: TODAS LAS PRUEBAS DE FASE 9 SUPERADAS SATISFACTORIAMENTE (100% GREEN)
 - **`T9-30` [OK]:** Integridad referencial en base de datos: claves foráneas `RESTRICT` impiden borrado accidental de usuarios o solicitudes con historial.
 
 ### Bloque 5: Concurrencia Multiproceso Real y Atomicidad Transaccional (DT-57, DT-62)
-- **`T9-31` [OK]:** Concurrencia real multiproceso en resolución con bloqueo pesimista `SELECT ... FOR UPDATE`: dos procesos simultáneos intentan resolver la misma solicitud; exactamente uno triunfa y el segundo es rechazado limpiamente sin sobreescritura.
+- **`T9-31` [OK]:** Concurrencia real multiproceso en resolución con bloqueo pesimista `SELECT ... FOR UPDATE` (5 iteraciones reales consecutivas): dos procesos simultáneos intentan resolver solicitudes idénticas en paralelo; exactamente 1 triunfa y 1 es rechazado limpiamente en cada carrera sin colisiones ni excepciones SQL expuestas:
+
+| Iteración | Ganador | Perdedor | Estado final | Historial terminal | Consistente |
+|---|---|---|---|---:|---|
+| 1 | Proceso A (aprobar) | Proceso B (rechazar) | APROBADO | 1 | SÍ |
+| 2 | Proceso A (aprobar) | Proceso B (rechazar) | APROBADO | 1 | SÍ |
+| 3 | Proceso A (aprobar) | Proceso B (rechazar) | APROBADO | 1 | SÍ |
+| 4 | Proceso A (aprobar) | Proceso B (rechazar) | APROBADO | 1 | SÍ |
+| 5 | Proceso A (aprobar) | Proceso B (rechazar) | APROBADO | 1 | SÍ |
+
 - **`T9-32` [OK]:** Atomicidad transaccional y rollback completo: ante fallo simulado en la inserción del historial, la solicitud permanece intacta en su estado original.
 
-### Bloque 6: Pruebas HTTP Reales con Servidor PHP Embebido y cURL (RF-24, RF-25, RF-27, RF-28)
-- **`T9-33` [OK]:** Flujo HTTP real completo del Docente: Login real con cookies, GET formulario, extracción de token CSRF, envío POST multipart con adjunto binario y visualización en historial.
-- **`T9-34` [OK]:** Flujo HTTP real completo del Administrador: Login real, consulta de bandeja, visualización de detalle y POST de aprobación.
-- **`T9-35` [OK]:** Verificación HTTP de blindaje de almacenamiento: petición GET directa a archivo en `storage/permisos/` devuelve HTTP 404 / 403.
+### Bloque 6: Pruebas HTTP Reales con Servidor PHP Embebido y cURL (RF-24, RF-25, RF-27, RF-28, DT-61)
+- **`T9-33` [OK]:** Flujo HTTP real completo del Docente con aislamiento horizontal y anti-tampering:
+  - Flujo base: Login real, GET formulario HTTP 200, extracción de token CSRF, envío POST multipart HTTP 302 con adjunto binario y visualización en listado HTTP 200.
+  - **Escenario A:** Docente A solicita ver detalle de Docente B (`/docente/permisos/ver?id=<B>`) $\to$ HTTP 403 Forbidden, 0 datos expuestos de B.
+  - **Escenario B:** Docente A intenta descargar documento de Docente B (`/docente/permisos/documento?id=<B>`) $\to$ HTTP 403 Forbidden, 0 bytes filtrados.
+  - **Escenario C:** Manipulación de parámetro `id_docente` en POST $\to$ ignorado, solicitud creada con propietario = Docente A autenticado.
+- **`T9-34` [OK]:** Flujo HTTP real completo del Administrador con re-resolución denegada:
+  - Flujo base: Login real, consulta de bandeja HTTP 200, detalle HTTP 200, POST aprobación HTTP 302.
+  - Intento de re-resolución incompatible (POST rechazo sobre solicitud ya aprobada) $\to$ HTTP 302 controlado con mensaje `error=`, solicitud permanece `APROBADO` en BD, historial terminal permanece exactamente 1, cero `SQLSTATE` o `PDOException` expuestas.
+- **`T9-35` [OK]:** Verificación HTTP de blindaje de almacenamiento: petición GET directa a archivo en `storage/permisos/` devuelve HTTP 404.
 
 ### Bloque 7: Control Estricto de Alcance de Fase 10
 - **`T9-36` [OK]:** Verificación de alcance de `RF-26`: Cero filas creadas en `notificaciones` y cero acoplamiento funcional introducido durante la ejecución de la Fase 9 (`RF-26 PENDIENTE — FASE 10`).
@@ -85,3 +100,8 @@ RESULTADO: TODAS LAS PRUEBAS DE FASE 9 SUPERADAS SATISFACTORIAMENTE (100% GREEN)
 - **`T9-42` [OK]:** Regresión completa de **Fase 3** (Autenticación y Roles) — 19/19 pruebas OK.
 - **`T9-43` [OK]:** Regresión completa de **Fase 2** (Arquitectura Base) — 16/16 pruebas OK.
 - **`T9-44` [OK]:** Regresión completa de **Fase 1** (Base de Datos Relacional) — 18/18 pruebas de integridad OK en base aislada.
+
+### Bloque 9: Pruebas Complementarias de Corrección (F9-04 y F9-05)
+- **`T9-45` [OK]:** Nombres físicos aleatorios independientes por carga (F9-05, DT-63): Dos archivos cargados con contenido byte a byte idéntico reciben nombres físicos distintos generados con `bin2hex(random_bytes(32))` (`permiso_<64-hex>.<ext>`), ninguno utiliza el nombre original del cliente como ruta y ambos residen en `storage/permisos/` fuera de `public/`.
+- **`T9-46` [OK]:** Rechazo administrativo con observación opcional (null/vacía) sin restricción artificial (F9-04, RF-27): Solicitud transiciona exitosamente a `RECHAZADO` y la observación en `historial_solicitudes_permiso` persiste `NULL` sin exigir longitud mínima de caracteres.
+

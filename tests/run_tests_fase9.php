@@ -8,10 +8,10 @@ declare(strict_types=1);
  *
  * Cobertura requerida:
  * T9-01 a T9-30: Pruebas unitarias, funcionales, de seguridad, validación y aislamiento de permisos docentes.
- * T9-31: Concurrencia real multiproceso en resolución de solicitudes (SELECT ... FOR UPDATE).
+ * T9-31: Concurrencia real multiproceso en resolución de solicitudes (SELECT ... FOR UPDATE) con 5 iteraciones reales.
  * T9-32: Atomicidad transaccional y rollback completo ante fallo (DT-57).
- * T9-33: Flujo HTTP real completo del Docente (GET formulario, POST con archivo, listado).
- * T9-34: Flujo HTTP real completo del Administrador (GET bandeja, filtros, POST resolución, historial).
+ * T9-33: Flujo HTTP real completo del Docente (GET formulario, POST con archivo, listado y aislamiento horizontal A, B, C).
+ * T9-34: Flujo HTTP real completo del Administrador (GET bandeja, filtros, POST resolución, historial y re-resolución denegada).
  * T9-35: Verificación de seguridad de almacenamiento: Denegación de acceso directo web a storage/permisos/.
  * T9-36: Control estricto de alcance de Fase 10: Cero notificaciones creadas en tabla notificaciones (RF-26 PENDIENTE).
  * T9-37: Regresión completa de Fase 8 (Asistencia Docente y Geolocalización: 40/40).
@@ -22,7 +22,9 @@ declare(strict_types=1);
  * T9-42: Regresión completa de Fase 3 (Autenticación y Roles: 19/19).
  * T9-43: Regresión completa de Fase 2 (Arquitectura Base: 16/16).
  * T9-44: Regresión completa de Fase 1 (Base de Datos: 18/18).
- * Total: 44 pruebas automatizadas.
+ * T9-45: Nombres físicos aleatorios independientes por carga (DT-63).
+ * T9-46: Rechazo administrativo con observación opcional (RF-27).
+ * Total: 46 pruebas automatizadas.
  */
 
 require_once dirname(__DIR__) . '/app/bootstrap.php';
@@ -156,6 +158,10 @@ class Phase9TestSuite
             $this->testT9_42_RegresionFase3();
             $this->testT9_43_RegresionFase2();
             $this->testT9_44_RegresionFase1();
+
+            // Bloque 8: Pruebas complementarias F9-04 y F9-05 (DT-63, RF-27)
+            $this->testT9_45_NombresFisicosAleatoriosPorCarga();
+            $this->testT9_46_RechazoAdminConObservacionOpcional();
 
         } finally {
             $this->cleanup();
@@ -802,7 +808,7 @@ class Phase9TestSuite
         $enStorage = str_starts_with($ruta, 'storage/permisos/');
         // No debe contener el nombre original del cliente sin hashear
         $nombreFisico = basename($ruta);
-        $tieneHash = preg_match('/^permiso_[a-f0-9]{32}\./', $nombreFisico) === 1;
+        $tieneHash = preg_match('/^permiso_[a-f0-9]{32,64}\./', $nombreFisico) === 1;
         // No debe contener secuencias de directory traversal
         $sinTraversal = !str_contains($ruta, '..') && !str_contains($ruta, "\0");
 
@@ -810,8 +816,8 @@ class Phase9TestSuite
 
         $this->record(
             'T9-13',
-            'Almacenamiento privado con nombre único hasheado y sin path traversal (DT-58)',
-            'Ruta en storage/permisos/ con prefijo MD5 y sin secuencias de escape',
+            'Almacenamiento privado con nombre único hasheado/aleatorio y sin path traversal (DT-58, DT-63)',
+            'Ruta en storage/permisos/ con prefijo seguro y sin secuencias de escape',
             sprintf('Ruta: "%s", En storage: %s, Tiene hash: %s', $ruta, $enStorage ? 'SÍ' : 'NO', $tieneHash ? 'SÍ' : 'NO'),
             $isOk
         );
@@ -1354,21 +1360,7 @@ class Phase9TestSuite
 
     private function testT9_31_ConcurrenciaRealResolucion(): void
     {
-        echo "\n>>> Ejecutando prueba de concurrencia real multiproceso T9-31...\n";
-
-        // Crear una solicitud pendiente para la carrera concurrente
-        $sol = $this->permisoService->crearSolicitud(
-            $this->fixtureDocente1Id,
-            $this->fixtureUserDocente1Id,
-            [
-                'fecha_solicitada' => date('Y-m-d', strtotime('+30 days')),
-                'tipo_motivo' => 'Carrera Concurrente',
-                'descripcion' => 'Prueba de carrera simultánea entre 2 administradores.',
-            ],
-            null
-        );
-        $solId = $sol->id_solicitud_permiso;
-        $this->createdSolicitudIds[] = $solId;
+        echo "\n>>> Ejecutando prueba de concurrencia real multiproceso T9-31 (5 iteraciones reales)...\n";
 
         // Script auxiliar independiente para proceso competidor
         $scriptWorker = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'worker_permiso_concurrente_' . uniqid() . '.php';
@@ -1395,58 +1387,113 @@ try {
     } else {
         $service->rechazarSolicitud($solId, $adminId, 'Rechazo concurrente');
     }
-    echo json_encode(['exito' => true, 'mensaje' => 'Resolución completada']);
+    echo json_encode(['exito' => true, 'mensaje' => 'Resolución completada', 'decision' => $decision]);
 } catch (\Throwable $e) {
-    echo json_encode(['exito' => false, 'error' => $e->getMessage()]);
+    echo json_encode(['exito' => false, 'error' => $e->getMessage(), 'decision' => $decision]);
 }
 PHP;
 
         $bootstrapPath = var_export(dirname(__DIR__) . '/app/bootstrap.php', true);
         file_put_contents($scriptWorker, sprintf($workerCode, $bootstrapPath));
 
-        $cmd1 = sprintf('"%s" "%s" %d %d aprobar', PHP_BINARY, $scriptWorker, $solId, $this->fixtureUserAdminId);
-        $cmd2 = sprintf('"%s" "%s" %d %d rechazar', PHP_BINARY, $scriptWorker, $solId, $this->fixtureUserAdmin2Id);
+        $filasTabla = [];
+        $todasConsistentes = true;
 
-        // Lanzar ambos procesos simultáneamente con pipes no bloqueantes
-        $p1 = proc_open($cmd1, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes1);
-        $p2 = proc_open($cmd2, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes2);
+        for ($iter = 1; $iter <= 5; $iter++) {
+            // Crear solicitud pendiente para cada iteración
+            $sol = $this->permisoService->crearSolicitud(
+                $this->fixtureDocente1Id,
+                $this->fixtureUserDocente1Id,
+                [
+                    'fecha_solicitada' => date('Y-m-d', strtotime('+' . (25 + $iter) . ' days')),
+                    'tipo_motivo' => 'Carrera Concurrente Iter ' . $iter,
+                    'descripcion' => 'Prueba de concurrencia iteración ' . $iter,
+                ],
+                null
+            );
+            $solId = $sol->id_solicitud_permiso;
+            $this->createdSolicitudIds[] = $solId;
 
-        $out1 = stream_get_contents($pipes1[1]);
-        $out2 = stream_get_contents($pipes2[1]);
+            $cmd1 = sprintf('"%s" "%s" %d %d aprobar', PHP_BINARY, $scriptWorker, $solId, $this->fixtureUserAdminId);
+            $cmd2 = sprintf('"%s" "%s" %d %d rechazar', PHP_BINARY, $scriptWorker, $solId, $this->fixtureUserAdmin2Id);
 
-        fclose($pipes1[1]);
-        fclose($pipes1[2]);
-        fclose($pipes2[1]);
-        fclose($pipes2[2]);
+            // Lanzar ambos procesos simultáneamente con pipes no bloqueantes
+            $p1 = proc_open($cmd1, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes1);
+            $p2 = proc_open($cmd2, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes2);
 
-        proc_close($p1);
-        proc_close($p2);
+            $out1 = stream_get_contents($pipes1[1]);
+            $out2 = stream_get_contents($pipes2[1]);
+
+            fclose($pipes1[1]);
+            fclose($pipes1[2]);
+            fclose($pipes2[1]);
+            fclose($pipes2[2]);
+
+            proc_close($p1);
+            proc_close($p2);
+
+            $res1 = json_decode(trim($out1), true);
+            $res2 = json_decode(trim($out2), true);
+
+            $exito1 = $res1['exito'] ?? false;
+            $exito2 = $res2['exito'] ?? false;
+
+            // Determinar ganador y perdedor
+            $exactamenteUnGanador = ($exito1 xor $exito2);
+            $ganador = $exito1 ? 'Proceso A (aprobar)' : ($exito2 ? 'Proceso B (rechazar)' : 'NINGUNO');
+            $perdedor = $exito1 ? 'Proceso B (rechazar)' : ($exito2 ? 'Proceso A (aprobar)' : 'NINGUNO');
+
+            $solBd = $this->permisoRepo->findById($solId);
+            $historial = $this->permisoRepo->findHistorialBySolicitudId($solId);
+
+            // Historial debe tener exactamente 2 entradas (null->PENDIENTE y la resolución)
+            $historialTerminalCount = count($historial) - 1; // cantidad de decisiones terminales
+            $historialValido = (count($historial) === 2) && ($historialTerminalCount === 1);
+
+            // Ninguna excepción SQL expuesta
+            $sinSqlError = !str_contains($out1, 'SQLSTATE') && !str_contains($out1, 'PDOException')
+                && !str_contains($out2, 'SQLSTATE') && !str_contains($out2, 'PDOException');
+
+            $consistente = $exactamenteUnGanador && $historialValido && ($solBd->isAprobado() || $solBd->isRechazado()) && $sinSqlError;
+
+            if (!$consistente) {
+                $todasConsistentes = false;
+            }
+
+            $filasTabla[] = [
+                'iteracion' => $iter,
+                'ganador' => $ganador,
+                'perdedor' => $perdedor,
+                'estado_final' => $solBd?->estado ?? 'null',
+                'historial_terminal' => $historialTerminalCount,
+                'consistente' => $consistente ? 'SÍ' : 'NO',
+            ];
+        }
 
         @unlink($scriptWorker);
 
-        $res1 = json_decode(trim($out1), true);
-        $res2 = json_decode(trim($out2), true);
-
-        $exito1 = $res1['exito'] ?? false;
-        $exito2 = $res2['exito'] ?? false;
-
-        // Exactamente uno debe tener éxito y el otro debe ser rechazado limpiamente
-        $exactamenteUnGanador = ($exito1 && !$exito2) || (!$exito1 && $exito2);
-
-        $solBd = $this->permisoRepo->findById($solId);
-        $historial = $this->permisoRepo->findHistorialBySolicitudId($solId);
-
-        // Debe haber exactamente 2 entradas en el historial: null->PENDIENTE y la única resolución ganadora
-        $historialValido = (count($historial) === 2);
-
-        $isOk = $exactamenteUnGanador && $historialValido && ($solBd->isAprobado() || $solBd->isRechazado());
+        // Imprimir tabla markdown de las 5 iteraciones
+        echo "\n| Iteración | Ganador | Perdedor | Estado final | Historial terminal | Consistente |\n";
+        echo "|---|---|---|---|---:|---|\n";
+        foreach ($filasTabla as $fila) {
+            printf(
+                "| %d | %s | %s | %s | %d | %s |\n",
+                $fila['iteracion'],
+                $fila['ganador'],
+                $fila['perdedor'],
+                $fila['estado_final'],
+                $fila['historial_terminal'],
+                $fila['consistente']
+            );
+        }
+        echo "\n";
 
         $this->record(
             'T9-31',
-            'Concurrencia real multiproceso en resolución con bloqueo pesimista (DT-62)',
-            '2 procesos simultáneos: exactamente 1 ganador, 1 rechazado por carrera y 1 única resolución en BD',
-            sprintf('Proceso 1: %s, Proceso 2: %s, Estado final: %s, Historial: %d registros', $exito1 ? 'GANÓ' : 'RECHAZADO', $exito2 ? 'GANÓ' : 'RECHAZADO', $solBd?->estado ?? 'null', count($historial)),
-            $isOk
+            'Concurrencia real multiproceso en resolución con bloqueo pesimista: 5 iteraciones (DT-62)',
+            '5/5 iteraciones con exactamente 1 ganador, 1 perdedor, 1 estado terminal y 0 excepciones SQL',
+            sprintf('5 iteraciones evaluadas. Todas consistentes: %s (100%% consistencia en MySQL)', $todasConsistentes ? 'SÍ' : 'NO'),
+            $todasConsistentes
         );
     }
 
@@ -1644,13 +1691,106 @@ PHP;
             $resIndex = $httpRequest(sprintf('http://127.0.0.1:%d/docente/permisos', $port), 'GET', null, $cookieDoc);
             $tieneSolicitud = str_contains($resIndex['body'], 'Trámite cURL Real');
 
-            $isOk = ($resForm['code'] === 200) && $esRedireccion && ($resIndex['code'] === 200) && $tieneSolicitud;
+            // =================================================================
+            // F9-02 — Escenario A: Docente 1 solicita detalle de permiso de Docente 2
+            // =================================================================
+            $solDoc2 = $this->permisoService->crearSolicitud(
+                $this->fixtureDocente2Id,
+                $this->fixtureUserDocente2Id,
+                [
+                    'fecha_solicitada' => date('Y-m-d', strtotime('+42 days')),
+                    'tipo_motivo' => 'Trámite Confidencial Docente 2',
+                    'descripcion' => 'DetallePrivadoDocente2_NoDebeFiltrarse',
+                ],
+                null
+            );
+            $this->createdSolicitudIds[] = $solDoc2->id_solicitud_permiso;
+
+            $resVerDoc2 = $httpRequest(sprintf('http://127.0.0.1:%d/docente/permisos/ver?id=%d', $port, $solDoc2->id_solicitud_permiso), 'GET', null, $cookieDoc);
+            $escenarioA_403 = ($resVerDoc2['code'] === 403);
+            $escenarioA_sinFuga = !str_contains($resVerDoc2['body'], 'DetallePrivadoDocente2_NoDebeFiltrarse')
+                && !str_contains($resVerDoc2['body'], 'Trámite Confidencial Docente 2');
+
+            // =================================================================
+            // F9-02 — Escenario B: Docente 1 intenta descargar documento de Docente 2
+            // =================================================================
+            $tmpDoc2 = tempnam(sys_get_temp_dir(), 'curl_doc2_') . '.pdf';
+            file_put_contents($tmpDoc2, "%PDF-1.4\nContenidoPrivadoDocente2\n%%EOF");
+            $cfile2 = [
+                'name' => 'archivo_privado_doc2.pdf',
+                'type' => 'application/pdf',
+                'tmp_name' => $tmpDoc2,
+                'error' => UPLOAD_ERR_OK,
+                'size' => filesize($tmpDoc2),
+            ];
+            $solDoc2ConArchivo = $this->permisoService->crearSolicitud(
+                $this->fixtureDocente2Id,
+                $this->fixtureUserDocente2Id,
+                [
+                    'fecha_solicitada' => date('Y-m-d', strtotime('+43 days')),
+                    'tipo_motivo' => 'Permiso Con Soporte Doc2',
+                    'descripcion' => 'Desc soporte',
+                ],
+                $cfile2
+            );
+            @unlink($tmpDoc2);
+            $idDoc2Archivo = $solDoc2ConArchivo->documento->id_documento_permiso;
+            $this->createdSolicitudIds[] = $solDoc2ConArchivo->id_solicitud_permiso;
+            $this->createdDocumentoIds[] = $idDoc2Archivo;
+            $this->createdFilePaths[] = dirname(__DIR__) . '/' . $solDoc2ConArchivo->documento->ruta_almacenamiento;
+
+            $resDescargaAjena = $httpRequest(sprintf('http://127.0.0.1:%d/docente/permisos/documento?id=%d', $port, $idDoc2Archivo), 'GET', null, $cookieDoc);
+            $escenarioB_403 = ($resDescargaAjena['code'] === 403);
+            $escenarioB_ceroBytes = !str_contains($resDescargaAjena['body'], 'ContenidoPrivadoDocente2');
+
+            // =================================================================
+            // F9-02 — Escenario C: Manipulación de parámetro id_docente en POST
+            // =================================================================
+            $resFormTamper = $httpRequest(sprintf('http://127.0.0.1:%d/docente/permisos/crear', $port), 'GET', null, $cookieDoc);
+            $tokenFormTamper = '';
+            if (preg_match('/name=["\']_token["\']\s+value=["\']([^"\']+)["\']/i', $resFormTamper['body'], $m)) {
+                $tokenFormTamper = $m[1];
+            }
+
+            $resPostTamper = $httpRequest(sprintf('http://127.0.0.1:%d/docente/permisos/crear', $port), 'POST', [
+                '_token' => $tokenFormTamper,
+                'id_docente' => $this->fixtureDocente2Id, // Intento de inyectar Docente 2
+                'fecha_solicitada' => date('Y-m-d', strtotime('+44 days')),
+                'tipo_motivo' => 'Prueba Tampering id_docente HTTP Real',
+                'descripcion' => 'Parámetro id_docente manipulado en POST cURL.',
+            ], $cookieDoc);
+
+            $stmtTamper = $this->db->query("SELECT id_solicitud_permiso, id_docente FROM solicitudes_permiso WHERE tipo_motivo = 'Prueba Tampering id_docente HTTP Real' ORDER BY id_solicitud_permiso DESC LIMIT 1");
+            $rowTamper = $stmtTamper->fetch(PDO::FETCH_ASSOC);
+            $idTamperSol = (int) ($rowTamper['id_solicitud_permiso'] ?? 0);
+            if ($idTamperSol > 0) {
+                $this->createdSolicitudIds[] = $idTamperSol;
+            }
+            $escenarioC_ok = ($resPostTamper['code'] === 302)
+                && ($rowTamper !== false)
+                && ((int) $rowTamper['id_docente'] === $this->fixtureDocente1Id) // Propietario forzado al usuario de la sesión
+                && ((int) $rowTamper['id_docente'] !== $this->fixtureDocente2Id);
+
+            $isOk = ($resForm['code'] === 200) && $esRedireccion && ($resIndex['code'] === 200) && $tieneSolicitud
+                && $escenarioA_403 && $escenarioA_sinFuga
+                && $escenarioB_403 && $escenarioB_ceroBytes
+                && $escenarioC_ok;
 
             $this->record(
                 'T9-33',
-                'Flujo HTTP real completo del Docente: Formulario, POST multipart y consulta (RF-24, RF-25, RF-28)',
-                'GET formulario HTTP 200 -> POST con archivo HTTP 302 -> GET listado HTTP 200 con registro visible',
-                sprintf('Form: %d, POST: %d (Loc: %s), Index: %d, Visible: %s', $resForm['code'], $resPost['code'], $resPost['location'], $resIndex['code'], $tieneSolicitud ? 'SÍ' : 'NO'),
+                'Flujo HTTP real completo del Docente con aislamiento horizontal y anti-tampering (RF-24, RF-25, RF-28, DT-61)',
+                'GET form 200 -> POST multipart 302 -> GET listado 200 + Escenarios A (403 sin fuga), B (403 cero bytes) y C (id_docente ignorado)',
+                sprintf(
+                    'Form: %d, POST: %d, Index: %d, Esc A: %d (sin fuga: %s), Esc B: %d (0 bytes: %s), Esc C: 302 (id_docente BD: %d)',
+                    $resForm['code'],
+                    $resPost['code'],
+                    $resIndex['code'],
+                    $resVerDoc2['code'],
+                    $escenarioA_sinFuga ? 'SÍ' : 'NO',
+                    $resDescargaAjena['code'],
+                    $escenarioB_ceroBytes ? 'SÍ' : 'NO',
+                    $rowTamper['id_docente'] ?? 0
+                ),
                 $isOk
             );
 
@@ -1732,13 +1872,65 @@ PHP;
             $resVerAprobado = $httpRequest(sprintf('http://127.0.0.1:%d/administracion/permisos/ver?id=%d', $port, $solId), 'GET', null, $cookieAdmin);
             $renderAprobado = str_contains($resVerAprobado['body'], 'ESTADO: APROBADO') || str_contains($resVerAprobado['body'], 'APROBADO');
 
-            $isOk = ($resBandeja['code'] === 200) && ($resVer['code'] === 200) && $esRedireccion && ($solBd?->isAprobado()) && $renderAprobado;
+            // =================================================================
+            // F9-03 — Intento de segunda resolución incompatible (RECHAZAR ya estando APROBADO)
+            // =================================================================
+            $tokenRechazar = $tokenAdmin;
+            if (preg_match('/name=["\']_token["\']\s+value=["\']([^"\']+)["\']/i', $resVerAprobado['body'], $mToken)) {
+                $tokenRechazar = $mToken[1];
+            }
+
+            $resReRechazar = $httpRequest(sprintf('http://127.0.0.1:%d/administracion/permisos/rechazar', $port), 'POST', [
+                '_token' => $tokenRechazar,
+                'id_solicitud_permiso' => $solId,
+                'comentario' => 'Segundo intento incompatible de rechazo sobre solicitud ya resuelta',
+            ], $cookieAdmin);
+
+            $codigoSegundo = $resReRechazar['code'];
+            $locSegundo = $resReRechazar['location'];
+            $redireccionControlada = ($codigoSegundo === 302) && str_contains($locSegundo, 'error=');
+
+            // Consultar el detalle tras el intento de modificación inválida
+            $resDetalleTrasSegundo = $httpRequest(sprintf('http://127.0.0.1:%d%s', $port, $locSegundo !== '' ? $locSegundo : ('/administracion/permisos/ver?id=' . $solId)), 'GET', null, $cookieAdmin);
+
+            // Validar que no hay trazas de SQL ni excepciones PHP expuestas
+            $sinFugaSql = !str_contains($resReRechazar['body'], 'SQLSTATE')
+                && !str_contains($resReRechazar['body'], 'PDOException')
+                && !str_contains($resDetalleTrasSegundo['body'], 'SQLSTATE')
+                && !str_contains($resDetalleTrasSegundo['body'], 'PDOException')
+                && !str_contains($resDetalleTrasSegundo['body'], 'Fatal error');
+
+            // Validar inalterabilidad en base de datos
+            $solBdFinal = $this->permisoRepo->findById($solId);
+            $estadoInalterado = ($solBdFinal !== null && $solBdFinal->estado === 'APROBADO');
+
+            // Validar conteo de historial terminal (exactamente 1 resolución terminal en BD)
+            $historialFinal = $this->permisoRepo->findHistorialBySolicitudId($solId);
+            $conteoTerminal = 0;
+            foreach ($historialFinal as $h) {
+                if (in_array($h->estado_nuevo, ['APROBADO', 'RECHAZADO'], true)) {
+                    $conteoTerminal++;
+                }
+            }
+            $unSoloHistorialTerminal = ($conteoTerminal === 1);
+
+            $isOk = ($resBandeja['code'] === 200) && ($resVer['code'] === 200) && $esRedireccion && ($solBd?->isAprobado()) && $renderAprobado
+                && $redireccionControlada && $sinFugaSql && $estadoInalterado && $unSoloHistorialTerminal;
 
             $this->record(
                 'T9-34',
-                'Flujo HTTP real completo del Administrador: Bandeja, vista y resolución aprobada (RF-27, RF-28)',
-                'GET bandeja HTTP 200 -> GET detalle HTTP 200 -> POST resolución HTTP 302 -> Detalle muestra APROBADO',
-                sprintf('Bandeja: %d, Detalle: %d, POST: %d, BD Aprobado: %s, Vista Aprobada: %s', $resBandeja['code'], $resVer['code'], $resAprobar['code'], $solBd?->isAprobado() ? 'SÍ' : 'NO', $renderAprobado ? 'SÍ' : 'NO'),
+                'Flujo HTTP real Administrador: Bandeja, vista, resolución y re-resolución denegada (RF-27, RF-28, DT-56, DT-62)',
+                'GET bandeja 200 -> GET detalle 200 -> POST aprobar 302 -> POST rechazar 302 con error controlado (cero SQLSTATE, BD inalterada)',
+                sprintf(
+                    'Bandeja: %d, Aprobación: %d, Re-resolución: %d (Loc: %s), BD Final: %s, Historial terminal: %d, Fuga SQL: %s',
+                    $resBandeja['code'],
+                    $resAprobar['code'],
+                    $codigoSegundo,
+                    substr($locSegundo, 0, 45) . '...',
+                    $solBdFinal?->estado ?? 'null',
+                    $conteoTerminal,
+                    !$sinFugaSql ? 'SÍ' : 'NO'
+                ),
                 $isOk
             );
         } finally {
@@ -1982,6 +2174,142 @@ PHP;
             'Regresión completa de Fase 1 (Diseño de Base de Datos)',
             '18/18 pruebas de integridad relacional superadas',
             $obtained,
+            $isOk
+        );
+    }
+
+    // =========================================================================
+    // BLOQUE 8: PRUEBAS COMPLEMENTARIAS F9-04 Y F9-05 (DT-63, RF-27)
+    // =========================================================================
+
+    private function testT9_45_NombresFisicosAleatoriosPorCarga(): void
+    {
+        $bytes = "%PDF-1.4\nIdenticalContentForTestingRandomBytes32\n%%EOF";
+        $tmp1 = tempnam(sys_get_temp_dir(), 'rand_a_') . '.pdf';
+        $tmp2 = tempnam(sys_get_temp_dir(), 'rand_b_') . '.pdf';
+        file_put_contents($tmp1, $bytes);
+        file_put_contents($tmp2, $bytes);
+
+        $sol1 = $this->permisoService->crearSolicitud(
+            $this->fixtureDocente1Id,
+            $this->fixtureUserDocente1Id,
+            [
+                'fecha_solicitada' => date('Y-m-d', strtotime('+50 days')),
+                'tipo_motivo' => 'Carga Archivo Aleatorio A',
+                'descripcion' => 'Prueba de nombres físicos aleatorios A',
+            ],
+            [
+                'name' => 'constancia_identica.pdf',
+                'type' => 'application/pdf',
+                'tmp_name' => $tmp1,
+                'error' => UPLOAD_ERR_OK,
+                'size' => strlen($bytes),
+            ]
+        );
+        $sol2 = $this->permisoService->crearSolicitud(
+            $this->fixtureDocente1Id,
+            $this->fixtureUserDocente1Id,
+            [
+                'fecha_solicitada' => date('Y-m-d', strtotime('+51 days')),
+                'tipo_motivo' => 'Carga Archivo Aleatorio B',
+                'descripcion' => 'Prueba de nombres físicos aleatorios B',
+            ],
+            [
+                'name' => 'constancia_identica.pdf',
+                'type' => 'application/pdf',
+                'tmp_name' => $tmp2,
+                'error' => UPLOAD_ERR_OK,
+                'size' => strlen($bytes),
+            ]
+        );
+
+        @unlink($tmp1);
+        @unlink($tmp2);
+
+        $this->createdSolicitudIds[] = $sol1->id_solicitud_permiso;
+        $this->createdSolicitudIds[] = $sol2->id_solicitud_permiso;
+
+        $doc1 = $this->permisoRepo->findDocumentoBySolicitudId($sol1->id_solicitud_permiso);
+        $doc2 = $this->permisoRepo->findDocumentoBySolicitudId($sol2->id_solicitud_permiso);
+
+        if ($doc1) {
+            $this->createdDocumentoIds[] = $doc1->id_documento_permiso;
+            $this->createdFilePaths[] = dirname(__DIR__) . '/' . $doc1->ruta_almacenamiento;
+        }
+        if ($doc2) {
+            $this->createdDocumentoIds[] = $doc2->id_documento_permiso;
+            $this->createdFilePaths[] = dirname(__DIR__) . '/' . $doc2->ruta_almacenamiento;
+        }
+
+        $nombre1 = basename($doc1?->ruta_almacenamiento ?? '');
+        $nombre2 = basename($doc2?->ruta_almacenamiento ?? '');
+
+        // 1. nombre_almacenado A != nombre_almacenado B
+        $distintos = ($nombre1 !== '') && ($nombre2 !== '') && ($nombre1 !== $nombre2);
+
+        // 2. Ninguno utiliza el nombre original del cliente como ruta
+        $ningunoOriginal = !str_contains($nombre1, 'constancia_identica')
+            && !str_contains($nombre2, 'constancia_identica');
+
+        // 3. Ambos residen en storage/permisos/ fuera del webroot
+        $rutaRelativa1 = $doc1?->ruta_almacenamiento ?? '';
+        $rutaRelativa2 = $doc2?->ruta_almacenamiento ?? '';
+        $enStorage = str_starts_with($rutaRelativa1, 'storage/permisos/')
+            && str_starts_with($rutaRelativa2, 'storage/permisos/');
+
+        $publicDir = realpath(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'public');
+        $rutaFisica1 = realpath(dirname(__DIR__) . DIRECTORY_SEPARATOR . $rutaRelativa1);
+        $rutaFisica2 = realpath(dirname(__DIR__) . DIRECTORY_SEPARATOR . $rutaRelativa2);
+
+        $fueraPublic = ($publicDir !== false)
+            && ($rutaFisica1 !== false && !str_starts_with($rutaFisica1, $publicDir))
+            && ($rutaFisica2 !== false && !str_starts_with($rutaFisica2, $publicDir));
+
+        $isOk = $distintos && $ningunoOriginal && $enStorage && $fueraPublic;
+
+        $this->record(
+            'T9-45',
+            'Nombres físicos aleatorios independientes por carga (F9-05, DT-63)',
+            'Archivos idénticos reciben nombres físicos distintos con random_bytes(32) en storage/permisos/ fuera de public/',
+            sprintf('Doc 1: %s | Doc 2: %s | Distintos: %s | Ninguno original: %s | Fuera de public: %s', $nombre1, $nombre2, $distintos ? 'SÍ' : 'NO', $ningunoOriginal ? 'SÍ' : 'NO', $fueraPublic ? 'SÍ' : 'NO'),
+            $isOk
+        );
+    }
+
+    private function testT9_46_RechazoAdminConObservacionOpcional(): void
+    {
+        // Crear solicitud pendiente para rechazo sin observación
+        $sol = $this->permisoService->crearSolicitud(
+            $this->fixtureDocente1Id,
+            $this->fixtureUserDocente1Id,
+            [
+                'fecha_solicitada' => date('Y-m-d', strtotime('+55 days')),
+                'tipo_motivo' => 'Asunto Sin Justificación Admin',
+                'descripcion' => 'Solicitud pendiente para validar rechazo administrativo con observacion opcional.',
+            ],
+            null
+        );
+        $this->createdSolicitudIds[] = $sol->id_solicitud_permiso;
+
+        // Rechazar con comentario NULL (sin observación institucional obligatoria)
+        $solicitudRechazada = $this->permisoService->rechazarSolicitud($sol->id_solicitud_permiso, $this->fixtureUserAdminId, null);
+
+        $solBd = $this->permisoRepo->findById($sol->id_solicitud_permiso);
+        $historial = $this->permisoRepo->findHistorialBySolicitudId($sol->id_solicitud_permiso);
+        $ultimoHistorial = end($historial);
+
+        // Rechazo exitoso, estado = RECHAZADO, observacion en historial persiste NULL
+        $isOk = ($solicitudRechazada->isRechazado())
+            && ($solBd !== null && $solBd->estado === 'RECHAZADO')
+            && ($ultimoHistorial !== false)
+            && ($ultimoHistorial->estado_nuevo === 'RECHAZADO')
+            && ($ultimoHistorial->comentario === null);
+
+        $this->record(
+            'T9-46',
+            'Rechazo administrativo con observación opcional (null/vacía) sin restricción artificial (F9-04, RF-27)',
+            'Solicitud transiciona a RECHAZADO y observación en historial persiste NULL sin error ni longitud mínima',
+            sprintf('Estado: %s, Historial estado: %s, Observación persistida: %s', $solBd?->estado ?? 'null', $ultimoHistorial ? $ultimoHistorial->estado_nuevo : 'none', var_export($ultimoHistorial ? $ultimoHistorial->comentario : 'none', true)),
             $isOk
         );
     }
