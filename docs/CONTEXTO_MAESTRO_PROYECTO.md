@@ -363,7 +363,7 @@ El siguiente esquema textual sintetiza las dependencias e integridad referencial
 | **RF-23** | Asistencia y geolocalización | Historial de asistencia | 8 | IMPLEMENTADO Y VALIDADO |
 | **RF-24** | Gestión de permisos | Solicitud de permiso | 9 | IMPLEMENTADO Y VALIDADO |
 | **RF-25** | Gestión de permisos | Documento de respaldo | 9 | IMPLEMENTADO Y VALIDADO |
-| **RF-26** | Notificaciones | Notificación de permiso | 10 | IMPLEMENTADO Y VALIDADO |
+| **RF-26** | Notificaciones | Notificación de permiso | 10 | PENDIENTE — FASE 10 |
 | **RF-27** | Gestión de permisos | Aprobación/rechazo | 9 | IMPLEMENTADO Y VALIDADO |
 | **RF-28** | Gestión de permisos | Estado de solicitud | 9 | IMPLEMENTADO Y VALIDADO |
 | **RF-29** | Reportes y exportación | Reporte de asistencia | 12 | PENDIENTE |
@@ -373,9 +373,9 @@ El siguiente esquema textual sintetiza las dependencias e integridad referencial
 
 ### Requerimientos No Funcionales (RNF Clave)
 - **RNF-03 (Seguridad):** IMPLEMENTADO Y VALIDADO en Fase 3 (`AuthService`, `RequireRole`, hashing seguro BCRYPT).
-- **RNF-04 (Privacidad):** EVIDENCIA AMPLIADA en Fases 6, 7 y 10 (Ocultamiento de datos sensibles en consulta pública, aislamiento horizontal docente y aislamiento de notificaciones entre administradores). *Validación global e integral reservada para la Fase 14*.
+- **RNF-04 (Privacidad):** EVIDENCIA PARCIAL VERIFICADA en Fases 6 y 7 (Ocultamiento de datos sensibles en consulta pública y aislamiento horizontal docente). *Validación global e integral reservada para la Fase 14*.
 - **RNF-05 (Integridad):** IMPLEMENTADO Y VALIDADO en Fase 1 (Esquema relacional con 20 tablas, constraints, checks y claves foráneas).
-- **RNF-06 (Trazabilidad):** EVIDENCIA AMPLIADA en Fases 8, 9 y 10 (Inmutabilidad de marcajes con microsegundos de servidor, bitácora append-only en `historial_solicitudes_permiso` y registro temporal de lectura en notificaciones). *Validación integral de auditoría del sistema reservada para la Fase 14*.
+- **RNF-06 (Trazabilidad):** EVIDENCIA PARCIAL VERIFICADA en Fases 8 y 9 (Inmutabilidad de marcajes con microsegundos de servidor y bitácora append-only en `historial_solicitudes_permiso`). *Validación integral de auditoría del sistema reservada para la Fase 14*.
 
 ---
 
@@ -393,8 +393,8 @@ El siguiente esquema textual sintetiza las dependencias e integridad referencial
 | **Fase 7** | Portal docente y minimización de datos | COMPLETADA ✅ |
 | **Fase 8** | Asistencia docente y geolocalización | COMPLETADA ✅ |
 | **Fase 9** | Gestión de permisos docentes | COMPLETADA ✅ |
-| **Fase 10** | Notificaciones | COMPLETADA ✅ |
-| **Fase 11** | Comprobantes PDF | **PENDIENTE (Siguiente fase)** |
+| **Fase 10** | Notificaciones | **PENDIENTE (Siguiente fase)** |
+| **Fase 11** | Comprobantes PDF | PENDIENTE |
 | **Fase 12** | Reportes y exportación | PENDIENTE |
 | **Fase 13** | Recuperación de contraseñas | PENDIENTE |
 | **Fase 14** | Endurecimiento integral de seguridad y privacidad | PENDIENTE |
@@ -418,12 +418,11 @@ Totales consolidados y certificados en los informes técnicos de cierre:
 | **Fase 7** | `tests/run_tests_fase7.php` | 28 | 28 OK | 100% |
 | **Fase 8** | `tests/run_tests_fase8.php` | 40 | 40 OK | 100% |
 | **Fase 9** | `tests/run_tests_fase9.php` | 46 | 46 OK | 100% |
-| **Fase 10** | `tests/run_tests_fase10.php` | 27 | 27 OK | 100% |
-| **TOTAL** | **10 Suites Automatizadas** | **277** | **277 OK** | **100% GREEN** |
+| **TOTAL** | **9 Suites Automatizadas** | **250** | **250 OK** | **100% GREEN** |
 
 ---
 
-## 11. ÍNDICE DE DECISIONES TÉCNICAS (DT-01 A DT-66)
+## 11. ÍNDICE DE DECISIONES TÉCNICAS (DT-01 A DT-63)
 
 | Decisión | Tema Central | Fase | Documento de Referencia |
 |:---|:---|:---:|:---|
@@ -490,9 +489,6 @@ Totales consolidados y certificados en los informes técnicos de cierre:
 | **DT-61** | Aislamiento horizontal de solicitudes de permiso por sesión activa | Fase 9 | `docs/fase-9/decisiones-tecnicas.md` |
 | **DT-62** | Control de concurrencia pesimista (`SELECT ... FOR UPDATE`) en resoluciones | Fase 9 | `docs/fase-9/decisiones-tecnicas.md` |
 | **DT-63** | Nombre físico aleatorio criptográfico CSPRNG (`bin2hex(random_bytes(32))`) | Fase 9 | `docs/fase-9/decisiones-tecnicas.md` |
-| **DT-64** | Arquitectura de notificaciones en BD y transacción atómica (`solicitudes_permiso`) | Fase 10 | `docs/fase-10/decisiones-tecnicas.md` |
-| **DT-65** | Resolución dinámica de administradores activos y formato institucional estricto | Fase 10 | `docs/fase-10/decisiones-tecnicas.md` |
-| **DT-66** | Gestión de lectura, aislamiento horizontal y conteo AJAX en tiempo real | Fase 10 | `docs/fase-10/decisiones-tecnicas.md` |
 
 ---
 
@@ -567,15 +563,6 @@ Totales consolidados y certificados en los informes técnicos de cierre:
 - **Storage:** `storage/permisos/` (archivos adjuntos protegidos con `.htaccess`)
 - **Tests:** `tests/run_tests_fase9.php` (T9-01 a T9-46)
 - **Docs:** `docs/fase-9/`
-
-### Módulo 8: Notificaciones Administrativas (Fase 10)
-- **Controller:** `app/Controllers/AdminNotificacionController.php`
-- **Service:** `app/Services/NotificacionService.php`
-- **Repository:** `app/Repositories/NotificacionRepositoryInterface.php`, `app/Repositories/NotificacionRepository.php`
-- **Model:** `app/Models/Notificacion.php`
-- **Views:** `views/admin/notificaciones/` (`index.php`)
-- **Tests:** `tests/run_tests_fase10.php` (T10-01 a T10-27)
-- **Docs:** `docs/fase-10/`
 
 ---
 

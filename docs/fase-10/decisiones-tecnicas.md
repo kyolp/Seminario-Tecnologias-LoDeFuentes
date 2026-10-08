@@ -29,10 +29,10 @@
 
 ---
 
-### DT-65: Resolución Dinámica de Destinatarios Administrativos y Formato Institucional
+#### DT-65: Resolución Dinámica de Destinatarios Administrativos y Aislamiento Horizontal
 
 - **Contexto:**  
-  La directriz institucional exige que *"La administración"* reciba aviso ante nuevas solicitudes de permiso. En la estructura del centro educativo pueden existir múltiples usuarios con responsabilidades administrativas (`ADMINISTRACION` / `ADMINISTRADOR`) y sus cuentas pueden encontrarse en estado `ACTIVO` o `INACTIVO`.
+  La directriz institucional exige que *"La administración"* reciba aviso ante nuevas solicitudes de permiso. En la estructura del centro educativo pueden existir múltiples usuarios con responsabilidades administrativas (`ADMINISTRACION` / `ADMINISTRADOR`) y sus cuentas pueden encontrarse en estado `ACTIVO` o `INACTIVO`. Asimismo, cada administrador debe tener su propio registro independiente sin interferencia ni manipulación cruzada.
 
 - **Decisión:**  
   1. La resolución de destinatarios se efectúa dinámicamente mediante consulta preparada en `NotificacionRepository::crearParaAdministradores()`:
@@ -47,34 +47,29 @@
   3. Se excluyen usuarios con rol `DOCENTE` u otros roles no directivos.
   4. Formato institucional obligatorio:
      - `tipo`: `'NUEVA_SOLICITUD'` (restringido por `CHECK tipo IN ('NUEVA_SOLICITUD', 'CAMBIO_ESTADO')`).
-     - `titulo`: `Nueva Solicitud de Permiso: [Nombre Completo del Docente]` (VARCHAR 150).
-     - `mensaje`: `El docente [Nombre] ([Código]) ha presentado una solicitud de permiso por motivo de [Motivo] del [Fecha Inicio] al [Fecha Fin].` (VARCHAR 500).
-     - `fecha_creacion`: Asignada por el motor de base de datos con precisión de microsegundos mediante `CURRENT_TIMESTAMP(6)`.
-     - `fecha_lectura`: Inicializada obligatoriamente como `NULL`, indicando estado pendiente de lectura.
+     - `titulo`: `Nueva solicitud de permiso docente` (VARCHAR 150).
+     - `mensaje`: Detalle contextual con nombre del docente, fecha solicitada y motivo (VARCHAR 500).
+  5. **Aislamiento horizontal estricto:**  
+     Tanto las consultas (`findByUsuario`) como las mutaciones (`marcarComoLeida`, `marcarTodasComoLeidas`) filtran obligatoriamente por el `id_usuario_destinatario` correspondiente al usuario autenticado, impidiendo que un administrador visualice o altere notificaciones pertenecientes a otro administrador.
 
 - **Consecuencias:**  
-  - Todos los administradores activos reciben su propia copia de la notificación, permitiendo control de lectura individualizado.
+  - Cada administrador activo recibe su propia notificación independiente en base de datos.
+  - Aislamiento horizontal estricto garantizado a nivel de repositorio y servicio.
   - La redacción es clara, profesional, auditada y trazable.
 
 ---
 
-### DT-66: Gestión de Lectura, Aislamiento Horizontal y Actualización de Estado
+### DT-66: Timestamps del Servidor, Gestión de Estado de Lectura y Conteo en Tiempo Real
 
 - **Contexto:**  
-  Cada usuario administrativo debe poder consultar sus notificaciones recibidas, identificar rápidamente cuántas tiene pendientes (badge informativo) y marcar avisos como leídos de manera individual o masiva, sin interferir con las notificaciones de otros administradores.
+  Cada usuario administrativo debe poder identificar sus avisos pendientes (badge informativo), conocer la marca temporal exacta de creación y lectura, y marcar avisos como leídos de manera individual o masiva, garantizando consistencia temporal e idempotencia.
 
 - **Decisión:**  
-  1. **Aislamiento horizontal estricto:**  
-     Tanto la consulta (`findByUsuario`) como las mutaciones (`marcarComoLeida`, `marcarTodasComoLeidas`) filtran obligatoriamente por el `id_usuario_destinatario` extraído de la sesión autenticada del servidor (`auth()->id()`), impidiendo manipulación de datos entre administradores:
-     ```sql
-     UPDATE notificaciones 
-     SET fecha_lectura = NOW(6) 
-     WHERE id_notificacion = :id_notif 
-       AND id_usuario_destinatario = :id_user 
-       AND fecha_lectura IS NULL
-     ```
-  2. **Consistencia temporal:**  
-     La base de datos impone la restricción `CHECK (fecha_lectura IS NULL OR fecha_lectura >= fecha_creacion)`. La actualización utiliza `NOW(6)`, garantizando cumplimiento formal del check.
+  1. **Timestamps autoritativos de servidor:**  
+     - `fecha_creacion`: Asignada automáticamente por el motor de base de datos con precisión de microsegundos mediante `CURRENT_TIMESTAMP(6)`.
+     - `fecha_lectura`: Inicializada obligatoriamente como `NULL` al crearse la notificación (estado pendiente).
+  2. **Actualización de lectura y consistencia temporal:**  
+     Al marcar como leída, `fecha_lectura` se actualiza con `NOW(6)`. La base de datos impone la restricción `CHECK (fecha_lectura IS NULL OR fecha_lectura >= fecha_creacion)`, garantizando estricta consistencia cronológica.
   3. **Idempotencia:**  
      Si una notificación ya fue leída previamente, intentar marcarla nuevamente no arroja excepción ni altera el timestamp de lectura original.
   4. **Seguridad y RBAC:**  
@@ -86,6 +81,6 @@
      `GET /administracion/notificaciones/conteo` proporciona un payload JSON ligero `{ "success": true, "unread_count": N }` para sincronización en tiempo real del indicador visual.
 
 - **Consecuencias:**  
-  - Privacidad y control granular por administrador.
-  - Protección robusta contra CSRF, XSS e inyecciones SQL.
+  - Trazabilidad cronológica rigurosa con microsegundos.
+  - Control de lectura inmutable e idempotente.
   - Experiencia de usuario ágil y moderna.

@@ -56,9 +56,9 @@ En estricta conformidad con el **Documento Oficial de Alcance del Proyecto** (*A
 
 | Código | Título | Resumen de Decisión |
 |---|---|---|
-| **DT-64** | Arquitectura de Notificaciones Basada en BD y Transacción Atómica | Notificaciones persistidas en la tabla `notificaciones` dentro de la transacción atómica de `PermisoService::crearSolicitud()`. Rollback total ante fallos. |
-| **DT-65** | Resolución Dinámica de Destinatarios y Formato Institucional | Identificación de usuarios activos con rol `ADMINISTRACION` / `ADMINISTRADOR`, exclusión de inactivos y docentes. Formato institucional riguroso. |
-| **DT-66** | Gestión de Lectura, Aislamiento Horizontal y RBAC | Filtrado estricto por `id_usuario_destinatario` en todas las consultas y mutaciones. Protección CSRF, XSS y RBAC. Endpoint AJAX de conteo. |
+| **DT-64** | Arquitectura de Notificaciones en BD y Atomicidad Transaccional | Notificaciones persistidas en la tabla `notificaciones` dentro de la transacción atómica de `PermisoService::crearSolicitud()`. Rollback total y cero huérfanas ante fallos. |
+| **DT-65** | Resolución Dinámica de Destinatarios y Aislamiento Horizontal | Identificación de usuarios activos con rol `ADMINISTRACION` / `ADMINISTRADOR`, exclusión de inactivos y docentes. Aislamiento estricto por destinatario en repositorio y servicio. |
+| **DT-66** | Timestamps de Servidor, Gestión de Estado de Lectura y Conteo | Marcas temporales `CURRENT_TIMESTAMP(6)` y `NOW(6)`, `fecha_lectura IS NULL` inicial, consistencia temporal, idempotencia y conteo de no leídas para badges. |
 
 ---
 

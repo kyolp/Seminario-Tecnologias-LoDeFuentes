@@ -433,7 +433,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-04',
-            'Notificación dirigida a todos los administradores activos con rol ADMINISTRADOR (DT-64)',
+            'Notificación dirigida a todos los administradores activos con rol ADMINISTRADOR (DT-65)',
             'Notificación creada tanto para Admin 1 como para Admin 2',
             sprintf('Admin 1 presente: %s, Admin 2 presente: %s (Total destinatarios: %d)', $hasAdmin1 ? 'SÍ' : 'NO', $hasAdmin2 ? 'SÍ' : 'NO', count($destinatarios)),
             $isOk
@@ -452,7 +452,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-05',
-            'Exclusión de administradores inactivos (estado != "ACTIVO") como destinatarios (DT-64)',
+            'Exclusión de administradores inactivos (estado != "ACTIVO") como destinatarios (DT-65)',
             'Cero notificaciones emitidas hacia el usuario administrador con estado INACTIVO',
             sprintf('Notificaciones dirigidas al admin inactivo: %d (esperado: 0)', $count),
             $isOk
@@ -475,7 +475,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-06',
-            'Exclusión de usuarios con rol DOCENTE como destinatarios de la notificación administrativa (DT-64)',
+            'Exclusión de usuarios con rol DOCENTE como destinatarios de la notificación administrativa (DT-65)',
             'Cero notificaciones dirigidas a docentes para el evento de nueva solicitud de permiso',
             sprintf('Notificaciones dirigidas a docentes: %d (esperado: 0)', $count),
             $isOk
@@ -498,7 +498,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-07',
-            'Atributos obligatorios y formato institucional del título y mensaje (RF-26)',
+            'Atributos obligatorios y formato institucional del título y mensaje (RF-26, DT-65)',
             'tipo="NUEVA_SOLICITUD", título descriptivo y mensaje con detalles contextuales del docente',
             sprintf('Tipo: %s, Título: "%s", Mensaje contiene contexto: %s', $notif['tipo'] ?? '', $notif['titulo'] ?? '', $mensajeOk ? 'SÍ' : 'NO'),
             $isOk
@@ -525,7 +525,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-08',
-            'Estado inicial de notificación: fecha_lectura IS NULL y estado pendiente (DT-64)',
+            'Estado inicial de notificación: fecha_lectura IS NULL y estado pendiente (DT-66)',
             'Todas las notificaciones recién emitidas tienen fecha_lectura = NULL',
             $isOk ? sprintf('Total notificaciones verificadas en estado NULL: %d', count($fechasLectura)) : 'Al menos una notificación tiene fecha_lectura no nula al crearse',
             $isOk
@@ -545,7 +545,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-09',
-            'Timestamp generado por el servidor con microsegundos CURRENT_TIMESTAMP(6) (DT-64)',
+            'Timestamp generado por el servidor con microsegundos CURRENT_TIMESTAMP(6) (DT-66)',
             'fecha_creacion válida con formato DATETIME del servidor de base de datos',
             sprintf('fecha_creacion: "%s" (formato correcto: %s)', $fechaCreacion, $hasMicroseconds ? 'SÍ' : 'NO'),
             $hasMicroseconds
@@ -608,7 +608,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-11',
-            'Integridad referencial: ON DELETE RESTRICT en id_solicitud_permiso protege contra borrado accidental',
+            'Integridad referencial: ON DELETE RESTRICT en id_solicitud_permiso protege contra borrado accidental (DT-64)',
             'PDOException 23000/1451 bloquea la eliminación de solicitud con notificaciones asociadas',
             $blocked ? 'Bloqueo exitoso por Foreign Key Constraint' : 'No se detectó el bloqueo esperado',
             $blocked
@@ -647,7 +647,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-12',
-            'Repositorio: Consulta de notificaciones ordenadas descendentemente por fecha_creacion (findByUsuario)',
+            'Repositorio: Consulta de notificaciones ordenadas descendentemente por fecha_creacion (findByUsuario) (DT-65, DT-66)',
             'Listado con al menos 2 elementos ordenados de más reciente a más antiguo',
             sprintf('Notificaciones obtenidas: %d, orden descendente estricto: %s', count($notifsAdmin1), $isDescending ? 'CORRECTO' : 'INCORRECTO'),
             $isOk
@@ -667,7 +667,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-13',
-            'Repositorio y Servicio: Contador de no leídas concuerda exactamente con fecha_lectura IS NULL',
+            'Repositorio y Servicio: Contador de no leídas concuerda exactamente con fecha_lectura IS NULL (DT-66)',
             'contarNoLeidasPorUsuario() coincide con SELECT COUNT(*) WHERE fecha_lectura IS NULL',
             sprintf('Repo: %d, Servicio: %d, SQL Directo: %d', $conteoRepo, $conteoService, $conteoDirecto),
             $isOk
@@ -689,7 +689,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-14',
-            'Repositorio y Servicio: Marcar notificación individual como leída actualiza fecha_lectura (NOW(6))',
+            'Repositorio y Servicio: Marcar notificación individual como leída actualiza fecha_lectura (NOW(6)) (DT-66)',
             'marcarLeida() retorna true y fecha_lectura se actualiza con timestamp no nulo',
             sprintf('Resultado: %s, fecha_lectura registrada: "%s"', $marcada ? 'TRUE' : 'FALSE', (string) $fechaLectura),
             $isOk
@@ -714,7 +714,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-15',
-            'Restricción de consistencia temporal: fecha_lectura >= fecha_creacion (CHECK de tabla)',
+            'Restricción de consistencia temporal: fecha_lectura >= fecha_creacion (CHECK de tabla) (DT-66)',
             'fecha_lectura mayor o igual a fecha_creacion respetando la restricción de integridad',
             $leida ? sprintf('creación: %s, lectura: %s (consistente: %s)', $leida->fecha_creacion, $leida->fecha_lectura, $isOk ? 'SÍ' : 'NO') : 'No se encontró notificación leída',
             $isOk
@@ -745,7 +745,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-16',
-            'Idempotencia al marcar como leída: Reintentos preservan el registro de lectura original sin error',
+            'Idempotencia al marcar como leída: Reintentos preservan el registro de lectura original sin error (DT-66)',
             'marcarLeida() en notificación ya leída retorna true y conserva timestamp original',
             sprintf('Retorno: %s, fecha original: %s, fecha final: %s', $marcadaSegundaVez ? 'TRUE' : 'FALSE', (string) $fechaLecturaOriginal, (string) $fechaLecturaFinal),
             $isOk
@@ -761,7 +761,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-17',
-            'Repositorio y Servicio: Marcar todas las notificaciones como leídas en una sola acción',
+            'Repositorio y Servicio: Marcar todas las notificaciones como leídas en una sola acción (DT-66)',
             'marcarTodasLeidas() actualiza pendientes y el contador de no leídas se reduce a 0',
             sprintf('Filas afectadas: %d, notificaciones no leídas restantes: %d', $afectadas, $pendientes),
             $isOk
@@ -786,7 +786,7 @@ class Phase10TestSuite
 
         $this->record(
             'T10-18',
-            'Aislamiento horizontal: Admin 1 no puede marcar ni alterar notificaciones de Admin 2',
+            'Aislamiento horizontal: Admin 1 no puede marcar ni alterar notificaciones de Admin 2 (DT-65)',
             'marcarComoLeida() retorna false ante id_usuario ajeno y el registro permanece intacto',
             sprintf('Intento cruzado retornó: %s, fecha_lectura de Admin 2: %s', $intentoCruzado ? 'TRUE' : 'FALSE', $fechaLectura === null ? 'NULL (intacta)' : 'MODIFICADA'),
             $isOk
