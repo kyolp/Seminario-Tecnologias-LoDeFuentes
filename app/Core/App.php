@@ -252,6 +252,13 @@ class App
         $this->router->post('/administracion/permisos/rechazar', [\App\Controllers\AdminPermisoController::class, 'rechazar'], $adminPost);
         $this->router->get('/administracion/permisos/documento', [\App\Controllers\AdminPermisoController::class, 'descargarDocumento'], $adminGet);
 
+        // 8. Notificaciones de Permisos (Fase 10 — RF-26)
+        $this->router->get('/administracion/notificaciones', [\App\Controllers\AdminNotificacionController::class, 'index'], $adminGet);
+        $this->router->post('/administracion/notificaciones/marcar-leida', [\App\Controllers\AdminNotificacionController::class, 'marcarLeida'], $adminPost);
+        $this->router->post('/administracion/notificaciones/marcar-todas', [\App\Controllers\AdminNotificacionController::class, 'marcarTodasLeidas'], $adminPost);
+        $this->router->get('/administracion/notificaciones/conteo', [\App\Controllers\AdminNotificacionController::class, 'conteoNoLeidas'], $adminGet);
+
+
         // 7. Módulo Público de Inscripciones y Cupos (Fase 6 — RF-05, RF-09, RF-10, RF-11, RF-12, RF-14, RF-32)
         $this->router->get('/inscripcion', [\App\Controllers\InscripcionPublicaController::class, 'createForm']);
         $this->router->get('/inscripcion/secciones-disponibles', [\App\Controllers\InscripcionPublicaController::class, 'getSeccionesDisponibles']);
