@@ -19,7 +19,12 @@ En estricta conformidad con el **Documento Oficial de Alcance del Proyecto** (*A
 ### Delimitación Estricta:
 - **No se implementaron canales externos fuera de alcance:** No se crearon integraciones de correo electrónico (SMTP), SMS, WhatsApp, WebSockets ni notificaciones push en la nube, ya que el alcance institucional no contempla dichos mecanismos.
 - **Uso de la infraestructura relacional preexistente:** Se utilizó la tabla `notificaciones` creada en Fase 1 (`database/schema.sql`), sin requerir modificaciones ni migraciones destructivas sobre el esquema de base de datos.
-- **Cero avance no autorizado:** No se iniciaron las fases posteriores (Fase 11 Generación de Documentos PDF, Fase 12 Reportes y Estadísticas, Fase 13 Recuperación de Contraseñas, etc.).
+- **Cero avance no autorizado:** No se iniciaron las fases posteriores. Control de alcance:
+  - **Fase 11 — Comprobante de inscripción en PDF (RF-13):** NO iniciada. RF-13 NO implementado funcionalmente.
+  - **Fase 12 — Reportes (RF-29 y RF-30):** NO iniciada. RF-29 y RF-30 pendientes.
+  - **Fase 13 — Recuperación de contraseña (RF-03):** NO iniciada. RF-03 pendiente.
+  - **Fase 14, Fase 15 y Fase 16:** NO iniciadas.
+  - **README:** NO modificado.
 - **Control de control de versiones:** No se realizó `git push`, preservando la política de gestión manual exclusiva del usuario.
 
 ---
@@ -87,4 +92,4 @@ En estricta conformidad con el **Documento Oficial de Alcance del Proyecto** (*A
 
 - **Working Tree:** Limpio (archivos versionados y listos para commit local).
 - **Git Push:** Ninguno realizado.
-- **Fase Siguiente:** **Fase 11 — Generación de Documentos y Reportes en Formato PDF** (DETENIDA a la espera de autorización explícita).
+- **Fase Siguiente:** **Fase 11 — Comprobante de inscripción en PDF (RF-13)** (DETENIDA a la espera de autorización explícita).
