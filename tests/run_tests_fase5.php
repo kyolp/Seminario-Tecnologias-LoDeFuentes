@@ -1223,9 +1223,14 @@ class Phase5TestSuite
         echo "\n>>> Ejecutando prueba de concurrencia real entre procesos independientes (T5-26)...\n";
 
         // 1. Crear sección dedicada y limpia para la prueba de concurrencia
+        $idGrdPer = $this->fixtureGradoPeriodoId;
+        $existeGp = $idGrdPer ? (int)$this->db->query("SELECT COUNT(*) FROM grados_periodos WHERE id_grado_periodo = {$idGrdPer}")->fetchColumn() : 0;
+        if ($existeGp === 0) {
+            $idGrdPer = (int)$this->db->query("SELECT id_grado_periodo FROM grados_periodos WHERE habilitado = 1 ORDER BY id_grado_periodo DESC LIMIT 1")->fetchColumn();
+        }
         $this->db->exec("DELETE FROM secciones WHERE codigo = 'SEC-F5-RACE26'");
         $stmtSec = $this->db->prepare("INSERT INTO secciones (id_grado_periodo, codigo, nombre, capacidad, habilitada) VALUES (?, 'SEC-F5-RACE26', 'Sección Carrera Real T26', 30, 1)");
-        $stmtSec->execute([$this->fixtureGradoPeriodoId]);
+        $stmtSec->execute([$idGrdPer]);
         $idSeccionRace = (int)$this->db->lastInsertId();
 
         $workerScript = __DIR__ . '/worker_asignacion_concurrente.php';
