@@ -29,15 +29,15 @@
 | **T11-07** | Cabeceras HTTP correctas (`Content-Type`, `Content-Disposition`, `Content-Length`, `nosniff`, `no-store`) | **[OK] PASÓ** | DT-67 |
 | **T11-08** | PDF no vacío: contiene página con bloques de texto | **[OK] PASÓ** | RF-13 |
 | **T11-09** | Caracteres UTF-8/acentos/ñ preservados; caracteres fuera de Windows-1252 y nombres largos no rompen el PDF | **[OK] PASÓ** | DT-67 |
-| **T11-10** | Los datos del PDF pertenecen únicamente a la inscripción solicitada | **[OK] PASÓ** | RF-13, RNF-04 |
+| **T11-10** | Los datos del PDF pertenecen únicamente a la inscripción solicitada | **[OK] PASÓ** | RF-13 |
 | **T11-11** | Código de confirmación del PDF coincide exactamente con el de la BD (RF-12) | **[OK] PASÓ** | RF-12, RF-13 |
 | **T11-12** | Estudiante, encargado y parentesco correctos (obtenidos de BD) | **[OK] PASÓ** | RF-13 |
 | **T11-13** | Grado, sección y ciclo escolar correctos para cada inscripción | **[OK] PASÓ** | RF-13 |
 | **T11-14** | Estado correcto en el PDF; solo CONFIRMADA genera comprobante (ANULADA -> 409; PENDIENTE/RECHAZADA sin código) | **[OK] PASÓ** | RF-13, DT-67 |
-| **T11-15** | El PDF no expone IDs internos, rutas del servidor, SQL ni trazas | **[OK] PASÓ** | RNF-04 |
-| **T11-16** | Sin contraseñas/hashes y con mínima exposición (sin teléfono, correo, fecha de nacimiento ni código de estudiante) | **[OK] PASÓ** | RNF-04 |
-| **T11-17** | Datos de otros estudiantes (misma sección o distinta) no se filtran | **[OK] PASÓ** | RNF-04 |
-| **T11-18** | Manipulación del identificador bloqueada (ids ignorados, sin acceso por ID, sin enumeración) | **[OK] PASÓ** | RNF-04, DT-67 |
+| **T11-15** | El PDF no expone IDs internos, rutas del servidor, SQL ni trazas | **[OK] PASÓ** | DT-67 |
+| **T11-16** | Sin contraseñas/hashes y con mínima exposición (sin CUI, teléfono, correo, fecha de nacimiento ni código de estudiante) | **[OK] PASÓ** | DT-67 (RNF-04 Parcial) |
+| **T11-17** | Datos de otros estudiantes (misma sección o distinta) no se filtran | **[OK] PASÓ** | RF-13 |
+| **T11-18** | Manipulación del identificador bloqueada (ids ignorados, sin acceso por ID, sin enumeración) | **[OK] PASÓ** | DT-67 |
 | **T11-19** | HTML/JS/operadores PDF maliciosos en nombres quedan neutralizados como texto inerte; vistas de error escapan el código | **[OK] PASÓ** | DT-67 |
 | **T11-20** | Nombre de archivo seguro: sin path traversal, caracteres de control ni inyección en cabeceras ni datos personales | **[OK] PASÓ** | DT-67 |
 | **T11-21** | Generar el PDF no modifica la inscripción (ni siquiera fecha_actualizacion) | **[OK] PASÓ** | DT-67 |
