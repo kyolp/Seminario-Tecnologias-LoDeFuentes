@@ -34,7 +34,13 @@
         </div>
     <?php endif; ?>
 
-    <div style="display: flex; justify-content: center; gap: 1rem;">
+    <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <?php if ($codigo !== ''): ?>
+        <a href="<?= e(url('inscripcion/comprobante?codigo=' . urlencode($codigo))) ?>"
+           style="background: #15803d; color: #fff; text-decoration: none; padding: 0.7rem 1.5rem; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
+            Descargar Comprobante (PDF)
+        </a>
+        <?php endif; ?>
         <a href="<?= e(url('inscripcion/consultar?codigo=' . urlencode($codigo))) ?>"
            style="background: #2563eb; color: #fff; text-decoration: none; padding: 0.7rem 1.5rem; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
             Ver Consulta en Línea

@@ -220,6 +220,15 @@ class Phase6TestSuite
             $this->db->exec("DELETE FROM inscripciones WHERE id_inscripcion IN ($in)");
         }
 
+        if (!empty($this->createdEstudianteIds)) {
+            $inE = implode(',', array_map('intval', $this->createdEstudianteIds));
+            $this->db->exec("DELETE FROM inscripciones WHERE id_estudiante IN ($inE)");
+        }
+        if (!empty($this->createdEncargadoIds)) {
+            $inEnc = implode(',', array_map('intval', $this->createdEncargadoIds));
+            $this->db->exec("DELETE FROM inscripciones WHERE id_encargado IN ($inEnc)");
+        }
+
         // Limpiar inscripciones asociadas a las secciones de prueba
         if ($this->fixtureSeccionAId) $this->db->exec("DELETE FROM inscripciones WHERE id_seccion = {$this->fixtureSeccionAId}");
         if ($this->fixtureSeccionBId) $this->db->exec("DELETE FROM inscripciones WHERE id_seccion = {$this->fixtureSeccionBId}");
@@ -229,12 +238,18 @@ class Phase6TestSuite
         if (!empty($this->createdEstudianteIds)) {
             $inE = implode(',', array_map('intval', $this->createdEstudianteIds));
             $this->db->exec("DELETE FROM estudiantes_encargados WHERE id_estudiante IN ($inE)");
-            $this->db->exec("DELETE FROM estudiantes WHERE id_estudiante IN ($inE)");
         }
-
         if (!empty($this->createdEncargadoIds)) {
             $inEnc = implode(',', array_map('intval', $this->createdEncargadoIds));
             $this->db->exec("DELETE FROM estudiantes_encargados WHERE id_encargado IN ($inEnc)");
+        }
+
+        if (!empty($this->createdEstudianteIds)) {
+            $inE = implode(',', array_map('intval', $this->createdEstudianteIds));
+            $this->db->exec("DELETE FROM estudiantes WHERE id_estudiante IN ($inE)");
+        }
+        if (!empty($this->createdEncargadoIds)) {
+            $inEnc = implode(',', array_map('intval', $this->createdEncargadoIds));
             $this->db->exec("DELETE FROM encargados WHERE id_encargado IN ($inEnc)");
         }
 

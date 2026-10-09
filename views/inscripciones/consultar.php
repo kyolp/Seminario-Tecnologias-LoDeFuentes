@@ -74,6 +74,15 @@
                     <dd style="margin: 0; color: #1e293b;"><?= e($resultado['fecha_inscripcion']) ?></dd>
                 </div>
             </dl>
+
+            <?php if (strtoupper((string) $resultado['estado']) === 'CONFIRMADA'): ?>
+                <div style="text-align: center; margin-top: 1.25rem;">
+                    <a href="<?= e(url('inscripcion/comprobante?codigo=' . urlencode((string) $resultado['codigo_confirmacion']))) ?>"
+                       style="background: #15803d; color: #fff; text-decoration: none; padding: 0.7rem 1.5rem; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
+                        Descargar Comprobante (PDF)
+                    </a>
+                </div>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 

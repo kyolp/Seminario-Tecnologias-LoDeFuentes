@@ -271,6 +271,9 @@ class App
             \App\Middleware\VerifyCsrfToken::class,
         ]);
 
+        // 7.1 Comprobante de inscripción en PDF (Fase 11 — RF-13)
+        $this->router->get('/inscripcion/comprobante', [\App\Controllers\ComprobanteInscripcionController::class, 'descargar']);
+
         // 7. Rutas técnicas de prueba: aisladas exclusivamente para entornos de desarrollo y testing
         $env = (string) Config::get('app.env', 'development');
         if (in_array(strtolower($env), ['development', 'testing', 'local'], true)) {
