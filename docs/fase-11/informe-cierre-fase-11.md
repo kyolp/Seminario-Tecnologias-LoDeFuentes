@@ -77,18 +77,34 @@ En estricta conformidad con el **Documento Oficial de Alcance del Proyecto** (*A
 
 ---
 
-## 5. Estado de Requerimientos Funcionales y No Funcionales
+## 5. Trazabilidad Consolidada de Requisitos (Fases 1 a 11)
 
-| Código | Requerimiento / Restricción | Estado | Evidencia |
-|---|---|---|---|
-| **RF-13** | Comprobante PDF | **IMPLEMENTADO Y VALIDADO** | `tests/run_tests_fase11.php` (T11-01 a T11-29) |
-| **RNF-04**| Privacidad y protección de datos | **EVIDENCIA PARCIAL** | Mínima exposición aplicada en PDF; validación integral reservada para Fase 14 |
-| **RNF-06**| Trazabilidad e integridad institucional | **CUMPLIDO** | Comprobante emparejado estrictamente con el código oficial de confirmación |
+> **Fuente autoritativa:** `docs/fase-0/matriz-trazabilidad.md`
+
+| Fase | Tipo de Contribución | Requerimientos Asociados Oficiales | Estado de la Fase |
+|---|---|---|:---:|
+| **Fase 1** | Soporte Estructural de Base de Datos | Soporte físico y relacional en BD para RF-01 a RF-32 (20 tablas) | **APROBADO** |
+| **Fase 2** | Arquitectura Base y Enrutamiento | RNF-08 (MVC / Capas), RNF-01 (Usabilidad), RNF-02 (Compatibilidad) | **APROBADO** |
+| **Fase 3** | Autenticación y Roles (RBAC) | RF-01 (Autenticación), RF-02 (Roles y permisos), RNF-03 (Seguridad / BCrypt) | **APROBADO** |
+| **Fase 4** | Administración Básica | RF-04 (Estudiantes), RF-06 (Grados), RF-07 (Secciones), RF-08 (Capacidad), RF-15 (Docentes), RNF-09 (Configurabilidad) | **APROBADO** |
+| **Fase 5** | Asignaciones Docentes | RF-16 (Asignación docente a grado, sección y aula) | **APROBADO** |
+| **Fase 6** | Inscripciones y Cupos Público | RF-05 (Encargados), RF-09 (Cupos), RF-10 (Disponibilidad), RF-11 (Inscripción web), RF-12 (Confirmación), RF-14 (Consulta), RF-31 (Integración), RF-32 (Concurrencia) | **APROBADO** |
+| **Fase 7** | Portal Docente | RF-17 (Listado de estudiantes), RF-31 (Integración nómina docente) | **APROBADO** |
+| **Fase 8** | Control de Asistencia y Geolocalización | RF-18 (Ubicación), RF-19 (Geolocalización), RF-20 (Entrada), RF-21 (Salida), RF-22 (Fecha/Hora), RF-23 (Historial), RNF-06 (Trazabilidad) | **APROBADO** |
+| **Fase 9** | Gestión de Permisos Docentes | RF-24 (Solicitud), RF-25 (Documento), RF-27 (Resolución), RF-28 (Historial) | **APROBADO** |
+| **Fase 10** | Notificaciones | RF-26 (Notificación de permiso a administración) | **APROBADO** |
+| **Fase 11** | Comprobante PDF | RF-13 (Comprobante de inscripción en PDF), RNF-04 (Evidencia parcial privacidad) | **APROBADO** |
 
 ---
 
-## 6. Estado del Repositorio y Próximos Pasos
+## 6. Estado del Repositorio y Control de Alcance Futuro
 
-- **Working Tree:** Limpio (archivos versionados y listos para commit local).
+- **Working Tree:** Limpio (`nothing to commit, working tree clean`).
 - **Git Push:** Ninguno realizado.
-- **Fase Siguiente:** **Fase 12 — Reportes (RF-29 y RF-30)** (DETENIDA a la espera de autorización explícita).
+- **README.md:** NO modificado.
+- **Control de Fases Futuras (Pendientes de Autorización):**
+  - **Fase 12 — Reportes — RF-29 y RF-30:** NO iniciada
+  - **Fase 13 — Recuperación de contraseña — RF-03:** NO iniciada
+  - **Fase 14 — Seguridad/Hardening:** NO iniciada
+  - **Fase 15 — Pruebas integrales:** NO iniciada
+  - **Fase 16 — Cierre final:** NO iniciada
