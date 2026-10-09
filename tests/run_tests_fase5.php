@@ -181,7 +181,7 @@ class Phase5TestSuite
     private function cleanPreviousTestArtifacts(): void
     {
         $this->db->exec("DELETE FROM asignaciones_docentes WHERE fecha_inicio >= '2026-06-01' OR id_docente IN (SELECT id_docente FROM docentes WHERE codigo_docente LIKE 'DOC-F5%')");
-        $this->db->exec("DELETE FROM secciones WHERE codigo LIKE 'F5-%'");
+        $this->db->exec("DELETE FROM secciones WHERE id_grado_periodo IN (SELECT id_grado_periodo FROM grados_periodos WHERE id_grado IN (SELECT id_grado FROM grados WHERE codigo LIKE 'GRD-F5%')) OR codigo LIKE 'F5-%'");
         $this->db->exec("DELETE FROM grados_periodos WHERE id_grado IN (SELECT id_grado FROM grados WHERE codigo LIKE 'GRD-F5%')");
         $this->db->exec("DELETE FROM grados WHERE codigo LIKE 'GRD-F5%'");
         $this->db->exec("DELETE FROM periodos_escolares WHERE nombre LIKE 'Ciclo F5%'");
@@ -1228,6 +1228,10 @@ class Phase5TestSuite
         if ($existeGp === 0) {
             $idGrdPer = (int)$this->db->query("SELECT id_grado_periodo FROM grados_periodos WHERE habilitado = 1 ORDER BY id_grado_periodo DESC LIMIT 1")->fetchColumn();
         }
+        $doc1 = (int)$this->db->query("SELECT id_docente FROM docentes WHERE estado = 'ACTIVO' ORDER BY id_docente ASC LIMIT 1")->fetchColumn();
+        $doc2 = (int)$this->db->query("SELECT id_docente FROM docentes WHERE estado = 'ACTIVO' AND id_docente != {$doc1} ORDER BY id_docente DESC LIMIT 1")->fetchColumn();
+        $aula1 = (int)$this->db->query("SELECT id_aula FROM aulas WHERE activa = 1 ORDER BY id_aula ASC LIMIT 1")->fetchColumn();
+
         $this->db->exec("DELETE FROM secciones WHERE codigo = 'SEC-F5-RACE26'");
         $stmtSec = $this->db->prepare("INSERT INTO secciones (id_grado_periodo, codigo, nombre, capacidad, habilitada) VALUES (?, 'SEC-F5-RACE26', 'Sección Carrera Real T26', 30, 1)");
         $stmtSec->execute([$idGrdPer]);
@@ -1255,9 +1259,9 @@ class Phase5TestSuite
             $outB = "$tmpDir/out_B_$i.json";
 
             $cmdA = sprintf('"%s" "%s" --docente=%d --seccion=%d --aula=%d --usuario=1 --fecha_inicio=2026-03-01 --ready="%s" --barrier="%s" --out="%s"',
-                $phpBinary, $workerScript, $this->fixtureDocente1Id, $idSeccionRace, $this->fixtureAula1Id, $readyA, $barrier, $outA);
+                $phpBinary, $workerScript, $doc1, $idSeccionRace, $aula1, $readyA, $barrier, $outA);
             $cmdB = sprintf('"%s" "%s" --docente=%d --seccion=%d --aula=%d --usuario=1 --fecha_inicio=2026-03-01 --ready="%s" --barrier="%s" --out="%s"',
-                $phpBinary, $workerScript, $this->fixtureDocente2Id, $idSeccionRace, $this->fixtureAula1Id, $readyB, $barrier, $outB);
+                $phpBinary, $workerScript, $doc2, $idSeccionRace, $aula1, $readyB, $barrier, $outB);
 
             $desc = [
                 0 => ['pipe', 'r'],

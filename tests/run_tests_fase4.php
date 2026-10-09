@@ -1084,7 +1084,7 @@ class Phase4TestSuite
     private function testT4_24_RegresionFase2(): void
     {
         echo "\n>>> Ejecutando regresión completa de Fase 2 en proceso aislado...\n";
-        $cmd = 'C:\\xampp\\php\\php.exe ' . escapeshellarg(dirname(__DIR__) . '/tests/run_tests.php');
+        $cmd = sprintf('"%s" "%s"', PHP_BINARY, str_replace('/', '\\', dirname(__DIR__) . '/tests/run_tests.php'));
         $output = shell_exec($cmd);
 
         $isOk = $output !== null && (str_contains($output, 'Exitosas (OK)    : 16') || str_contains($output, 'TODAS LAS PRUEBAS DE FASE 2 SUPERADAS'));
@@ -1124,26 +1124,28 @@ class Phase4TestSuite
         $dbPass = (string) Config::get('database.connections.mysql.password', '');
         $tempDb = 'escuela_fase4_regresion_temp';
 
-        $schemaFile = $root . '/database/schema.sql';
-        $seedFile = $root . '/database/seed.sql';
-        $valFile = $root . '/database/tests/validacion.sql';
+        $schemaFile = str_replace('/', '\\', $root . '/database/schema.sql');
+        $seedFile = str_replace('/', '\\', $root . '/database/seed.sql');
+        $valFile = str_replace('/', '\\', $root . '/database/tests/validacion.sql');
 
-        $passParam = $dbPass !== '' ? ' -p' . escapeshellarg($dbPass) : '';
         $baseCmd = sprintf(
-            '"%s" -h %s -P %d -u %s%s',
+            '"%s" -h %s -P %d -u %s',
             $mysqlBinary,
-            escapeshellarg($dbHost),
+            $dbHost,
             $dbPort,
-            escapeshellarg($dbUser),
-            $passParam
+            $dbUser
         );
+        if ($dbPass !== '') {
+            $baseCmd .= ' -p"' . str_replace('"', '\"', $dbPass) . '"';
+        }
 
         $isOk = false;
         $obtained = '';
 
         try {
             // 1. Crear base de datos temporal limpia
-            shell_exec($baseCmd . ' -e "DROP DATABASE IF EXISTS ' . $tempDb . '; CREATE DATABASE ' . $tempDb . ' CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1');
+            shell_exec($baseCmd . ' -e "DROP DATABASE IF EXISTS ' . $tempDb . ';" 2>&1');
+            shell_exec($baseCmd . ' -e "CREATE DATABASE ' . $tempDb . ' CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1');
 
             // 2. Ejecutar schema.sql
             shell_exec($baseCmd . ' ' . $tempDb . ' < "' . $schemaFile . '" 2>&1');

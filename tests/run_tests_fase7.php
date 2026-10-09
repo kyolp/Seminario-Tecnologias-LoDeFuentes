@@ -1242,25 +1242,27 @@ class Phase7TestSuite
         $dbPass = (string) Config::get('database.connections.mysql.password', '');
         $tempDb = 'escuela_fase7_regresion_temp';
 
-        $schemaFile = $root . '/database/schema.sql';
-        $seedFile = $root . '/database/seed.sql';
-        $valFile = $root . '/database/tests/validacion.sql';
+        $schemaFile = str_replace('/', '\\', $root . '/database/schema.sql');
+        $seedFile = str_replace('/', '\\', $root . '/database/seed.sql');
+        $valFile = str_replace('/', '\\', $root . '/database/tests/validacion.sql');
 
-        $passParam = $dbPass !== '' ? ' -p' . escapeshellarg($dbPass) : '';
         $baseCmd = sprintf(
-            '"%s" -h %s -P %d -u %s%s',
+            '"%s" -h %s -P %d -u %s',
             $mysqlBinary,
-            escapeshellarg($dbHost),
+            $dbHost,
             $dbPort,
-            escapeshellarg($dbUser),
-            $passParam
+            $dbUser
         );
+        if ($dbPass !== '') {
+            $baseCmd .= ' -p"' . str_replace('"', '\"', $dbPass) . '"';
+        }
 
         $isOk = false;
         $obtained = '';
 
         try {
-            shell_exec($baseCmd . ' -e "DROP DATABASE IF EXISTS ' . $tempDb . '; CREATE DATABASE ' . $tempDb . ' CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1');
+            shell_exec($baseCmd . ' -e "DROP DATABASE IF EXISTS ' . $tempDb . ';" 2>&1');
+            shell_exec($baseCmd . ' -e "CREATE DATABASE ' . $tempDb . ' CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1');
             shell_exec($baseCmd . ' ' . $tempDb . ' < "' . $schemaFile . '" 2>&1');
             shell_exec($baseCmd . ' ' . $tempDb . ' < "' . $seedFile . '" 2>&1');
             $output = (string) shell_exec($baseCmd . ' ' . $tempDb . ' < "' . $valFile . '" 2>&1');

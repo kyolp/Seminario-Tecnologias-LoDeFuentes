@@ -567,19 +567,20 @@ class Phase2TestSuite
         $dbPass = (string) Config::get('database.connections.mysql.password', '');
         $tempDb = 'escuela_fase2_regresion_temp';
 
-        $schemaFile = $root . '/database/schema.sql';
-        $seedFile = $root . '/database/seed.sql';
-        $valFile = $root . '/database/tests/validacion.sql';
+        $schemaFile = str_replace('/', '\\', $root . '/database/schema.sql');
+        $seedFile = str_replace('/', '\\', $root . '/database/seed.sql');
+        $valFile = str_replace('/', '\\', $root . '/database/tests/validacion.sql');
 
-        $passParam = $dbPass !== '' ? ' -p' . escapeshellarg($dbPass) : '';
         $baseCmd = sprintf(
-            '"%s" -h %s -P %d -u %s%s',
+            '"%s" -h %s -P %d -u %s',
             $mysqlBinary,
-            escapeshellarg($dbHost),
+            $dbHost,
             $dbPort,
-            escapeshellarg($dbUser),
-            $passParam
+            $dbUser
         );
+        if ($dbPass !== '') {
+            $baseCmd .= ' -p"' . str_replace('"', '\"', $dbPass) . '"';
+        }
 
         $isOk = false;
         $obtained = '';
