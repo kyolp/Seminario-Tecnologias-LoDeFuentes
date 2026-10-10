@@ -186,6 +186,9 @@ class Phase7TestSuite
 
     private function setupFixtures(): void
     {
+        $this->db->exec("DELETE FROM docentes WHERE id_usuario IN (SELECT id_usuario FROM usuarios WHERE nombre_usuario IN ('marta.morales', 'carlos.perez', 'lucia.castillo', 'roberto.mendez'))");
+        $this->db->exec("DELETE FROM usuarios WHERE nombre_usuario IN ('marta.morales', 'carlos.perez', 'lucia.castillo', 'roberto.mendez')");
+
         // 1. Roles
         $roleDocenteId = (int)$this->db->query("SELECT id_rol FROM roles WHERE nombre = 'DOCENTE'")->fetchColumn();
         $roleAdminId = (int)$this->db->query("SELECT id_rol FROM roles WHERE nombre IN ('ADMINISTRACION', 'ADMINISTRADOR') LIMIT 1")->fetchColumn();
@@ -195,8 +198,8 @@ class Phase7TestSuite
         $hash = password_hash('DocenteFase7Pass!', PASSWORD_BCRYPT);
         $stmtU = $this->db->prepare('INSERT INTO usuarios (id_rol, nombre_usuario, clave_hash, correo, nombres, apellidos, estado) VALUES (:r, :u, :p, :c, :n, :a, "ACTIVO")');
         
-        $u1 = 'f7_docente_' . uniqid();
-        $c1 = $u1 . '@escuela.edu.gt';
+        $u1 = 'marta.morales';
+        $c1 = 'marta.morales@escuela.com';
         $stmtU->execute([':r' => $roleDocenteId, ':u' => $u1, ':p' => $hash, ':c' => $c1, ':n' => 'Marta Elena', ':a' => 'Morales Solís']);
         $this->fixtureUserDocente1Id = (int)$this->db->lastInsertId();
 
@@ -206,8 +209,8 @@ class Phase7TestSuite
         $this->fixtureDocente1Id = (int)$this->db->lastInsertId();
 
         // Docente 2 (Para prueba de aislamiento horizontal de secciones)
-        $u2 = 'f7_doc2_' . uniqid();
-        $c2 = $u2 . '@escuela.edu.gt';
+        $u2 = 'carlos.perez';
+        $c2 = 'carlos.perez@escuela.com';
         $stmtU->execute([':r' => $roleDocenteId, ':u' => $u2, ':p' => $hash, ':c' => $c2, ':n' => 'Carlos Andrés', ':a' => 'Pérez Ramos']);
         $this->fixtureUserDocente2Id = (int)$this->db->lastInsertId();
 
@@ -216,8 +219,8 @@ class Phase7TestSuite
         $this->fixtureDocente2Id = (int)$this->db->lastInsertId();
 
         // Docente Libre (Sin asignaciones docentes)
-        $u3 = 'f7_libre_' . uniqid();
-        $c3 = $u3 . '@escuela.edu.gt';
+        $u3 = 'lucia.castillo';
+        $c3 = 'lucia.castillo@escuela.com';
         $stmtU->execute([':r' => $roleDocenteId, ':u' => $u3, ':p' => $hash, ':c' => $c3, ':n' => 'Lucía Regina', ':a' => 'Castillo Gómez']);
         $this->fixtureUserDocenteLibreId = (int)$this->db->lastInsertId();
 
@@ -226,8 +229,8 @@ class Phase7TestSuite
         $this->fixtureDocenteLibreId = (int)$this->db->lastInsertId();
 
         // Docente Inactivo
-        $u4 = 'f7_inactivo_' . uniqid();
-        $c4 = $u4 . '@escuela.edu.gt';
+        $u4 = 'roberto.mendez';
+        $c4 = 'roberto.mendez@escuela.com';
         $stmtU->execute([':r' => $roleDocenteId, ':u' => $u4, ':p' => $hash, ':c' => $c4, ':n' => 'Roberto José', ':a' => 'Méndez Ruiz']);
         $this->fixtureUserDocenteInactivoId = (int)$this->db->lastInsertId();
 

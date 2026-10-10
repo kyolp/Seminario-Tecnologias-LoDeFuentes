@@ -177,9 +177,10 @@ class Phase4TestSuite
         $adminHash = password_hash('Admin.2026!', PASSWORD_BCRYPT);
         $docenteHash = password_hash('Docente.2026!', PASSWORD_BCRYPT);
 
+        $this->db->exec("UPDATE usuarios SET nombre_usuario = 'carlos.mendez', correo = 'carlos.mendez@escuela.com', nombres = 'Carlos', apellidos = 'Méndez' WHERE nombre_usuario = 'docente.demo'");
         $stmt = $this->db->prepare('UPDATE usuarios SET clave_hash = :hash, estado = "ACTIVO" WHERE nombre_usuario = :user');
         $stmt->execute([':hash' => $adminHash, ':user' => 'admin.demo']);
-        $stmt->execute([':hash' => $docenteHash, ':user' => 'docente.demo']);
+        $stmt->execute([':hash' => $docenteHash, ':user' => 'carlos.mendez']);
     }
 
     private function cleanPreviousTestArtifacts(): void
@@ -287,7 +288,7 @@ class Phase4TestSuite
     {
         Session::destroy();
         Session::start();
-        $this->authService->attempt('docente.demo', 'Docente.2026!');
+        $this->authService->attempt('carlos.mendez', 'Docente.2026!');
 
         $rutas = [
             '/administracion',
@@ -1339,7 +1340,7 @@ class Phase4TestSuite
             $rDocLoginGet = $httpRequest("http://127.0.0.1:$port/login", 'GET', null, $docenteCookie);
             $docCsrf = $extractCsrf($rDocLoginGet['body']);
             $httpRequest("http://127.0.0.1:$port/login", 'POST', [
-                'nombre_usuario' => 'docente.demo',
+                'nombre_usuario' => 'carlos.mendez',
                 'password' => 'Docente.2026!',
                 '_token' => $docCsrf,
             ], $docenteCookie);

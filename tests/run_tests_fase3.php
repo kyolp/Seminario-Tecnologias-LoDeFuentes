@@ -109,20 +109,38 @@ class Phase3TestSuite
 
         // Docente: Docente.2026!
         $docenteHash = password_hash('Docente.2026!', PASSWORD_BCRYPT);
-        $pdo->prepare('UPDATE usuarios SET clave_hash = ?, estado = "ACTIVO" WHERE nombre_usuario = ?')
-            ->execute([$docenteHash, 'docente.demo']);
+        $docExists = (int)$pdo->query("SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'carlos.mendez'")->fetchColumn();
+        if ($docExists === 0) {
+            $oldDocId = (int)$pdo->query("SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'docente.demo'")->fetchColumn();
+            if ($oldDocId > 0) {
+                $pdo->exec("UPDATE usuarios SET nombre_usuario = 'carlos.mendez', correo = 'carlos.mendez@escuela.com', nombres = 'Carlos', apellidos = 'Méndez' WHERE id_usuario = {$oldDocId}");
+            } else {
+                $docenteRolId = (int)$pdo->query("SELECT id_rol FROM roles WHERE nombre = 'DOCENTE'")->fetchColumn();
+                $pdo->prepare('INSERT INTO usuarios (id_rol, nombre_usuario, correo, clave_hash, nombres, apellidos, estado) VALUES (?, ?, ?, ?, ?, ?, ?)')
+                    ->execute([$docenteRolId, 'carlos.mendez', 'carlos.mendez@escuela.com', $docenteHash, 'Carlos', 'Méndez', 'ACTIVO']);
+                $uId = (int)$pdo->lastInsertId();
+                $pdo->exec("INSERT INTO docentes (id_usuario, codigo_docente, fecha_ingreso, estado) VALUES ($uId, 'DOC-DEMO-001', '2026-01-01', 'ACTIVO')");
+            }
+        } else {
+            $pdo->prepare('UPDATE usuarios SET clave_hash = ?, correo = "carlos.mendez@escuela.com", nombres = "Carlos", apellidos = "Méndez", estado = "ACTIVO" WHERE nombre_usuario = ?')
+                ->execute([$docenteHash, 'carlos.mendez']);
+        }
 
         // Inactivo: Inactivo.2026!
         $inactivoHash = password_hash('Inactivo.2026!', PASSWORD_BCRYPT);
-        $exists = $pdo->prepare('SELECT COUNT(*) FROM usuarios WHERE nombre_usuario = ?');
-        $exists->execute(['inactivo.demo']);
-        if ((int) $exists->fetchColumn() === 0) {
-            $docenteRolId = $pdo->query("SELECT id_rol FROM roles WHERE nombre = 'DOCENTE'")->fetchColumn();
-            $pdo->prepare('INSERT INTO usuarios (id_rol, nombre_usuario, correo, clave_hash, nombres, apellidos, estado) VALUES (?, ?, ?, ?, ?, ?, ?)')
-                ->execute([$docenteRolId, 'inactivo.demo', 'inactivo@example.invalid', $inactivoHash, 'Usuario', 'Inactivo', 'INACTIVO']);
+        $inacExists = (int)$pdo->query("SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'luis.ramirez'")->fetchColumn();
+        if ($inacExists === 0) {
+            $oldInacId = (int)$pdo->query("SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'inactivo.demo'")->fetchColumn();
+            if ($oldInacId > 0) {
+                $pdo->exec("UPDATE usuarios SET nombre_usuario = 'luis.ramirez', correo = 'luis.ramirez@escuela.com', nombres = 'Luis', apellidos = 'Ramírez' WHERE id_usuario = {$oldInacId}");
+            } else {
+                $docenteRolId = (int)$pdo->query("SELECT id_rol FROM roles WHERE nombre = 'DOCENTE'")->fetchColumn();
+                $pdo->prepare('INSERT INTO usuarios (id_rol, nombre_usuario, correo, clave_hash, nombres, apellidos, estado) VALUES (?, ?, ?, ?, ?, ?, ?)')
+                    ->execute([$docenteRolId, 'luis.ramirez', 'luis.ramirez@escuela.com', $inactivoHash, 'Luis', 'Ramírez', 'INACTIVO']);
+            }
         } else {
-            $pdo->prepare('UPDATE usuarios SET clave_hash = ?, estado = "INACTIVO" WHERE nombre_usuario = ?')
-                ->execute([$inactivoHash, 'inactivo.demo']);
+            $pdo->prepare('UPDATE usuarios SET clave_hash = ?, correo = "luis.ramirez@escuela.com", nombres = "Luis", apellidos = "Ramírez", estado = "INACTIVO" WHERE nombre_usuario = ?')
+                ->execute([$inactivoHash, 'luis.ramirez']);
         }
     }
 
@@ -144,7 +162,7 @@ class Phase3TestSuite
         $response = $app->handle($request);
 
         $isRedirect = ($response->getStatusCode() === 302);
-        $targetLocation = $response->getHeader('Location');
+        $targetLocation = (string) $response->getHeader('Location');
         $locationOk = str_contains($targetLocation, '/administracion');
 
         $user = $this->auth->user();
@@ -168,7 +186,7 @@ class Phase3TestSuite
 
         $app = App::getInstance();
         $request = Request::create('POST', '/login', [], [
-            'nombre_usuario' => 'docente.demo',
+            'nombre_usuario' => 'carlos.mendez',
             'password' => 'Docente.2026!',
             '_token' => $token,
         ]);
@@ -176,11 +194,11 @@ class Phase3TestSuite
         $response = $app->handle($request);
 
         $isRedirect = ($response->getStatusCode() === 302);
-        $targetLocation = $response->getHeader('Location');
+        $targetLocation = (string) $response->getHeader('Location');
         $locationOk = str_contains($targetLocation, '/docente');
 
         $user = $this->auth->user();
-        $authOk = ($user !== null) && ($user->nombre_usuario === 'docente.demo') && $user->isDocente();
+        $authOk = ($user !== null) && ($user->nombre_usuario === 'carlos.mendez') && $user->isDocente();
 
         $isOk = $isRedirect && $locationOk && $authOk;
         $obtained = $isOk
@@ -362,7 +380,7 @@ class Phase3TestSuite
      */
     private function testT3_09_DocenteAccedeDocente(): void
     {
-        $this->auth->attempt('docente.demo', 'Docente.2026!');
+        $this->auth->attempt('carlos.mendez', 'Docente.2026!');
 
         $app = App::getInstance();
         $request = Request::create('GET', '/docente');
@@ -370,7 +388,7 @@ class Phase3TestSuite
 
         $statusOk = ($response->getStatusCode() === 200);
         $contentOk = str_contains($response->getContent(), 'Portal docente — sesión válida')
-            && str_contains($response->getContent(), 'docente.demo');
+            && str_contains($response->getContent(), 'carlos.mendez');
 
         $isOk = $statusOk && $contentOk;
         $obtained = $isOk
@@ -385,7 +403,7 @@ class Phase3TestSuite
      */
     private function testT3_10_DocenteIntentaAdmin(): void
     {
-        $this->auth->attempt('docente.demo', 'Docente.2026!');
+        $this->auth->attempt('carlos.mendez', 'Docente.2026!');
 
         $app = App::getInstance();
         $request = Request::create('GET', '/administracion');
@@ -462,7 +480,7 @@ class Phase3TestSuite
      */
     private function testT3_13_ManipulacionManualRol(): void
     {
-        $this->auth->attempt('docente.demo', 'Docente.2026!');
+        $this->auth->attempt('carlos.mendez', 'Docente.2026!');
 
         // Intento 1: Manipular la variable de sesión directamente en memoria
         Session::set('auth_role', 'ADMINISTRADOR');
@@ -533,7 +551,7 @@ class Phase3TestSuite
     private function testT3_15_UsuarioDesactivadoConSesionPrevia(): void
     {
         // 1. Iniciar sesión como docente activo
-        $this->auth->attempt('docente.demo', 'Docente.2026!');
+        $this->auth->attempt('carlos.mendez', 'Docente.2026!');
         $user = $this->auth->user();
 
         $app = App::getInstance();
@@ -580,7 +598,7 @@ class Phase3TestSuite
         $adminContent = $respAdmin->getContent();
 
         // Probar vista docente
-        $this->auth->attempt('docente.demo', 'Docente.2026!');
+        $this->auth->attempt('carlos.mendez', 'Docente.2026!');
         $respDocente = $app->handle(Request::create('GET', '/docente'));
         $docenteContent = $respDocente->getContent();
 

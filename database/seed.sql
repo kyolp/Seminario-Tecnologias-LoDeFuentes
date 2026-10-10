@@ -28,11 +28,11 @@ VALUES
     ),
     (
         (SELECT id_rol FROM roles WHERE nombre = 'DOCENTE'),
-        'docente.demo',
-        'docente.demo@example.invalid',
+        'carlos.mendez',
+        'carlos.mendez@escuela.com',
         '$2y$10$/LZ/ivMueOQ/BlQxyrULOeKijxwC6226UrGyfb7TQvUp0zN6iYqb.',
-        'Docente',
-        'Demostración',
+        'Carlos',
+        'Méndez',
         'ACTIVO'
     );
 
@@ -43,7 +43,7 @@ INSERT INTO docentes (
     estado
 )
 VALUES (
-    (SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'docente.demo'),
+    (SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'carlos.mendez'),
     'DOC-DEMO-001',
     '2026-01-01',
     'ACTIVO'

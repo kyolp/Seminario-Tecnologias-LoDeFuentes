@@ -173,9 +173,10 @@ class Phase5TestSuite
         $adminHash = password_hash('Admin.2026!', PASSWORD_BCRYPT);
         $docenteHash = password_hash('Docente.2026!', PASSWORD_BCRYPT);
 
+        $this->db->exec("UPDATE usuarios SET nombre_usuario = 'carlos.mendez', correo = 'carlos.mendez@escuela.com', nombres = 'Carlos', apellidos = 'Méndez' WHERE nombre_usuario = 'docente.demo'");
         $stmt = $this->db->prepare('UPDATE usuarios SET clave_hash = :hash, estado = "ACTIVO" WHERE nombre_usuario = :user');
         $stmt->execute([':hash' => $adminHash, ':user' => 'admin.demo']);
-        $stmt->execute([':hash' => $docenteHash, ':user' => 'docente.demo']);
+        $stmt->execute([':hash' => $docenteHash, ':user' => 'carlos.mendez']);
     }
 
     private function cleanPreviousTestArtifacts(): void
@@ -187,7 +188,7 @@ class Phase5TestSuite
         $this->db->exec("DELETE FROM periodos_escolares WHERE nombre LIKE 'Ciclo F5%'");
         $this->db->exec("DELETE FROM aulas WHERE codigo LIKE 'AUL-F5%'");
 
-        $testUsers = $this->db->query("SELECT id_usuario FROM usuarios WHERE nombre_usuario LIKE 'test_f5_%'")->fetchAll(PDO::FETCH_COLUMN);
+        $testUsers = $this->db->query("SELECT id_usuario FROM usuarios WHERE nombre_usuario LIKE 'test_f5_%' OR nombre_usuario IN ('carlos.garcia', 'lucia.morales', 'luis.ramirez')")->fetchAll(PDO::FETCH_COLUMN);
         if (!empty($testUsers)) {
             $inClause = implode(',', array_map('intval', $testUsers));
             $this->db->exec("DELETE FROM docentes WHERE id_usuario IN ($inClause)");
@@ -231,21 +232,21 @@ class Phase5TestSuite
         $hash = password_hash('Docente.2026!', PASSWORD_BCRYPT);
 
         // Docente 1
-        $this->db->exec("INSERT INTO usuarios (id_rol, nombre_usuario, correo, clave_hash, nombres, apellidos, estado) VALUES ($idRolDocente, 'test_f5_doc1', 'test_f5_doc1@example.invalid', '$hash', 'Carlos Alberto', 'García Méndez', 'ACTIVO')");
+        $this->db->exec("INSERT INTO usuarios (id_rol, nombre_usuario, correo, clave_hash, nombres, apellidos, estado) VALUES ($idRolDocente, 'carlos.garcia', 'carlos.garcia@escuela.com', '$hash', 'Carlos Alberto', 'García Méndez', 'ACTIVO')");
         $u1 = (int)$this->db->lastInsertId();
         $this->createdUserIds[] = $u1;
         $this->db->exec("INSERT INTO docentes (id_usuario, codigo_docente, fecha_ingreso, estado) VALUES ($u1, 'DOC-F5-001', '2026-01-10', 'ACTIVO')");
         $this->fixtureDocente1Id = (int)$this->db->lastInsertId();
 
         // Docente 2
-        $this->db->exec("INSERT INTO usuarios (id_rol, nombre_usuario, correo, clave_hash, nombres, apellidos, estado) VALUES ($idRolDocente, 'test_f5_doc2', 'test_f5_doc2@example.invalid', '$hash', 'Lucía Fernanda', 'Morales Paz', 'ACTIVO')");
+        $this->db->exec("INSERT INTO usuarios (id_rol, nombre_usuario, correo, clave_hash, nombres, apellidos, estado) VALUES ($idRolDocente, 'lucia.morales', 'lucia.morales@escuela.com', '$hash', 'Lucía Fernanda', 'Morales Paz', 'ACTIVO')");
         $u2 = (int)$this->db->lastInsertId();
         $this->createdUserIds[] = $u2;
         $this->db->exec("INSERT INTO docentes (id_usuario, codigo_docente, fecha_ingreso, estado) VALUES ($u2, 'DOC-F5-002', '2026-01-12', 'ACTIVO')");
         $this->fixtureDocente2Id = (int)$this->db->lastInsertId();
 
         // Docente inactivo
-        $this->db->exec("INSERT INTO usuarios (id_rol, nombre_usuario, correo, clave_hash, nombres, apellidos, estado) VALUES ($idRolDocente, 'test_f5_doc_inac', 'test_f5_doc_inac@example.invalid', '$hash', 'Docente Inactivo', 'Prueba F5', 'INACTIVO')");
+        $this->db->exec("INSERT INTO usuarios (id_rol, nombre_usuario, correo, clave_hash, nombres, apellidos, estado) VALUES ($idRolDocente, 'luis.ramirez', 'luis.ramirez@escuela.com', '$hash', 'Luis', 'Ramírez', 'INACTIVO')");
         $uInac = (int)$this->db->lastInsertId();
         $this->createdUserIds[] = $uInac;
         $this->db->exec("INSERT INTO docentes (id_usuario, codigo_docente, fecha_ingreso, estado) VALUES ($uInac, 'DOC-F5-INAC', '2026-01-15', 'INACTIVO')");
@@ -324,7 +325,7 @@ class Phase5TestSuite
     {
         Session::destroy();
         Session::start();
-        $this->authService->attempt('docente.demo', 'Docente.2026!');
+        $this->authService->attempt('carlos.mendez', 'Docente.2026!');
 
         $app = App::getInstance();
         $rList = $app->handle(Request::create('GET', '/administracion/asignaciones'));
@@ -1025,7 +1026,7 @@ class Phase5TestSuite
             $rDocLoginGet = $httpRequest("http://127.0.0.1:$port/login", 'GET', null, $docenteCookie);
             $docCsrf = $extractCsrf($rDocLoginGet['body']);
             $httpRequest("http://127.0.0.1:$port/login", 'POST', [
-                'nombre_usuario' => 'docente.demo',
+                'nombre_usuario' => 'carlos.mendez',
                 'password' => 'Docente.2026!',
                 '_token' => $docCsrf,
             ], $docenteCookie);

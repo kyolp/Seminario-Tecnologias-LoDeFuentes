@@ -168,6 +168,10 @@ class Phase8TestSuite
 
     private function setupFixtures(): void
     {
+        $this->db->exec("DELETE FROM marcajes_asistencia WHERE id_docente IN (SELECT id_docente FROM docentes WHERE id_usuario IN (SELECT id_usuario FROM usuarios WHERE nombre_usuario IN ('claudia.morales', 'fernando.perez', 'luis.ramirez')))");
+        $this->db->exec("DELETE FROM docentes WHERE id_usuario IN (SELECT id_usuario FROM usuarios WHERE nombre_usuario IN ('claudia.morales', 'fernando.perez', 'luis.ramirez'))");
+        $this->db->exec("DELETE FROM usuarios WHERE nombre_usuario IN ('claudia.morales', 'fernando.perez', 'luis.ramirez')");
+
         // 1. Rol ADMINISTRADOR / ADMINISTRACION
         $stmtRol = $this->db->query("SELECT id_rol FROM roles WHERE nombre IN ('ADMINISTRACION', 'ADMINISTRADOR') LIMIT 1");
         $rolAdminId = (int) $stmtRol->fetchColumn();
@@ -185,8 +189,8 @@ class Phase8TestSuite
         $this->fixtureUserAdminId = (int) $this->db->lastInsertId();
 
         // 3. Usuario Docente 1 (Activo)
-        $uDoc1 = 'doc1_f8_' . rand(1000, 9999);
-        $stmt->execute([':r' => $rolDocId, ':u' => $uDoc1, ':c' => $uDoc1 . '@escuela.test', ':p' => $passHash, ':n' => 'Claudia', ':a' => 'Morales Ruiz']);
+        $uDoc1 = 'claudia.morales';
+        $stmt->execute([':r' => $rolDocId, ':u' => $uDoc1, ':c' => 'claudia.morales@escuela.com', ':p' => $passHash, ':n' => 'Claudia', ':a' => 'Morales Ruiz']);
         $this->fixtureUserDocente1Id = (int) $this->db->lastInsertId();
 
         $stmtDoc = $this->db->prepare('INSERT INTO docentes (id_usuario, codigo_docente, fecha_ingreso, estado) VALUES (:u, :cod, "2024-01-15", "ACTIVO")');
@@ -195,8 +199,8 @@ class Phase8TestSuite
         $this->fixtureDocente1Id = (int) $this->db->lastInsertId();
 
         // 4. Usuario Docente 2 (Activo, para aislamiento)
-        $uDoc2 = 'doc2_f8_' . rand(1000, 9999);
-        $stmt->execute([':r' => $rolDocId, ':u' => $uDoc2, ':c' => $uDoc2 . '@escuela.test', ':p' => $passHash, ':n' => 'Fernando', ':a' => 'Pérez Ramos']);
+        $uDoc2 = 'fernando.perez';
+        $stmt->execute([':r' => $rolDocId, ':u' => $uDoc2, ':c' => 'fernando.perez@escuela.com', ':p' => $passHash, ':n' => 'Fernando', ':a' => 'Pérez Ramos']);
         $this->fixtureUserDocente2Id = (int) $this->db->lastInsertId();
 
         $cDoc2 = 'DOC-F8-02-' . rand(100, 999);
@@ -204,8 +208,8 @@ class Phase8TestSuite
         $this->fixtureDocente2Id = (int) $this->db->lastInsertId();
 
         // 5. Usuario Docente Inactivo
-        $uDocInac = 'doc_inac_f8_' . rand(1000, 9999);
-        $stmt->execute([':r' => $rolDocId, ':u' => $uDocInac, ':c' => $uDocInac . '@escuela.test', ':p' => $passHash, ':n' => 'Inactivo', ':a' => 'Docente']);
+        $uDocInac = 'luis.ramirez';
+        $stmt->execute([':r' => $rolDocId, ':u' => $uDocInac, ':c' => 'luis.ramirez@escuela.com', ':p' => $passHash, ':n' => 'Luis', ':a' => 'Ramírez']);
         $this->fixtureUserDocenteInactivoId = (int) $this->db->lastInsertId();
 
         $cDocInac = 'DOC-F8-INAC-' . rand(100, 999);

@@ -280,7 +280,7 @@ BEGIN
         distancia_metros, dentro_radio
     ) VALUES (
         (SELECT id_docente FROM docentes WHERE codigo_docente = 'DOC-DEMO-001'),
-        (SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'docente.demo'),
+        (SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'carlos.mendez'),
         LAST_INSERT_ID(), 'ENTRADA', 0.0000000, 0.0000000, 5.00, 0.00, 1
     );
     SELECT COUNT(*) INTO v_total FROM marcajes_asistencia;
@@ -301,7 +301,7 @@ BEGIN
         estado_anterior, estado_nuevo, comentario
     ) VALUES (
         @id_permiso_fase_1,
-        (SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'docente.demo'),
+        (SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'carlos.mendez'),
         NULL, 'PENDIENTE', 'Creación de prueba'
     );
     INSERT INTO documentos_permiso (
@@ -337,7 +337,7 @@ BEGIN
     INSERT INTO tokens_recuperacion (
         id_usuario, token_hash, fecha_expiracion
     ) VALUES (
-        (SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'docente.demo'),
+        (SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'carlos.mendez'),
         REPEAT('a', 64), DATE_ADD(CURRENT_TIMESTAMP(6), INTERVAL 30 MINUTE)
     );
     SELECT COUNT(*) INTO v_total
