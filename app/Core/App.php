@@ -258,6 +258,11 @@ class App
         $this->router->post('/administracion/notificaciones/marcar-todas', [\App\Controllers\AdminNotificacionController::class, 'marcarTodasLeidas'], $adminPost);
         $this->router->get('/administracion/notificaciones/conteo', [\App\Controllers\AdminNotificacionController::class, 'conteoNoLeidas'], $adminGet);
 
+        // 9. Reportes Institucionales (Fase 12 — RF-29, RF-30)
+        $this->router->get('/administracion/reportes', [\App\Controllers\AdminReporteController::class, 'index'], $adminGet);
+        $this->router->get('/administracion/reportes/asistencia', [\App\Controllers\AdminReporteController::class, 'asistencia'], $adminGet);
+        $this->router->get('/administracion/reportes/inscripciones', [\App\Controllers\AdminReporteController::class, 'inscripciones'], $adminGet);
+
 
         // 7. Módulo Público de Inscripciones y Cupos (Fase 6 — RF-05, RF-09, RF-10, RF-11, RF-12, RF-14, RF-32)
         $this->router->get('/inscripcion', [\App\Controllers\InscripcionPublicaController::class, 'createForm']);

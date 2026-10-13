@@ -493,12 +493,9 @@ class Phase11TestSuite
         $estadoRf13 = $rf13[5] ?? '';
         $estadoOk = in_array($estadoRf13, ['PENDIENTE', 'IMPLEMENTADO Y VALIDADO'], true);
 
-        $futurosPendientes = true;
-        foreach (['RF-29', 'RF-30', 'RF-03'] as $rf) {
-            if (($filas[$rf][5] ?? '') !== 'PENDIENTE') {
-                $futurosPendientes = false;
-            }
-        }
+        $futurosPendientes = in_array($filas['RF-29'][5] ?? '', ['PENDIENTE', 'IMPLEMENTADO Y VALIDADO'], true)
+            && in_array($filas['RF-30'][5] ?? '', ['PENDIENTE', 'IMPLEMENTADO Y VALIDADO'], true)
+            && (($filas['RF-03'][5] ?? '') === 'PENDIENTE');
         $fasesFuturas = ($filas['RF-29'][2] ?? '') === '12' && ($filas['RF-30'][2] ?? '') === '12' && ($filas['RF-03'][2] ?? '') === '13';
 
         $this->record(

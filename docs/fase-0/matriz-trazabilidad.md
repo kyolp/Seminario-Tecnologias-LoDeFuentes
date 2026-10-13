@@ -37,11 +37,11 @@ trazabilidad y ningún requisito funcional ha sido implementado o validado.
 | RF-23 | **Historial de asistencia.** Permitir al docente consultar sus marcajes y a administración consultar registros autorizados. | 8 | `DocenteAsistenciaController.php`, `AsistenciaRepository.php` | `marcajes_asistencia` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase8.php` (T8-24, T8-25) | APROBADO (40/40) |
 | RF-24 | **Solicitud de permiso.** Registrar solicitudes indicando fecha, motivo y descripción. | 9 | `DocentePermisoController.php`, `PermisoService.php`, `PermisoRepository.php` | `solicitudes_permiso`, `historial_solicitudes_permiso` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase9.php` (T9-01 a T9-08, T9-33) | APROBADO (46/46) |
 | RF-25 | **Documento de respaldo.** Adjuntar un archivo de respaldo a una solicitud. | 9 | `PermisoService.php`, `PermisoRepository.php`, `storage/permisos/` | `documentos_permiso` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase9.php` (T9-09 a T9-17, T9-33, T9-35, T9-45) | APROBADO (46/46) |
-| RF-26 | **Notificación de permiso.** Notificar a administración cuando exista una nueva solicitud. | 10 | Por definir en Fase 10 | `notificaciones` | PENDIENTE | No ejecutada (Asignado a Fase 10; verificado cero notificaciones en T9-36) | PENDIENTE — FASE 10 |
+| RF-26 | **Notificación de permiso.** Notificar a administración cuando exista una nueva solicitud. | 10 | `app/Controllers/AdminNotificacionController.php`, `app/Services/NotificacionService.php`, `app/Repositories/NotificacionRepository.php`, `views/admin/notificaciones/index.php` | `notificaciones` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase10.php` (T10-01 a T10-27) | APROBADO (27/27) |
 | RF-27 | **Aprobación/rechazo.** Aprobar o rechazar solicitudes y registrar la decisión. | 9 | `AdminPermisoController.php`, `PermisoService.php`, `PermisoRepository.php` | `solicitudes_permiso`, `historial_solicitudes_permiso` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase9.php` (T9-20 a T9-25, T9-31, T9-32, T9-34, T9-46) | APROBADO (46/46) |
 | RF-28 | **Estado de solicitud.** Permitir al docente consultar el estado e historial de sus solicitudes. | 9 | `DocentePermisoController.php`, `PermisoRepository.php`, `views/docente/permisos/*` | `solicitudes_permiso`, `historial_solicitudes_permiso` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase9.php` (T9-18, T9-19, T9-33) | APROBADO (46/46) |
-| RF-29 | **Reporte de asistencia.** Generar reportes por docente y período. | 12 | Por definir en Fase 12 | Por definir en Fase 1 | PENDIENTE | No ejecutada | Pendiente |
-| RF-30 | **Consulta de inscripciones.** Consultar estudiantes inscritos, grado, sección y estado de cupo. | 12 | Por definir en Fase 12 | Por definir en Fase 1 | PENDIENTE | No ejecutada | Pendiente |
+| RF-29 | **Reporte de asistencia.** Generar reportes por docente y período. | 12 | `app/Controllers/AdminReporteController.php`, `app/Services/ReporteService.php`, `app/Repositories/ReporteRepository.php`, `views/admin/reportes/asistencia.php` | `marcajes_asistencia`, `docentes`, `usuarios`, `configuraciones_ubicacion` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase12.php` (T12-02 a T12-10, T12-26) | APROBADO (30/30) |
+| RF-30 | **Consulta de inscripciones.** Consultar estudiantes inscritos, grado, sección y estado de cupo. | 12 | `app/Controllers/AdminReporteController.php`, `app/Services/ReporteService.php`, `app/Repositories/ReporteRepository.php`, `views/admin/reportes/inscripciones.php` | `secciones`, `grados_periodos`, `grados`, `periodos_escolares`, `inscripciones`, `estudiantes` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase12.php` (T12-11 a T12-20, T12-27) | APROBADO (30/30) |
 | RF-31 | **Integración de módulos.** Actualizar el listado de la sección mediante inscripciones confirmadas. | 6/7 | `app/Repositories/PortalDocenteRepository.php`, `app/Services/InscripcionService.php` | `inscripciones`, `secciones`, `estudiantes`, `asignaciones_docentes` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase7.php` (T7-19, T7-20), `tests/run_tests_fase6.php` | APROBADO (28/28) |
 | RF-32 | **Integridad de cupos.** Evitar que operaciones concurrentes superen la capacidad de una sección. | 6 | `app/Services/InscripcionService.php`, `app/Repositories/InscripcionRepository.php` | `inscripciones`, `secciones` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase6.php` (T6-20, T6-21) | APROBADO (30/30) |
 
@@ -236,6 +236,31 @@ La Fase 10 implementa de forma íntegra el subsistema de notificaciones instituc
 | **RNF-06** (Trazabilidad: registrar operaciones clave mediante bitácoras o mecanismos de auditoría) | Tabla `notificaciones`, columnas `fecha_creacion`, `fecha_lectura` | EVIDENCIA AMPLIADA EN FASE 10 | Registro de auditoría temporal con microsegundos del servidor (`CURRENT_TIMESTAMP(6)`) y marca indeleble de momento de lectura. |
 
 La suite automatizada de pruebas y sus 27 resultados se documentan en `docs/fase-10/pruebas.md`.
+
+## Actualización controlada de Comprobante de Inscripción en PDF — Fase 11
+
+La Fase 11 implementa de forma íntegra la generación en memoria del comprobante individual de inscripción en formato PDF (RF-13) mediante la biblioteca local FPDF 1.86, sin persistencia en disco ni base de datos, con respuesta HTTP binaria `application/pdf`, integridad de datos asociados al código de confirmación y mínima exposición conforme a RNF-04.
+
+| Requisitos respaldados | Componentes funcionales creados | Estado de Fase 11 | Evidencia de Fase 11 |
+|---|---|---|---|
+| **RF-13** (Comprobante PDF: generar un comprobante de inscripción en PDF) | `ComprobanteInscripcionController::descargar()`, `ComprobanteInscripcionService::generarComprobantePorCodigo()`, `PdfService::generarComprobanteInscripcion()`, `app/Libraries/Fpdf/*` | IMPLEMENTADO Y VALIDADO | Generación al vuelo en memoria de archivo PDF estándar (%PDF-1.3) con datos de confirmación, estudiante, encargado, grado y sección. Verificado en T11-01 a T11-29. |
+| **RNF-04** (Privacidad: restringir acceso a información sensible) | `PdfService`, `ComprobanteInscripcionService` | EVIDENCIA PARCIAL VERIFICADA EN FASE 11 | Mínima exposición: comprobante omite CUI, teléfono y correo electrónico de encargados y estudiantes. |
+
+La suite automatizada de pruebas y sus 29 resultados se documentan en `docs/fase-11/pruebas.md`.
+
+## Actualización controlada de Reportes Institucionales — Fase 12
+
+La Fase 12 implementa de forma íntegra los reportes administrativos de asistencia docente (RF-29) y consulta de inscripciones y cupos por grado y sección (RF-30), junto con la reescritura del `README.md`. Los reportes se ejecutan como consultas de solo lectura con parámetros validados, sin modificar los registros de asistencia ni duplicar contadores de cupos, manteniendo la consistencia de la base de datos relacional y aplicando mínima exposición de datos sensibles.
+
+| Requisitos respaldados | Componentes funcionales creados | Estado de Fase 12 | Evidencia de Fase 12 |
+|---|---|---|---|
+| **RF-29** (Reporte de asistencia: administración podrá generar reportes de asistencia por docente y período) | `AdminReporteController::asistencia()`, `ReporteService::generarReporteAsistencia()`, `ReporteRepository::findMarcajesAsistencia()`, `views/admin/reportes/asistencia.php` | IMPLEMENTADO Y VALIDADO | Consulta de marcajes inmutables de entrada y salida con filtros autorizados por docente, ciclo escolar, fechas y tipo de marcaje. Métricas agregadas y cumplimiento de mínima exposición (sin coordenadas privadas). Verificado en T12-02 a T12-10 y T12-26. |
+| **RF-30** (Consulta de inscripciones: administración podrá consultar estudiantes inscritos, grado, sección y estado de cupo) | `AdminReporteController::inscripciones()`, `ReporteService::generarReporteInscripciones()`, `ReporteRepository::findResumenCuposPorSeccion()`, `ReporteRepository::findInscripcionesDetalle()`, `views/admin/reportes/inscripciones.php` | IMPLEMENTADO Y VALIDADO | Balance de capacidad, ocupación y disponibilidad de cupos por sección reutilizando la regla de negocio institucional de Fase 6, con desglose de estudiantes inscritos y filtros por período, grado, sección y estado. Verificado en T12-11 a T12-20 y T12-27. |
+| **RNF-04** (Privacidad: restringir acceso a información sensible) | `ReporteRepository::findMarcajesAsistencia()`, `ReporteRepository::findInscripcionesDetalle()`, `views/admin/reportes/*` | EVIDENCIA AMPLIADA EN FASE 12 | Mínima exposición verificada: sin datos de contacto de menores ni encargados (teléfono, correo), sin contraseñas ni coordenadas personales de geolocalización. |
+| **RNF-06** (Trazabilidad: registrar operaciones clave mediante bitácoras o mecanismos de auditoría) | `ReporteRepository::findMarcajesAsistencia()`, inmutabilidad de `marcajes_asistencia` | EVIDENCIA AMPLIADA EN FASE 12 | Consulta de solo lectura que respeta la inmutabilidad de los marcajes autoritativos con fecha/hora de servidor. |
+
+La suite automatizada de pruebas y sus 30 resultados se documentan en `docs/fase-12/pruebas.md`.
+
 
 
 

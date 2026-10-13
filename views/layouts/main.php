@@ -23,6 +23,7 @@
                     <?php if ($currentUser !== null && $currentUser->isAdmin()): ?>
                         <a href="<?= e(url('administracion')) ?>" class="nav-link">Administración</a>
                         <a href="<?= e(url('administracion/notificaciones')) ?>" class="nav-link">🔔 Notificaciones</a>
+                        <a href="<?= e(url('administracion/reportes')) ?>" class="nav-link">📊 Reportes</a>
                     <?php endif; ?>
                     <?php if ($currentUser !== null && $currentUser->isDocente()): ?>
                         <a href="<?= e(url('docente')) ?>" class="nav-link">Docente</a>

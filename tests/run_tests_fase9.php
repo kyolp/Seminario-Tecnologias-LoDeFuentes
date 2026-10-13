@@ -172,7 +172,12 @@ class Phase9TestSuite
 
     private function setupFixtures(): void
     {
-        $this->db->exec("DELETE FROM solicitudes_permiso WHERE id_docente IN (SELECT id_docente FROM docentes WHERE id_usuario IN (SELECT id_usuario FROM usuarios WHERE nombre_usuario IN ('elena.garcia', 'roberto.alvarado', 'luis.ramirez')))");
+        $docSubQuery = "SELECT id_docente FROM docentes WHERE id_usuario IN (SELECT id_usuario FROM usuarios WHERE nombre_usuario IN ('elena.garcia', 'roberto.alvarado', 'luis.ramirez'))";
+        $solSubQuery = "SELECT id_solicitud_permiso FROM solicitudes_permiso WHERE id_docente IN ($docSubQuery)";
+        $this->db->exec("DELETE FROM notificaciones WHERE id_solicitud_permiso IN ($solSubQuery)");
+        $this->db->exec("DELETE FROM historial_solicitudes_permiso WHERE id_solicitud_permiso IN ($solSubQuery)");
+        $this->db->exec("DELETE FROM documentos_permiso WHERE id_solicitud_permiso IN ($solSubQuery)");
+        $this->db->exec("DELETE FROM solicitudes_permiso WHERE id_docente IN ($docSubQuery)");
         $this->db->exec("DELETE FROM docentes WHERE id_usuario IN (SELECT id_usuario FROM usuarios WHERE nombre_usuario IN ('elena.garcia', 'roberto.alvarado', 'luis.ramirez'))");
         $this->db->exec("DELETE FROM usuarios WHERE nombre_usuario IN ('elena.garcia', 'roberto.alvarado', 'luis.ramirez')");
 

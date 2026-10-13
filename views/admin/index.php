@@ -105,5 +105,11 @@
             <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Avisos institucionales sobre nuevas solicitudes de permisos y eventos administrativos (Fase 10 — RF-26).</p>
             <a href="<?= e(url('/administracion/notificaciones')) ?>" style="display: inline-block; padding: 0.4rem 0.8rem; background: #0284c7; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">Ver Notificaciones &rarr;</a>
         </div>
+
+        <div style="background: #ffffff; border: 2px solid #0d9488; border-radius: 8px; padding: 1.25rem; box-shadow: 0 2px 4px rgba(13,148,136,0.1);">
+            <h4 style="margin: 0 0 0.5rem 0; color: #1e3a8a; font-size: 1.15rem;">📊 Reportes Institucionales</h4>
+            <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Reportes administrativos de asistencia docente (RF-29) y consulta de inscripciones y cupos (RF-30).</p>
+            <a href="<?= e(url('/administracion/reportes')) ?>" style="display: inline-block; padding: 0.4rem 0.8rem; background: #0d9488; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">Ver Reportes &rarr;</a>
+        </div>
     </div>
 </section>
