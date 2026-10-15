@@ -1107,7 +1107,7 @@ class Phase12TestSuite
         $totalRestantes = $marcsRestantes + $inscrRestantes + $secsRestantes + $usersRestantes;
 
         $ok = $totalRestantes === 0;
-        $this->record('T12-30', 'Gestión de pruebas: Cero datos basura permanentes en base principal tras ejecución', 'Todos los fixtures de Fase 12 eliminados al 100%',
+        $this->record('T12-30', 'Gestión de pruebas: Fase 12 no deja nuevos fixtures o datos temporales permanentes después de ejecutar su suite', 'Todos los fixtures creados por Fase 12 eliminados al 100%',
             sprintf('Marcajes residuales: %d | Inscripciones residuales: %d | Secciones residuales: %d | Usuarios residuales: %d', $marcsRestantes, $inscrRestantes, $secsRestantes, $usersRestantes), $ok);
     }
 

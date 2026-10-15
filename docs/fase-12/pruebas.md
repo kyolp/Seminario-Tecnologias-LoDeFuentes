@@ -17,7 +17,7 @@
 | **T12-01** | Trazabilidad | Trazabilidad documental oficial: RF-29 y RF-30 en Fase 12; RF-03 pendiente en Fase 13 | RF-29 y RF-30 verificados en matriz de Fase 12; RF-03 asignado a Fase 13 | **OK** |
 | **T12-02** | RF-29 | Consulta básica de marcajes de asistencia por administración con datos reales | Total: 4 marcajes (3 entradas, 1 salida) obtenidos de base de datos | **OK** |
 | **T12-03** | RF-29 | Filtro por docente específico aísla exclusivamente sus marcajes | Exactamente 3 marcajes del Docente 1 con docente único en resumen | **OK** |
-| **T12-04** | RF-29 | Filtro por período escolar acota automáticamente las fechas al ciclo lectivo | Ciclo 2026: 4 marcajes; Ciclo 2025: 0 marcajes | **OK** |
+| **T12-04** | RF-29 | Criterio técnico auxiliar: filtro por período escolar acota las fechas de marcajes al ciclo lectivo | Ciclo 2026: 4 marcajes; Ciclo 2025: 0 marcajes | **OK** |
 | **T12-05** | RF-29 | Filtro por rango de fechas acota estrictamente la consulta | Rango 2026-03-10: 3 marcajes (2 entradas, 1 salida) | **OK** |
 | **T12-06** | RF-29 | Validación de consistencia temporal: rechazo estricto si fecha_fin < fecha_inicio | InvalidArgumentException capturada con mensaje explicativo | **OK** |
 | **T12-07** | RF-29 | Filtro por tipo de marcaje discrimina con precisión entradas y salidas | Entradas: 2, Salidas: 1 para el docente evaluado | **OK** |
@@ -43,11 +43,11 @@
 | **T12-27** | HTTP Real | Consulta de inscripciones y cupos por administrador autenticado en servidor embebido | HTTP 200 con tabla de cupos (LLENO y DISPONIBLE) y listado de inscritos | **OK** |
 | **T12-28** | HTTP Real | Acceso anónimo redirige a login (302) y docente recibe 403 Forbidden | HTTP 302 a login para anónimo y HTTP 403 para docente | **OK** |
 | **T12-29** | Base de Datos | schema.sql intacto sin tablas ni campos redundantes de reportes | Cero tablas de reportes o estadísticas en schema.sql y en motor MySQL | **OK** |
-| **T12-30** | No Contaminación | Cero datos basura permanentes en base principal tras ejecución de suite | Todos los fixtures de Fase 12 eliminados al 100% tras el cierre | **OK** |
+| **T12-30** | No Contaminación | Fase 12 no deja nuevos fixtures o datos temporales permanentes después de ejecutar su suite | Fixtures creados por Fase 12 eliminados al 100% (cero residuos de usuarios, marcajes, inscripciones o secciones de prueba de Fase 12) | **OK** |
 
 ---
 
 ### Resumen de Ejecución
 - **30 pruebas ejecutadas, 30 aprobadas (100%).**
 - Pruebas HTTP reales ejecutadas mediante servidor web PHP embebido en puerto 8100 y cliente cURL.
-- Aislamiento total de fixtures y verificación estricta de no contaminación de la base de datos relacional.
+- **Alcance de T12-30:** La prueba verifica exclusivamente que la suite de Fase 12 no deje datos residuales ni fixtures permanentes creados durante su propia ejecución. No se realiza afirmación sobre la totalidad de la base de datos histórica, cuya limpieza integral y depuración de datos semilla está formalmente reservada para la Fase 16.

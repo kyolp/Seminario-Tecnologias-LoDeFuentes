@@ -1,84 +1,116 @@
-# INFORME DE CIERRE FORMAL — FASE 12
+# INFORME DE CIERRE FORMAL — FASE 12 (CORRECCIÓN DOCUMENTAL)
 ## SISTEMA WEB ESCUELA OFICIAL RURAL MIXTA LO DE FUENTES
 
 **Módulo:** Reportes Institucionales (RF-29 y RF-30) + Actualización Controlada del README  
 **Rol:** Antigravity — Desarrollador Principal  
-**Fecha:** 12 de octubre de 2026  
-**Resultado de Fase:** COMPLETADA, VERIFICADA Y LISTA PARA REVISIÓN EXTERNA  
+**Fecha:** 14 de octubre de 2026  
+**Resultado de Fase:** COMPLETADA, VERIFICADA Y DOCUMENTALMENTE CONFORME  
 
 ---
 
-## 1. Declaración de Cumplimiento de Alcance
+## 1. Verificación Literal de Requisitos Oficiales (Documento de Alcance)
 
-En estricta conformidad con el **Documento Oficial de Alcance del Proyecto** (*Andersson Godoy, Secciones 9.5 y 10.1*) y la autorización concedida para la Fase 12:
+Se consultó directamente el archivo oficial:
+`Documento_Alcance_Escuela_Lo_de_Fuentes_Andersson_Godoy (1).docx` (Secciones 9.5 y 10.1).
 
-1. **RF-29 — Reporte de Asistencia:**
-   - *Definición oficial:* "Administración podrá generar reportes de asistencia por docente y período."
-   - **ESTADO: IMPLEMENTADO Y VALIDADO.**
-   - Flujo de consulta administrativa de marcajes inmutables de entrada y salida con filtros autorizados por docente, ciclo escolar, rango de fechas y tipo de marcaje, sin exponer coordenadas geográficas privadas.
+### RF-29
+- **Nombre literal:** `Reporte de asistencia` (Sección 10.1, y Sección 9.5: *"Reporte de asistencia docente por período"*, *"Historial de entradas y salidas de un docente"*).
+- **Descripción literal:** `Administración podrá generar reportes de asistencia por docente y período.` (Sección 10.1).
+- **Actor:** `Administración`.
+- **Filtros expresamente requeridos por el texto oficial:** Por docente y por período.
 
-2. **RF-30 — Consulta de Inscripciones y Cupos:**
-   - *Definición oficial:* "Administración podrá consultar estudiantes inscritos, grado, sección y estado de cupo."
-   - **ESTADO: IMPLEMENTADO Y VALIDADO.**
-   - Consulta administrativa de ocupación y disponibilidad de cupos por sección reutilizando la regla de negocio de Fase 6, junto con el listado detallado de estudiantes inscritos, filtrado por período, grado, sección y estado, con mínima exposición de datos sensibles.
-
-3. **Actualización Documental del README:**
-   - Reescritura completa del archivo `README.md` con un tono natural, profesional, breve y útil para desarrolladores y evaluadores, eliminando estructuras ceremoniales y referencias a lineamientos de IA.
-
----
-
-## 2. Componentes Desarrollados y Modificados
-
-### 2.1 Backend y Arquitectura
-- **`app/Repositories/ReporteRepositoryInterface.php`**: Contrato de acceso a datos para consultas de asistencia e inscripciones.
-- **`app/Repositories/ReporteRepository.php`**: Implementación con PDO de consultas preparadas, optimizadas con índices y libres de inyección SQL.
-- **`app/Services/ReporteService.php`**: Lógica de validación de filtros, coherencia cronológica (`fecha_fin >= fecha_inicio`), cálculo de cupos y consolidación de métricas.
-- **`app/Controllers/AdminReporteController.php`**: Endpoints administrativos (`/administracion/reportes`, `/administracion/reportes/asistencia`, `/administracion/reportes/inscripciones`) protegidos con RBAC (`ADMINISTRADOR`).
-- **`app/Core/App.php`**: Registro formal de las nuevas rutas administrativas protegidas con el middleware `$adminGet`.
-
-### 2.2 Vistas e Interfaz de Usuario
-- **`views/admin/reportes/index.php`**: Centro de control de reportes institucionales.
-- **`views/admin/reportes/asistencia.php`**: Formulario de filtros, métricas de asistencia y tabla de marcajes.
-- **`views/admin/reportes/inscripciones.php`**: Formulario de filtros, balance de cupos por sección y listado de estudiantes inscritos.
-- **`views/admin/index.php`**: Tarjeta de acceso al módulo de reportes institucionales en el panel de administración.
-- **`views/layouts/main.php`**: Enlace a reportes en la barra de navegación para administradores.
-
-### 2.3 Documentación y Pruebas
-- **`README.md`**: Reescritura natural, breve y profesional del proyecto.
-- **`tests/run_tests_fase12.php`**: Suite automatizada con 30 pruebas unitarias, de integración, de seguridad y HTTP reales.
-- **`docs/fase-0/matriz-trazabilidad.md`**: Actualización de RF-26, RF-29 y RF-30 a `IMPLEMENTADO Y VALIDADO`.
-- **`docs/fase-12/decisiones-tecnicas.md`**: Registro formal de DT-68 a DT-72.
-- **`docs/fase-12/pruebas.md`**: Evidencia y detalle de las 30 pruebas ejecutadas.
+### RF-30
+- **Nombre literal:** `Consulta de inscripciones` (Sección 10.1, y Sección 9.5: *"Consulta de estudiantes inscritos por grado y sección"*, *"Consulta de ocupación y disponibilidad de cupos"*).
+- **Descripción literal:** `Administración podrá consultar estudiantes inscritos, grado, sección y estado de cupo.` (Sección 10.1).
+- **Actor:** `Administración`.
+- **Filtros expresamente requeridos por el texto oficial:** Grado, sección, estado de cupo y listado de estudiantes inscritos.
 
 ---
 
-## 3. Matriz de Decisiones Técnicas
+## 2. Clarificación sobre Métricas y Filtros Técnicos
+
+### 2.1 Métrica de Puntualidad: CASO B (Mejora Auxiliar de Presentación / Resumen)
+- **Verificación en el Documento Oficial:** La palabra *"puntualidad"* no aparece en ningún apartado del Documento de Alcance (0 coincidencias en todo el texto). De igual forma, no existen los términos *"tardanza"*, *"retraso"* ni *"hora límite"*. Además, la Sección 9.5 estipula textualmente:
+  > *"Los reportes estarán orientados a facilitar la consulta administrativa y no incluirán estadísticas avanzadas como requisito principal."*
+- **Clasificación oficial:** Las tarjetas métricas mostradas en la cabecera de la vista (`total_marcajes`, `total_entradas`, `total_salidas`, `docentes_registrados`) constituyen exclusivamente una **MEJORA AUXILIAR DE PRESENTACIÓN / RESUMEN** agregada para facilidad visual del usuario administrativo, y **NO forman parte obligatoria de RF-29**.
+- **Reglas del sistema:** El sistema no inventa ni aplica ninguna regla arbitraria sobre hora límite, cálculo de tardanza, penalizaciones ni porcentaje de puntualidad.
+
+### 2.2 Filtro por Período Escolar (T12-04): Criterio Técnico Auxiliar
+- RF-29 requiere literalmente generar reportes *"por docente y período"*.
+- El mecanismo técnico implementado mediante el cual la selección de un `id_periodo_escolar` delimita automáticamente la consulta entre la `fecha_inicio` y `fecha_fin` del período lectivo registrado en la tabla `periodos_escolares` corresponde a un **criterio técnico auxiliar de filtrado/implementación** para vincular la fecha del marcaje con el ciclo académico, y no a un requisito formal independiente del documento.
+
+---
+
+## 3. Corrección del Objetivo y Alcance de T12-30
+
+- **Redacción anterior:** *"Cero datos basura permanentes en base principal tras ejecución."*
+- **Redacción corregida:** *"Fase 12 no deja nuevos fixtures o datos temporales permanentes después de ejecutar su suite."*
+- **Qué demuestra realmente la prueba:**  
+  La prueba T12-30 verifica de forma exhaustiva y exclusiva que los datos de prueba creados durante la ejecución de la suite de la Fase 12 (usuarios `adm_f12_*`, `doc_f12_*`, secciones `F12-*`, inscripciones `F12-*` y marcajes temporales asociados a las coordenadas de prueba) son eliminados en su totalidad al concluir los tests.  
+  **No afirma ni garantiza que la base de datos completa esté desprovista de fixtures de fases anteriores.** La depuración integral y consolidación limpia de los datos de prueba está reservada de forma explícita para la Fase 16.
+
+---
+
+## 4. Estado de Base de Datos y Reserva de Fase 16
+
+- **Limpieza masiva realizada en Fase 12:** **NO**.
+- **Esquema relacional (`database/schema.sql`):** **INTACTO** (cero tablas o columnas agregadas).
+- **Pendiente formal para Fase 16:**  
+  **FASE 16 — LIMPIEZA FINAL DE BASE DE DATOS Y DATOS DE DEMOSTRACIÓN**, la cual incluirá:
+  1. Recreación limpia del esquema desde `database/schema.sql`.
+  2. Depuración integral del archivo `database/seed.sql`.
+  3. Eliminación de todos los fixtures históricos residuales de pruebas anteriores.
+  4. Población con datos ficticios naturales, realistas y no automatizados.
+  5. Verificación de integridad relacional completa.
+  6. Base de datos final lista para evaluación y demostración.
+
+---
+
+## 5. Verificación del README
+
+- **Estado:** Cumple a cabalidad con todos los lineamientos solicitados: breve, claro, natural, profesional, sin tono ceremonial ni de inteligencia artificial, sin exposición de credenciales y con instrucciones precisas de despliegue y pruebas.
+- **¿Modificado en esta corrección?:** **NO** (se preserva la versión estable aprobada).
+
+---
+
+## 6. Componentes Técnicos de Fase 12
+
+### 6.1 Backend en Tres Capas
+- `app/Repositories/ReporteRepositoryInterface.php`: Contrato desacoplado con métodos de solo lectura: `findMarcajesAsistencia()`, `findResumenCuposPorSeccion()` y `findInscripcionesDetalle()`.
+- `app/Repositories/ReporteRepository.php`: Consultas SQL de solo lectura mediante PDO, sentencias preparadas y tipos de parámetros estrictos (`PDO::PARAM_INT`, `PDO::PARAM_STR`).
+- `app/Services/ReporteService.php`: Capa de negocio con validaciones de fechas (`YYYY-MM-DD`, `checkdate`, `fecha_fin >= fecha_inicio`), verificación de catálogos y cálculo de ocupación reutilizando la lógica de Fase 6.
+- `app/Controllers/AdminReporteController.php`: Controlador protegido con RBAC (`$adminGet`) para las rutas `/administracion/reportes`, `/administracion/reportes/asistencia` y `/administracion/reportes/inscripciones`.
+- `app/Core/App.php`: Registro formal de rutas administrativas.
+
+### 6.2 Interfaz de Usuario
+- `views/admin/reportes/index.php`: Panel de acceso institucional a los reportes.
+- `views/admin/reportes/asistencia.php`: Filtros por docente, ciclo y fechas, resumen visual auxiliar y tabla de marcajes sanitizada (`e()`).
+- `views/admin/reportes/inscripciones.php`: Filtros por ciclo, grado, sección y estado, balance de cupos (`DISPONIBLE`/`LLENO`) y listado de alumnos inscritos.
+- `views/admin/index.php` y `views/layouts/main.php`: Enlaces institucionales integrados.
+
+---
+
+## 7. Resumen de Decisiones Técnicas (DT-68 a DT-72)
 
 | Código | Título | Resumen de Decisión |
 |---|---|---|
 | **DT-68** | Arquitectura en Capas de Reportes Administrativos de Solo Lectura | Controller -> Service -> Repository; consultas parametrizadas, cero SQL en vistas/controladores y desacoplamiento por interfaz. |
-| **DT-69** | Reutilización de la Regla Institucional de Cupos sin Tablas Redundantes | Cálculo de cupos idéntico a Fase 6 (CONFIRMADA + PENDIENTE); cero tablas de reportes y `database/schema.sql` intacto. |
-| **DT-70** | Validación Rigurosa de Filtros Temporales y Acotamiento por Período | Formato `YYYY-MM-DD`, `checkdate`, validación `fecha_fin >= fecha_inicio` y herencia automática de fechas del ciclo lectivo. |
+| **DT-69** | Reutilización de la Regla Institucional de Cupos sin Tablas Redundantes | Cálculo de cupos idéntico a Fase 6 (`CONFIRMADA` + `PENDIENTE`); cero tablas de reportes y `database/schema.sql` intacto. |
+| **DT-70** | Validación Rigurosa de Filtros Temporales y Acotamiento Técnico por Período | Formato `YYYY-MM-DD`, `checkdate`, validación `fecha_fin >= fecha_inicio` y vinculación técnica opcional con ciclo lectivo. |
 | **DT-71** | Política de Mínima Exposición y Privacidad de Menores (RNF-04) | Sin teléfonos, correos ni datos de contacto de encargados; sin contraseñas ni coordenadas GPS personales de docentes. |
-| **DT-72** | Mecanismo de No Contaminación de Base de Datos y Limpieza de Fixtures | Registro y eliminación atómica de fixtures en orden inverso de FK; verificación de cero residuos en base principal. |
+| **DT-72** | Mecanismo de No Contaminación de Base de Datos para Fase 12 | Registro y eliminación atómica de fixtures de Fase 12 al finalizar pruebas; verificación de cero residuos propios en la base. |
 
 ---
 
-## 4. Resultados de Pruebas
+## 8. Resultados de Pruebas
 
-- **Pruebas Fase 12 (`tests/run_tests_fase12.php`):** 30/30 aprobadas (100% GREEN).
-- **Flujo HTTP Real:** Verificado mediante servidor web PHP embebido en puerto 8100 y cliente cURL.
-- **Control de Inyección SQL y XSS:** 100% neutralizado mediante sentencias preparadas y escape `e()`.
-- **RBAC:** Acceso anónimo redirige a login (HTTP 302); acceso de rol DOCENTE denegado (HTTP 403).
+- **Suite de Fase 12 (`tests/run_tests_fase12.php`):** 30 / 30 aprobadas (100% GREEN).
+- **Regresión total acumulada (Fases 1 a 12):** 336 / 336 pruebas aprobadas (100% GREEN).
+- **Seguridad:** Protección RBAC (docentes HTTP 403, anónimos HTTP 302 a login), escape estricto XSS mediante `e()` y mitigación de inyección SQL con prepared statements.
 
 ---
 
-## 5. Control de Alcance y Fases Pendientes
+## 9. Control de Alcance
 
-- **Fase 13 — Recuperación de Contraseña:** NO iniciada (RF-03 pendiente).
-- **Fase 14 — Hardening Integral y Validación Global de RNF:** NO iniciada.
-- **Fase 15 — Pruebas No Funcionales y Rendimiento:** NO iniciada.
-- **Fase 16 — Cierre Final, Depuración y Datos de Demostración:** NO iniciada.
-- **Limpieza Masiva de Base de Datos:** NO ejecutada (tarea expresamente reservada para el cierre en Fase 16).
-- **Esquema de Base de Datos (`database/schema.sql`):** INTACTO y sin alteraciones.
-- **Git Push:** Cero envíos remotos automáticos realizados.
+- **Fase 13 — Recuperación de Contraseña (RF-03):** NO iniciada. RF-03 permanece estrictamente en estado `PENDIENTE`.
+- **Git Push:** Cero ejecuciones de git push.

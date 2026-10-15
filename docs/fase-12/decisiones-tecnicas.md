@@ -27,13 +27,12 @@
 
 ---
 
-### DT-70: Validación Rigurosa de Filtros Temporales y Acotamiento por Período Escolar
-- **Contexto:** RF-29 permite filtrar la asistencia docente por docente y período escolar o rango de fechas.
-- **Decisión:** Validar en el backend:
-  1. Formato estricto ISO 8601 (`YYYY-MM-DD`) y existencia en calendario gregoriano (`checkdate`).
-  2. Coherencia cronológica: `fecha_fin >= fecha_inicio`. Si `fecha_fin < fecha_inicio`, se lanza `InvalidArgumentException` informativa.
-  3. Si se especifica un período escolar (`id_periodo_escolar`) sin fechas manuales, el servicio toma autoritativamente `fecha_inicio` y `fecha_fin` definidas en el ciclo escolar.
-- **Justificación:** Previene errores de consulta, garantiza datos fiables y protege la integridad de la base de datos.
+### DT-70: Validación Rigurosa de Filtros Temporales y Acotamiento Técnico por Período Escolar
+- **Contexto:** RF-29 requiere reportes por docente y período.
+- **Decisión:** 
+  1. Validar en la capa de servicio el formato estricto ISO 8601 (`YYYY-MM-DD`) y la existencia en calendario (`checkdate`), aplicando coherencia cronológica (`fecha_fin >= fecha_inicio`).
+  2. Implementar como **criterio técnico auxiliar de filtrado** que al seleccionar un período escolar (`id_periodo_escolar`) sin fechas manuales, la consulta acote automáticamente los marcajes al rango de fechas (`fecha_inicio` y `fecha_fin`) de dicho ciclo lectivo.
+- **Justificación:** Garantiza consultas coherentes, previene errores de rango y respeta la definición del requisito oficial sin imponer reglas artificiales de puntualidad o tardanza.
 
 ---
 
@@ -46,11 +45,11 @@
 
 ---
 
-### DT-72: Mecanismo de No Contaminación de Base de Datos y Limpieza Total de Fixtures en Pruebas
-- **Contexto:** Se identificó la necesidad de evitar la acumulación de datos técnicos basura en la base de datos principal durante la ejecución de las suites de prueba.
+### DT-72: Mecanismo de No Contaminación de Base de Datos para Pruebas de Fase 12
+- **Contexto:** Se requiere asegurar que la suite de Fase 12 no deje datos residuales ni contamine la base de datos con nuevos registros permanentes.
 - **Decisión:** Implementar en `Phase12TestSuite`:
   1. Identificadores y códigos prefijados controlados (`F12-`, `adm_f12_`, `doc_f12_`).
-  2. Registro en memoria de todas las claves primarias creadas durante la preparación de la suite.
+  2. Registro en memoria de todas las entidades creadas durante la preparación de la suite.
   3. Ejecución obligatoria de `cleanup()` en bloque `finally`, borrando registros en orden inverso estricto de claves foráneas.
-  4. Prueba automatizada específica (T12-30) que audita la base de datos al finalizar y comprueba que no queden residuos.
-- **Justificación:** Preserva la limpieza del entorno de desarrollo y sienta la base para la depuración y carga final de demostración reservada para la Fase 16.
+  4. Prueba automatizada específica (T12-30) que audita que la suite de Fase 12 no deje nuevos fixtures o datos temporales tras su ejecución.
+- **Justificación:** Garantiza que la ejecución de la suite de Fase 12 sea inocua para la base de datos, manteniendo intacto el estado previo y reservando la depuración global de datos históricos para la Fase 16.
