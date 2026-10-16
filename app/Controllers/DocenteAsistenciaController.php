@@ -77,6 +77,7 @@ class DocenteAsistenciaController extends BaseController
             'ultimoMarcaje' => $estadoAsistencia['ultimo_marcaje'],
             'puedeMarcarEntrada' => $estadoAsistencia['puede_marcar_entrada'],
             'puedeMarcarSalida' => $estadoAsistencia['puede_marcar_salida'],
+            'jornadaFinalizada' => $estadoAsistencia['jornada_finalizada'],
             'historial' => $historial,
             'mensajeExito' => $request->query('msg'),
             'mensajeError' => $request->query('error'),

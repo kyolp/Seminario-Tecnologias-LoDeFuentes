@@ -38,7 +38,45 @@ class AsistenciaRepository implements AsistenciaRepositoryInterface
     ): MarcajeAsistencia {
         $tipo = strtoupper(trim($tipo));
 
-        $sql = 'INSERT INTO marcajes_asistencia (
+        if (!in_array($tipo, ['ENTRADA', 'SALIDA'], true)) {
+            throw new \InvalidArgumentException('Tipo de marcaje inválido.');
+        }
+
+        $this->db->beginTransaction();
+
+        try {
+            // Procesar de uno en uno los marcajes del mismo docente.
+            $bloqueo = $this->db->prepare(
+                'SELECT id_docente FROM docentes
+         WHERE id_docente = :d FOR UPDATE'
+            );
+            $bloqueo->execute(['d' => $idDocente]);
+
+            if ($bloqueo->fetchColumn() === false) {
+                throw new \DomainException('El docente no existe.');
+            }
+
+            $estado = $this->obtenerEstadoDelDia($idDocente);
+
+            if ($estado['tiene_salida']) {
+                throw new \DomainException(
+                    'Jornada laboral finalizada por hoy. Podrá marcar entrada nuevamente mañana.'
+                );
+            }
+
+            if ($tipo === 'ENTRADA' && $estado['tiene_entrada']) {
+                throw new \DomainException(
+                    'Ya registró su entrada de hoy. Únicamente puede registrar la salida.'
+                );
+            }
+
+            if ($tipo === 'SALIDA' && !$estado['tiene_entrada']) {
+                throw new \DomainException(
+                    'Debe registrar la entrada de hoy antes de marcar salida.'
+                );
+            }
+
+            $sql = 'INSERT INTO marcajes_asistencia (
                     id_docente,
                     id_usuario,
                     id_configuracion_ubicacion,
@@ -62,29 +100,37 @@ class AsistenciaRepository implements AsistenciaRepositoryInterface
                     1
                 )';
 
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':d', $idDocente, PDO::PARAM_INT);
-        $stmt->bindValue(':u', $idUsuario, PDO::PARAM_INT);
-        $stmt->bindValue(':c', $idConfiguracion, PDO::PARAM_INT);
-        $stmt->bindValue(':tipo', $tipo, PDO::PARAM_STR);
-        $stmt->bindValue(':lat', $latitud);
-        $stmt->bindValue(':lon', $longitud);
-        if ($precision !== null) {
-            $stmt->bindValue(':prec', $precision);
-        } else {
-            $stmt->bindValue(':prec', null, PDO::PARAM_NULL);
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindValue(':d', $idDocente, PDO::PARAM_INT);
+            $stmt->bindValue(':u', $idUsuario, PDO::PARAM_INT);
+            $stmt->bindValue(':c', $idConfiguracion, PDO::PARAM_INT);
+            $stmt->bindValue(':tipo', $tipo, PDO::PARAM_STR);
+            $stmt->bindValue(':lat', $latitud);
+            $stmt->bindValue(':lon', $longitud);
+            if ($precision !== null) {
+                $stmt->bindValue(':prec', $precision);
+            } else {
+                $stmt->bindValue(':prec', null, PDO::PARAM_NULL);
+            }
+            $stmt->bindValue(':dist', $distancia);
+
+            $stmt->execute();
+            $id = (int) $this->db->lastInsertId();
+
+            $marcaje = $this->findMarcajeByIdAndDocente($id, $idDocente);
+            if ($marcaje === null) {
+                throw new \RuntimeException('No fue posible recuperar el registro de marcaje recién creado.');
+            }
+
+            $this->db->commit();
+            return $marcaje;
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            throw $e;
         }
-        $stmt->bindValue(':dist', $distancia);
-
-        $stmt->execute();
-        $id = (int) $this->db->lastInsertId();
-
-        $marcaje = $this->findMarcajeByIdAndDocente($id, $idDocente);
-        if ($marcaje === null) {
-            throw new \RuntimeException('No fue posible recuperar el registro de marcaje recién creado.');
-        }
-
-        return $marcaje;
     }
 
     /**
@@ -165,5 +211,24 @@ class AsistenciaRepository implements AsistenciaRepositoryInterface
         $stmt->execute();
 
         return (int) $stmt->fetchColumn();
+    }
+
+    public function obtenerEstadoDelDia(int $idDocente): array
+    {
+        $sql = 'SELECT tipo
+            FROM marcajes_asistencia
+            WHERE id_docente = :d
+              AND fecha_hora >= CURRENT_DATE()
+              AND fecha_hora < CURRENT_DATE() + INTERVAL 1 DAY';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['d' => $idDocente]);
+
+        $tipos = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        return [
+            'tiene_entrada' => in_array('ENTRADA', $tipos, true),
+            'tiene_salida' => in_array('SALIDA', $tipos, true),
+        ];
     }
 }

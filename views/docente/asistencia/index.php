@@ -16,6 +16,16 @@
  */
 ?>
 
+<?php if ($jornadaFinalizada ?? false): ?>
+    <div role="status"
+         style="max-width: 950px; margin: 1rem auto; padding: 1rem;
+                background: #dcfce7; color: #166534;
+                border: 1px solid #86efac; border-radius: 8px;">
+        <strong>Jornada laboral finalizada por hoy.</strong>
+        Ya registró su salida. Podrá marcar una nueva entrada mañana.
+    </div>
+<?php endif; ?>
+
 <div class="docente-asistencia-container" style="max-width: 1000px; margin: 2rem auto; padding: 0 1rem;">
     <!-- Encabezado y Navegación -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">

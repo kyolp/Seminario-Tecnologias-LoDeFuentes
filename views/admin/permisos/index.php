@@ -134,7 +134,7 @@
                         <tr style="border-bottom: 1px solid #f1f5f9;">
                             <td style="padding: 0.75rem 1rem; font-weight: 600; color: #1e293b;">#<?= e($s->id_solicitud_permiso) ?></td>
                             <td style="padding: 0.75rem 1rem;">
-                                <div style="font-weight: 600; color: #1e293b;"><?= e($s->nombre_docente ?? 'Docente #' . $s->id_docente) ?></div>
+                                <div style="font-weight: 600; color: #1e293b;"><?= e($s->docente?->getNombreCompleto() ?? 'Docente no disponible') ?></div>
                                 <?php if (!empty($s->codigo_docente)): ?>
                                     <div style="font-size: 0.75rem; color: #64748b;"><?= e($s->codigo_docente) ?></div>
                                 <?php endif; ?>

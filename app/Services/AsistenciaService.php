@@ -169,8 +169,8 @@ class AsistenciaService
         }
 
         // 6. Validar secuencia lógica de marcajes para prevenir duplicados y secuencias inválidas
-        $ultimoMarcaje = $this->asistenciaRepo->findUltimoMarcajeDocente($idDocente);
-        $this->validarSecuenciaMarcaje($tipo, $ultimoMarcaje);
+        $estado = $this->asistenciaRepo->obtenerEstadoDelDia($idDocente);
+        $this->validarSecuenciaMarcaje($tipo, $estado);
 
         // 7. Persistir marcaje inmutable en base de datos
         $marcaje = $this->asistenciaRepo->crearMarcaje(
@@ -196,19 +196,24 @@ class AsistenciaService
     /**
      * Validar la secuencia lógica de marcaje (ENTRADA -> SALIDA -> ENTRADA).
      */
-    private function validarSecuenciaMarcaje(string $tipo, ?MarcajeAsistencia $ultimoMarcaje): void
+    private function validarSecuenciaMarcaje(string $tipo, array $estado): void
     {
-        if ($tipo === 'ENTRADA') {
-            if ($ultimoMarcaje !== null && $ultimoMarcaje->isEntrada()) {
-                throw new DomainException('Secuencia inválida: Ya cuenta con un marcaje de entrada registrado pendiente de salida.');
-            }
-        } elseif ($tipo === 'SALIDA') {
-            if ($ultimoMarcaje === null) {
-                throw new DomainException('Secuencia inválida: No puede registrar una salida sin haber registrado previamente una entrada.');
-            }
-            if ($ultimoMarcaje->isSalida()) {
-                throw new DomainException('Secuencia inválida: Su último marcaje ya fue una salida. Debe marcar entrada antes de una nueva salida.');
-            }
+        if ($estado['tiene_salida']) {
+            throw new DomainException(
+                'Jornada laboral finalizada por hoy. Podrá marcar entrada nuevamente mañana.'
+            );
+        }
+
+        if ($tipo === 'ENTRADA' && $estado['tiene_entrada']) {
+            throw new DomainException(
+                'Ya registró su entrada de hoy. Únicamente puede registrar la salida.'
+            );
+        }
+
+        if ($tipo === 'SALIDA' && !$estado['tiene_entrada']) {
+            throw new DomainException(
+                'Debe registrar la entrada de hoy antes de marcar salida.'
+            );
         }
     }
 
@@ -277,15 +282,18 @@ class AsistenciaService
         $config = $this->ubicacionRepo->findConfiguracionActiva();
         $ultimo = $this->asistenciaRepo->findUltimoMarcajeDocente($idDocente);
         $total = $this->asistenciaRepo->countMarcajesByDocente($idDocente);
-
-        $puedeEntrada = ($config !== null) && ($ultimo === null || $ultimo->isSalida());
-        $puedeSalida = ($config !== null) && ($ultimo !== null && $ultimo->isEntrada());
+        $estado = $this->asistenciaRepo->obtenerEstadoDelDia($idDocente);
 
         return [
             'configuracion' => $config,
             'ultimo_marcaje' => $ultimo,
-            'puede_marcar_entrada' => $puedeEntrada,
-            'puede_marcar_salida' => $puedeSalida,
+            'puede_marcar_entrada' => $config !== null
+                && !$estado['tiene_entrada']
+                && !$estado['tiene_salida'],
+            'puede_marcar_salida' => $config !== null
+                && $estado['tiene_entrada']
+                && !$estado['tiene_salida'],
+            'jornada_finalizada' => $estado['tiene_salida'],
             'total_marcajes' => $total,
         ];
     }

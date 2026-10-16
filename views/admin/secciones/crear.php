@@ -22,7 +22,7 @@
                 <option value="">-- Seleccione Grado y Período --</option>
                 <?php foreach ($gradosPeriodos as $gp): ?>
                     <option value="<?= e((string)$gp->id_grado_periodo) ?>" <?= ((int)($old['id_grado_periodo'] ?? 0) === (int)$gp->id_grado_periodo) ? 'selected' : '' ?>>
-                        <?= e($gp->nombre_periodo ?? 'Período #' . $gp->id_periodo_escolar) ?> &raquo; <?= e($gp->nombre_grado ?? 'Grado #' . $gp->id_grado) ?>
+                        <?= e($gp->periodo_nombre ?? 'Período #' . $gp->id_periodo_escolar) ?> &raquo; <?= e($gp->grado_nombre ?? 'Grado #' . $gp->id_grado) ?>
                     </option>
                 <?php endforeach; ?>
             </select>
