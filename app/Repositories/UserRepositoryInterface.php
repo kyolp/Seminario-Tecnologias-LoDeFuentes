@@ -30,4 +30,14 @@ interface UserRepositoryInterface
      * Actualizar el estado de un usuario (ACTIVO, INACTIVO, BLOQUEADO).
      */
     public function updateStatus(int $userId, string $status): void;
+
+    /**
+     * Buscar un usuario por su correo electrónico único (RF-03).
+     */
+    public function findByEmail(string $email): ?User;
+
+    /**
+     * Actualizar el hash de contraseña de un usuario (RF-03).
+     */
+    public function updatePassword(int $userId, string $passwordHash): void;
 }

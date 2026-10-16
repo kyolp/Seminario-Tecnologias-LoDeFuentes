@@ -123,6 +123,16 @@ class App
             \App\Middleware\VerifyCsrfToken::class,
         ]);
 
+        // 2.1 Rutas de recuperación de contraseña (Fase 13 — RF-03)
+        $this->router->get('/recuperar-contrasena', [\App\Controllers\PasswordRecoveryController::class, 'showRequestForm']);
+        $this->router->post('/recuperar-contrasena', [\App\Controllers\PasswordRecoveryController::class, 'sendRecoveryLink'], [
+            \App\Middleware\VerifyCsrfToken::class,
+        ]);
+        $this->router->get('/restablecer-contrasena', [\App\Controllers\PasswordRecoveryController::class, 'showResetForm']);
+        $this->router->post('/restablecer-contrasena', [\App\Controllers\PasswordRecoveryController::class, 'resetPassword'], [
+            \App\Middleware\VerifyCsrfToken::class,
+        ]);
+
         // 3. Rutas privadas autorizadas por roles (Fase 3)
         $this->router->get('/administracion', [\App\Controllers\AdminController::class, 'index'], [
             \App\Middleware\Authenticate::class,

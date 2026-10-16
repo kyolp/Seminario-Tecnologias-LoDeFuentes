@@ -495,14 +495,14 @@ class Phase11TestSuite
 
         $futurosPendientes = in_array($filas['RF-29'][5] ?? '', ['PENDIENTE', 'IMPLEMENTADO Y VALIDADO'], true)
             && in_array($filas['RF-30'][5] ?? '', ['PENDIENTE', 'IMPLEMENTADO Y VALIDADO'], true)
-            && (($filas['RF-03'][5] ?? '') === 'PENDIENTE');
+            && in_array($filas['RF-03'][5] ?? '', ['PENDIENTE', 'IMPLEMENTADO Y VALIDADO'], true);
         $fasesFuturas = ($filas['RF-29'][2] ?? '') === '12' && ($filas['RF-30'][2] ?? '') === '12' && ($filas['RF-03'][2] ?? '') === '13';
 
         $this->record(
             'T11-01',
-            'Trazabilidad RF-13: nombre/descripcion oficiales, Fase 11; RF-29, RF-30 y RF-03 siguen pendientes (Fases 12 y 13)',
-            'RF-13 = "Comprobante PDF" / Fase 11; RF-29, RF-30 (Fase 12) y RF-03 (Fase 13) PENDIENTE',
-            sprintf('Nombre: %s | Fase: %s | Estado RF-13: %s | RF-29/RF-30/RF-03 pendientes: %s', $nombreOk ? 'OK' : 'ERR', $rf13[2] ?? '?', $estadoRf13, ($futurosPendientes && $fasesFuturas) ? 'SÍ' : 'NO'),
+            'Trazabilidad RF-13: nombre/descripcion oficiales, Fase 11; RF-29, RF-30 y RF-03 en Fases 12 y 13',
+            'RF-13 = "Comprobante PDF" / Fase 11; RF-29, RF-30 (Fase 12) y RF-03 (Fase 13) válidos',
+            sprintf('Nombre: %s | Fase: %s | Estado RF-13: %s | RF-29/RF-30/RF-03 consistentes: %s', $nombreOk ? 'OK' : 'ERR', $rf13[2] ?? '?', $estadoRf13, ($futurosPendientes && $fasesFuturas) ? 'SÍ' : 'NO'),
             $nombreOk && $faseOk && $estadoOk && $futurosPendientes && $fasesFuturas
         );
     }

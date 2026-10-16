@@ -14,7 +14,7 @@ trazabilidad y ningún requisito funcional ha sido implementado o validado.
 |---|---|---:|---|---|---|---|---|
 | RF-01 | **Autenticación.** Permitir iniciar sesión a usuarios administrativos y docentes mediante credenciales. | 3 | `app/Controllers/AuthController.php`, `app/Services/AuthService.php` | `usuarios`, `roles` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase3.php` (T3-01 a T3-06, T3-12, T3-19) | APROBADO (19/19) |
 | RF-02 | **Roles y permisos.** Restringir las funciones de acuerdo con el rol del usuario. | 3 | `app/Middleware/RequireRole.php`, `app/Middleware/Authenticate.php` | `roles`, `usuarios` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase3.php` (T3-07 a T3-11, T3-13) | APROBADO (19/19) |
-| RF-03 | **Recuperación de contraseña.** Recuperar el acceso mediante correo electrónico o enlace/código. | 13 | Por definir en Fase 13 | Por definir en Fase 1 | PENDIENTE | No ejecutada | Pendiente |
+| RF-03 | **Recuperación de contraseña.** Recuperar el acceso mediante correo electrónico o enlace/código. | 13 | `app/Controllers/PasswordRecoveryController.php`, `app/Services/PasswordRecoveryService.php`, `app/Repositories/TokenRecuperacionRepository.php`, `views/auth/recuperar-contrasena.php`, `views/auth/restablecer-contrasena.php` | `tokens_recuperacion`, `usuarios` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase13.php` (T13-01 a T13-30) | APROBADO (30/30) |
 | RF-04 | **Gestión de estudiantes.** Registrar, editar, consultar y desactivar estudiantes. | 4 | `app/Controllers/AdminEstudianteController.php`, `app/Services/EstudianteService.php`, `app/Repositories/EstudianteRepository.php` | `estudiantes` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase4.php` (T4-09, T4-10) | APROBADO (27/27) |
 | RF-05 | **Datos del encargado.** Registrar los datos necesarios del padre, madre o encargado relacionados con la inscripción. | 6 | `app/Models/Encargado.php`, `app/Models/EstudianteEncargado.php`, `app/Repositories/EncargadoRepository.php`, `app/Services/InscripcionService.php` | `encargados`, `estudiantes_encargados`, `estudiantes` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase6.php` (T6-06, T6-14, T6-15) | APROBADO (30/30) |
 | RF-06 | **Gestión de grados.** Habilitar y administrar los grados disponibles para cada período. | 4 | `app/Controllers/AdminGradoController.php`, `app/Controllers/AdminGradoPeriodoController.php`, `app/Services/GradoService.php` | `grados`, `grados_periodos` | IMPLEMENTADO Y VALIDADO | `tests/run_tests_fase4.php` (T4-13 a T4-15) | APROBADO (27/27) |
@@ -260,6 +260,19 @@ La Fase 12 implementa de forma íntegra los reportes administrativos de asistenc
 | **RNF-06** (Trazabilidad: registrar operaciones clave mediante bitácoras o mecanismos de auditoría) | `ReporteRepository::findMarcajesAsistencia()`, inmutabilidad de `marcajes_asistencia` | EVIDENCIA AMPLIADA EN FASE 12 | Consulta de solo lectura que respeta la inmutabilidad de los marcajes autoritativos con fecha/hora de servidor. |
 
 La suite automatizada de pruebas y sus 30 resultados se documentan en `docs/fase-12/pruebas.md`.
+
+## Actualización controlada de Recuperación de Contraseña — Fase 13
+
+La Fase 13 implementa de forma íntegra el subsistema de recuperación de contraseña institucional (RF-03) para usuarios administrativos y docentes, reutilizando la tabla relacional `tokens_recuperacion` preexistente sin alteraciones al esquema de base de datos (`database/schema.sql`). Incluye mitigación rigurosa de enumeración de usuarios (RNF-04), generación criptográficamente segura de tokens con CSPRNG (64 caracteres hex) almacenados exclusivamente como hash SHA-256 (RNF-03), vigencia temporal fija de 60 minutos, revocación automática de tokens activos anteriores, bloqueo pesimista en base de datos (`SELECT ... FOR UPDATE`) para evitar condiciones de carrera, transición atómica a estado `USADO` para un solo uso, actualización de contraseñas con BCrypt nativo (`PASSWORD_BCRYPT`), protección CSRF obligatoria y escape contextual anti-XSS.
+
+| Requisitos respaldados | Componentes funcionales creados | Estado de Fase 13 | Evidencia de Fase 13 |
+|---|---|---|---|
+| **RF-03** (Recuperación de contraseña: el sistema deberá permitir recuperar el acceso mediante un mecanismo basado en correo electrónico o enlace/código) | `PasswordRecoveryController`, `PasswordRecoveryService`, `TokenRecuperacionRepository`, `TokenRecuperacion`, `views/auth/recuperar-contrasena.php`, `views/auth/restablecer-contrasena.php` | IMPLEMENTADO Y VALIDADO | Flujo completo de solicitud y restablecimiento de contraseña mediante token seguro con vigencia de 60 minutos, un solo uso y actualización de hash BCrypt. Verificado en T13-01 a T13-30. |
+| **RNF-03** (Seguridad: contraseñas no almacenadas en texto plano y tokens protegidos) | `PasswordRecoveryService`, `TokenRecuperacion` | EVIDENCIA AMPLIADA EN FASE 13 | Tokens con entropía CSPRNG (`random_bytes`), persistencia exclusiva en forma de hash SHA-256 en BD (`token_hash`) y actualización de contraseñas mediante `PASSWORD_BCRYPT`. |
+| **RNF-04** (Privacidad: mitigación de enumeración de cuentas) | `PasswordRecoveryService::solicitarRecuperacion()`, `PasswordRecoveryController` | EVIDENCIA AMPLIADA EN FASE 13 | Mensaje de confirmación neutral indistinguible ante correos existentes, inexistentes o inactivos, mitigando la recolección externa de identidades institucionales. |
+
+La suite automatizada de pruebas y sus 30 resultados se documentan en `docs/fase-13/pruebas.md`.
+
 
 
 

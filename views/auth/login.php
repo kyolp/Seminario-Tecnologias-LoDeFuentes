@@ -87,6 +87,10 @@
         </form>
 
         <p class="acceso-inscripcion">
+            <a href="<?= e(url('/recuperar-contrasena')) ?>">¿Olvidaste tu contraseña?</a>
+        </p>
+
+        <p class="acceso-inscripcion">
             ¿Deseas inscribir a un estudiante?
             <a href="<?= e(url('inscripcion')) ?>">Ir a inscripciones</a>
         </p>

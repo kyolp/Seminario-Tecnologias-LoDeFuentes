@@ -98,4 +98,46 @@ class UserRepository implements UserRepositoryInterface
         $stmt->bindValue(':id', $userId, PDO::PARAM_INT);
         $stmt->execute();
     }
+
+    /**
+     * Buscar un usuario por su correo electrónico único (RF-03).
+     */
+    public function findByEmail(string $email): ?User
+    {
+        $sql = 'SELECT u.id_usuario, u.id_rol, u.nombre_usuario, u.correo, u.clave_hash,
+                       u.nombres, u.apellidos, u.estado, u.ultimo_acceso,
+                       r.nombre AS rol_nombre
+                FROM usuarios u
+                JOIN roles r ON r.id_rol = u.id_rol
+                WHERE LOWER(TRIM(u.correo)) = LOWER(TRIM(:email))
+                LIMIT 1';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':email', trim($email), PDO::PARAM_STR);
+        $stmt->execute();
+
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$data) {
+            return null;
+        }
+
+        return User::fromArray($data);
+    }
+
+    /**
+     * Actualizar la clave hasheada de un usuario (RF-03).
+     */
+    public function updatePassword(int $userId, string $passwordHash): void
+    {
+        $sql = 'UPDATE usuarios
+                SET clave_hash = :hash,
+                    fecha_actualizacion = CURRENT_TIMESTAMP(6)
+                WHERE id_usuario = :id';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':hash', $passwordHash, PDO::PARAM_STR);
+        $stmt->bindValue(':id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+    }
 }
+
