@@ -26,11 +26,11 @@
             </tr>
             <tr style="border-bottom: 1px solid #e2e8f0;">
                 <th style="padding: 0.75rem 0; color: #475569;">Grado Académico:</th>
-                <td style="padding: 0.75rem 0; color: #0f172a;"><?= e($seccion->nombre_grado ?? 'ID Grado/Período #' . $seccion->id_grado_periodo) ?></td>
+                <td style="padding: 0.75rem 0; color: #0f172a;"><?= e($seccion->grado_nombre ?? 'ID Grado/Período #' . $seccion->id_grado_periodo) ?></td>
             </tr>
             <tr style="border-bottom: 1px solid #e2e8f0;">
                 <th style="padding: 0.75rem 0; color: #475569;">Período Escolar:</th>
-                <td style="padding: 0.75rem 0; color: #0f172a;"><?= e($seccion->nombre_periodo ?? 'No especificado') ?></td>
+                <td style="padding: 0.75rem 0; color: #0f172a;"><?= e($seccion->periodo_nombre ?? 'No especificado') ?></td>
             </tr>
             <tr style="border-bottom: 1px solid #e2e8f0;">
                 <th style="padding: 0.75rem 0; color: #475569;">Capacidad Máxima:</th>

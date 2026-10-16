@@ -137,8 +137,8 @@ class InscripcionService
 
         $resultado = [];
         foreach ($secciones as $sec) {
-            $idSec = (int)$sec['id_seccion'];
-            $capacidad = (int)$sec['capacidad'];
+            $idSec = (int) $sec['id_seccion'];
+            $capacidad = (int) $sec['capacidad'];
             $ocupacion = $this->inscripcionRepo->countOcupacionBySeccion($idSec);
             $disponibles = max(0, $capacidad - $ocupacion);
             $tieneCupo = ($disponibles > 0);
@@ -149,8 +149,8 @@ class InscripcionService
 
             $resultado[] = [
                 'id_seccion' => $idSec,
-                'codigo' => (string)$sec['codigo'],
-                'nombre' => $sec['nombre'] !== null ? (string)$sec['nombre'] : null,
+                'codigo' => (string) $sec['codigo'],
+                'nombre' => $sec['nombre'] !== null ? (string) $sec['nombre'] : null,
                 'capacidad' => $capacidad,
                 'ocupacion' => $ocupacion,
                 'disponibles' => $disponibles,
@@ -194,18 +194,18 @@ class InscripcionService
         $errors = [];
 
         // 1. Sanitización y extracción segura (Whitelisting estricto)
-        $estudianteNombres = trim((string)($input['estudiante_nombres'] ?? ''));
-        $estudianteApellidos = trim((string)($input['estudiante_apellidos'] ?? ''));
-        $estudianteFechaNac = !empty($input['estudiante_fecha_nacimiento']) ? trim((string)$input['estudiante_fecha_nacimiento']) : null;
-        $codigoEstudiante = !empty($input['codigo_estudiante']) ? trim((string)$input['codigo_estudiante']) : null;
+        $estudianteNombres = trim((string) ($input['estudiante_nombres'] ?? ''));
+        $estudianteApellidos = trim((string) ($input['estudiante_apellidos'] ?? ''));
+        $estudianteFechaNac = !empty($input['estudiante_fecha_nacimiento']) ? trim((string) $input['estudiante_fecha_nacimiento']) : null;
+        $codigoEstudiante = null; // El carné se asigna en el servidor, nunca desde el formulario público.
 
-        $encargadoNombres = trim((string)($input['encargado_nombres'] ?? ''));
-        $encargadoApellidos = trim((string)($input['encargado_apellidos'] ?? ''));
-        $encargadoTelefono = !empty($input['encargado_telefono']) ? trim((string)$input['encargado_telefono']) : null;
-        $encargadoCorreo = !empty($input['encargado_correo']) ? trim((string)$input['encargado_correo']) : null;
-        $parentesco = strtoupper(trim((string)($input['parentesco'] ?? '')));
+        $encargadoNombres = trim((string) ($input['encargado_nombres'] ?? ''));
+        $encargadoApellidos = trim((string) ($input['encargado_apellidos'] ?? ''));
+        $encargadoTelefono = !empty($input['encargado_telefono']) ? trim((string) $input['encargado_telefono']) : null;
+        $encargadoCorreo = !empty($input['encargado_correo']) ? trim((string) $input['encargado_correo']) : null;
+        $parentesco = strtoupper(trim((string) ($input['parentesco'] ?? '')));
 
-        $idSeccion = (int)($input['id_seccion'] ?? 0);
+        $idSeccion = (int) ($input['id_seccion'] ?? 0);
 
         // 2. Validaciones sintácticas del Estudiante
         if ($estudianteNombres === '') {
@@ -341,7 +341,7 @@ class InscripcionService
                 $idMatch = $stmtM->fetchColumn();
 
                 if ($idMatch) {
-                    $idEstudiante = (int)$idMatch;
+                    $idEstudiante = (int) $idMatch;
                 } else {
                     $idEstudiante = $this->estudianteRepo->create([
                         'codigo_estudiante' => $codigoEstudiante,
@@ -352,6 +352,24 @@ class InscripcionService
                     ]);
                 }
             }
+
+            // Asignar carné únicamente si el estudiante todavía no tiene uno.
+// Se utiliza su ID único, evitando calcular MAX + 1.
+            $stmtCarnet = $this->db->prepare(
+                "UPDATE estudiantes
+     SET codigo_estudiante = CONCAT(
+         'LDF-',
+         CASE
+             WHEN id_estudiante < 1000000
+             THEN LPAD(CAST(id_estudiante AS CHAR), 6, '0')
+             ELSE CAST(id_estudiante AS CHAR)
+         END
+     )
+     WHERE id_estudiante = :id
+       AND (codigo_estudiante IS NULL OR codigo_estudiante = '')"
+            );
+
+            $stmtCarnet->execute([':id' => $idEstudiante]);
 
             // 5.5 Prevenir doble inscripción vigente del mismo estudiante en la misma sección
             $inscripcionVigente = $this->inscripcionRepo->findVigenteByEstudianteAndSeccion($idEstudiante, $idSeccion);
@@ -415,7 +433,7 @@ class InscripcionService
             }
 
             if ($e instanceof PDOException) {
-                $code = (int)($e->errorInfo[1] ?? $e->getCode());
+                $code = (int) ($e->errorInfo[1] ?? $e->getCode());
                 $msg = $e->getMessage();
 
                 if ($code === 1062) {
@@ -486,18 +504,46 @@ class InscripcionService
             ];
         }
 
+        $stmtDetalle = $this->db->prepare(
+            "SELECT
+         p.fecha_inicio AS inicio_clases,
+         CONCAT_WS(' ', u.nombres, u.apellidos) AS docente,
+         CONCAT_WS(' - ', a.codigo, a.nombre) AS aula
+     FROM secciones s
+     JOIN grados_periodos gp
+         ON gp.id_grado_periodo = s.id_grado_periodo
+     JOIN periodos_escolares p
+         ON p.id_periodo_escolar = gp.id_periodo_escolar
+     LEFT JOIN asignaciones_docentes ad
+         ON ad.id_seccion = s.id_seccion
+         AND ad.estado = 'ACTIVA'
+     LEFT JOIN docentes d ON d.id_docente = ad.id_docente
+     LEFT JOIN usuarios u ON u.id_usuario = d.id_usuario
+     LEFT JOIN aulas a ON a.id_aula = ad.id_aula
+     WHERE s.id_seccion = :seccion
+     LIMIT 1"
+        );
+
+        $stmtDetalle->execute([':seccion' => $inscripcion->id_seccion]);
+        $detalle = $stmtDetalle->fetch(PDO::FETCH_ASSOC) ?: [];
+
         // Sanitización para privacidad pública: no exponer IDs de BD ni información sensible
         return [
             'success' => true,
             'data' => [
-                'codigo_confirmacion' => (string)$inscripcion->codigo_confirmacion,
+                'codigo_confirmacion' => (string) $inscripcion->codigo_confirmacion,
                 'estudiante_nombre' => $inscripcion->getEstudianteNombreCompleto(),
                 'codigo_estudiante' => $inscripcion->codigo_estudiante,
-                'grado' => (string)($inscripcion->grado_nombre ?? 'Grado no especificado'),
-                'seccion' => (string)($inscripcion->seccion_codigo ?? '') . ($inscripcion->seccion_nombre ? ' (' . $inscripcion->seccion_nombre . ')' : ''),
-                'periodo' => (string)($inscripcion->periodo_nombre ?? 'Ciclo Escolar'),
+                'docente' => trim((string) ($detalle['docente'] ?? ''))
+                    ?: 'Pendiente de asignación',
+                'aula' => trim((string) ($detalle['aula'] ?? ''))
+                    ?: 'Pendiente de asignación',
+                'inicio_clases' => $detalle['inicio_clases'] ?? null,
+                'grado' => (string) ($inscripcion->grado_nombre ?? 'Grado no especificado'),
+                'seccion' => (string) ($inscripcion->seccion_codigo ?? '') . ($inscripcion->seccion_nombre ? ' (' . $inscripcion->seccion_nombre . ')' : ''),
+                'periodo' => (string) ($inscripcion->periodo_nombre ?? 'Ciclo Escolar'),
                 'encargado_nombre' => $inscripcion->getEncargadoNombreCompleto(),
-                'parentesco' => (string)($inscripcion->parentesco ?? 'Encargado'),
+                'parentesco' => (string) ($inscripcion->parentesco ?? 'Encargado'),
                 'fecha_inscripcion' => substr($inscripcion->fecha_inscripcion, 0, 10),
                 'fecha_confirmacion' => $inscripcion->fecha_confirmacion ? substr($inscripcion->fecha_confirmacion, 0, 10) : null,
                 'estado' => $inscripcion->estado,
@@ -515,6 +561,6 @@ class InscripcionService
         if (!ctype_digit($year) || !ctype_digit($month) || !ctype_digit($day)) {
             return false;
         }
-        return checkdate((int)$month, (int)$day, (int)$year);
+        return checkdate((int) $month, (int) $day, (int) $year);
     }
 }

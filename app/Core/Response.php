@@ -84,6 +84,12 @@ class Response
      */
     public static function redirect(string $url, int $statusCode = 302): self
     {
+        // Las rutas internas utilizan la dirección base del proyecto.
+        if (str_starts_with($url, '/') && !str_starts_with($url, '//')) {
+            $baseUrl = rtrim((string) Config::get('app.url', ''), '/');
+            $url = $baseUrl . $url;
+        }
+
         return new self('', $statusCode, ['Location' => $url]);
     }
 

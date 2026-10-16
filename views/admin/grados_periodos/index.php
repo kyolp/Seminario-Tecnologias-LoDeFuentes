@@ -54,9 +54,9 @@
                     <?php foreach ($gradosPeriodos as $gp): ?>
                         <tr style="border-bottom: 1px solid #e2e8f0;">
                             <td style="padding: 0.75rem; font-weight: 600; color: #1e293b;">#<?= e((string)$gp->id_grado_periodo) ?></td>
-                            <td style="padding: 0.75rem; font-weight: 500;"><?= e($gp->nombre_periodo ?? 'ID ' . $gp->id_periodo_escolar) ?></td>
+                            <td style="padding: 0.75rem; font-weight: 500;"><?= e($gp->periodo_nombre ?? 'ID ' . $gp->id_periodo_escolar) ?></td>
                             <td style="padding: 0.75rem; font-weight: 600; color: #1e3a8a;">
-                                <?= e($gp->nombre_grado ?? 'ID ' . $gp->id_grado) ?>
+                                <?= e($gp->grado_nombre ?? 'ID ' . $gp->id_grado) ?>
                                 <?php if (!empty($gp->codigo_grado)): ?>
                                     <span style="font-family: monospace; font-size: 0.8rem; color: #64748b;">(<?= e($gp->codigo_grado) ?>)</span>
                                 <?php endif; ?>

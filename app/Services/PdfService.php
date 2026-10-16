@@ -87,9 +87,17 @@ class PdfService
         // Datos de la inscripción.
         $filas = [
             ['Estudiante', $datos['estudiante_nombre']],
+            ['Carné interno', $datos['codigo_estudiante'] ?? 'Pendiente'],
             ['Grado', $datos['grado']],
             ['Sección', $datos['seccion']],
             ['Ciclo escolar', $datos['periodo']],
+            ['Docente asignado', $datos['docente'] ?? 'Pendiente de asignación'],
+            ['Aula', $datos['aula'] ?? 'Pendiente de asignación'],
+            [
+                'Inicio de clases',
+                !empty($datos['inicio_clases'])
+                ? $this->fecha($datos['inicio_clases'])
+                : 'Pendiente de definir'],
             ['Padre, madre o encargado', trim($datos['encargado_nombre'] . ' (' . $datos['parentesco'] . ')')],
             ['Estado de la inscripción', $datos['estado']],
             ['Fecha de inscripción', $this->fecha($datos['fecha_inscripcion'])],

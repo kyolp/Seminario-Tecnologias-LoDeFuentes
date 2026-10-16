@@ -48,4 +48,6 @@ interface AsistenciaRepositoryInterface
      * Contar el total de marcajes de un docente.
      */
     public function countMarcajesByDocente(int $idDocente): int;
+
+    public function obtenerEstadoDelDia(int $idDocente): array;
 }
