@@ -15,75 +15,128 @@
  */
 ?>
 
-<div class="portal-docente-container" style="max-width: 1100px; margin: 2rem auto; padding: 0 1rem;">
-    <!-- Encabezado y Perfil del Docente -->
-    <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 2rem; overflow: hidden;">
-        <div style="background: #1e3a8a; color: #ffffff; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <div>
-                <span style="background: #3b82f6; color: #ffffff; font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.05em;">Portal docente — sesión válida</span>
-                <h1 style="margin: 0.5rem 0 0.25rem 0; font-size: 1.75rem; font-weight: 700;">Bienvenido, <?= e($docente->getNombreCompleto()) ?></h1>
-                <p style="margin: 0; color: #bfdbfe; font-size: 0.9rem;">Escuela Oficial Rural Mixta Lo de Fuentes</p>
-            </div>
-            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-                <a href="<?= e(url('/docente/asistencia')) ?>" style="background: #10b981; color: #ffffff; border: none; border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
-                    Marcaje de Asistencia (RF-20, RF-21)
+<?php
+$usuarioAvisos = (new \App\Services\AuthService())->user();
+
+$avisosPendientes = $usuarioAvisos !== null
+    ? (new \App\Services\NotificacionService())
+        ->obtenerConteoNoLeidas($usuarioAvisos->id_usuario)
+    : 0;
+?>
+
+<div class="panel-docente">
+    <section class="docente-perfil">
+        <div class="docente-bienvenida">
+            <span class="docente-etiqueta">Portal docente — sesión válida</span>
+
+            <h1>Bienvenido,
+                <?= e($docente->getNombreCompleto()) ?>
+            </h1>
+
+            <p>
+                Consulta tu sección y gestiona tus actividades escolares.
+            </p>
+
+            <div class="docente-acciones">
+                <a href="<?= e(url('/docente/asistencia')) ?>" class="docente-boton docente-boton-blanco">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        aria-hidden="true">
+                        <path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z" />
+                        <circle cx="12" cy="10" r="2.5" />
+                    </svg>
+                    Marcar asistencia
                 </a>
-                <a href="<?= e(url('/docente/permisos')) ?>" style="background: #2563eb; color: #ffffff; border: none; border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857V3.857z"/><path d="M6.5 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-9 3a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm3 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>
-                    Mis Permisos (RF-24, RF-28)
+
+                <a href="<?= e(url('/docente/permisos')) ?>" class="docente-boton docente-boton-contorno">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        aria-hidden="true">
+                        <rect x="4" y="5" width="16" height="16" rx="2" />
+                        <path d="M16 3v4M8 3v4M4 11h16M8 15h3" />
+                    </svg>
+                    Mis permisos
                 </a>
-                <form action="<?= e(url('/logout')) ?>" method="POST" style="margin: 0;">
-                    <?= csrf_field() ?>
-                    <button type="submit" style="background: #dc2626; color: #ffffff; border: none; border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/><path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/></svg>
-                        Cerrar Sesión
-                    </button>
-                </form>
+
+                <a href="<?= e(url('/docente/notificaciones')) ?>" class="docente-boton docente-boton-celeste">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        aria-hidden="true">
+                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                        <path d="M10 21h4" />
+                    </svg>
+                    Notificaciones
+
+                    <?php if ($avisosPendientes > 0): ?>
+                        <span class="contador-avisos" aria-label="<?= (int) $avisosPendientes ?> sin leer">
+                            <?= $avisosPendientes > 99
+                                ? '99+'
+                                : (int) $avisosPendientes ?>
+                        </span>
+                    <?php endif; ?>
+                </a>
             </div>
         </div>
 
-        <div style="padding: 1.25rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.9rem;">
+        <div class="docente-datos">
             <div>
-                <span style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Código de Docente</span>
-                <strong style="color: #1e293b;"><?= e($docente->codigo_docente ?? 'Sin código asignado') ?></strong>
+                <span>Código de docente</span>
+                <strong>
+                    <?= e($docente->codigo_docente ?? 'Sin código asignado') ?>
+                </strong>
             </div>
+
             <div>
-                <span style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Nombre de Usuario</span>
-                <strong style="color: #1e293b;"><?= e($user->nombre_usuario) ?></strong>
+                <span>Usuario</span>
+                <strong>
+                    <?= e($user->nombre_usuario) ?>
+                </strong>
             </div>
+
             <div>
-                <span style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Correo Electrónico</span>
-                <span style="color: #1e293b;"><?= e($user->correo) ?></span>
+                <span>Correo electrónico</span>
+                <strong>
+                    <?= e($user->correo) ?>
+                </strong>
             </div>
+
             <div>
-                <span style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Estado de Cuenta</span>
-                <span style="display: inline-block; background: #dcfce7; color: #166534; padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 600; font-size: 0.8rem;"><?= e($docente->estado) ?></span>
+                <span>Estado de cuenta</span>
+                <strong class="docente-estado">
+                    <?= e($docente->estado) ?>
+                </strong>
             </div>
         </div>
-    </div>
+    </section>
+
 
     <?php if ($sin_asignacion): ?>
         <!-- Mensaje amigable cuando el docente no tiene secciones asignadas (T7-06) -->
-        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 3rem 1.5rem; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-            <div style="width: 64px; height: 64px; background: #fef3c7; color: #d97706; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
-                <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <div class="card"
+            style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 3rem 1.5rem; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div
+                style="width: 64px; height: 64px; background: #fef3c7; color: #d97706; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
+                <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
             </div>
-            <h2 style="color: #1e293b; font-size: 1.35rem; margin: 0 0 0.5rem 0;"><?= e($mensaje_aviso ?? 'Actualmente no tiene una sección asignada.') ?></h2>
+            <h2 style="color: #1e293b; font-size: 1.35rem; margin: 0 0 0.5rem 0;">
+                <?= e($mensaje_aviso ?? 'Actualmente no tiene una sección asignada.') ?>
+            </h2>
             <p style="color: #64748b; max-width: 520px; margin: 0 auto; line-height: 1.6;">
-                Usted no posee ninguna asignación docente activa en el ciclo lectivo en curso. Para registrar la titularidad de su grado y sección, comuníquese con la dirección administrativa de la escuela.
+                Usted no posee ninguna asignación docente activa en el ciclo lectivo en curso. Para registrar la titularidad
+                de su grado y sección, comuníquese con la dirección administrativa de la escuela.
             </p>
         </div>
     <?php else: ?>
         <!-- Selector de Asignaciones (si tiene múltiples) -->
         <?php if (count($asignaciones) > 1): ?>
-            <div style="margin-bottom: 1.5rem; background: #ffffff; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div
+                style="margin-bottom: 1.5rem; background: #ffffff; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
                 <span style="font-weight: 700; color: #1e293b; margin-right: 1rem; font-size: 0.9rem;">Mis Asignaciones Activas:</span>
                 <div style="display: inline-flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
                     <?php foreach ($asignaciones as $asig): ?>
                         <?php $isActiva = ($asignacion_seleccionada !== null && $asig->id_seccion === $asignacion_seleccionada->id_seccion); ?>
                         <a href="<?= e(url('/docente?seccion=' . $asig->id_seccion)) ?>"
-                           style="padding: 0.4rem 0.9rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none; border: 1px solid <?= $isActiva ? '#2563eb' : '#cbd5e1' ?>; background: <?= $isActiva ? '#2563eb' : '#f8fafc' ?>; color: <?= $isActiva ? '#ffffff' : '#334155' ?>;">
+                            style="padding: 0.4rem 0.9rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none; border: 1px solid <?= $isActiva ? '#2563eb' : '#cbd5e1' ?>; background: <?= $isActiva ? '#2563eb' : '#f8fafc' ?>; color: <?= $isActiva ? '#ffffff' : '#334155' ?>;">
                             <?= e($asig->grado_nombre) ?> — <?= e($asig->seccion_codigo) ?> (Aula <?= e($asig->aula_codigo) ?>)
                         </a>
                     <?php endforeach; ?>
@@ -93,56 +146,77 @@
 
         <!-- Tarjeta de Contexto Académico de la Asignación Activa -->
         <?php if ($asignacion_seleccionada !== null): ?>
-            <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 2rem; overflow: hidden;">
-                <div style="background: #f1f5f9; padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div class="card"
+                style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 2rem; overflow: hidden;">
+                <div
+                    style="background: #f1f5f9; padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                     <div>
                         <h2 style="margin: 0; color: #0f172a; font-size: 1.25rem;">
-                            <?= e($asignacion_seleccionada->grado_nombre) ?> — Sección <?= e($asignacion_seleccionada->seccion_codigo) ?>
+                            <?= e($asignacion_seleccionada->grado_nombre) ?> — Sección
+                            <?= e($asignacion_seleccionada->seccion_codigo) ?>
                             <?php if (!empty($asignacion_seleccionada->seccion_nombre)): ?>
-                                <span style="font-weight: 400; color: #64748b; font-size: 1rem;">(<?= e($asignacion_seleccionada->seccion_nombre) ?>)</span>
+                                <span
+                                    style="font-weight: 400; color: #64748b; font-size: 1rem;">(<?= e($asignacion_seleccionada->seccion_nombre) ?>)</span>
                             <?php endif; ?>
                         </h2>
-                        <span style="color: #64748b; font-size: 0.85rem;">Ciclo Escolar: <strong><?= e($asignacion_seleccionada->periodo_nombre) ?></strong></span>
+                        <span style="color: #64748b; font-size: 0.85rem;">Ciclo Escolar:
+                            <strong><?= e($asignacion_seleccionada->periodo_nombre) ?></strong></span>
                     </div>
                     <div>
-                        <span style="background: #dbeafe; color: #1e40af; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 700; font-size: 0.8rem;">
+                        <span
+                            style="background: #dbeafe; color: #1e40af; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 700; font-size: 0.8rem;">
                             <?= e($total_estudiantes) ?> de <?= e($asignacion_seleccionada->seccion_capacidad) ?> cupos ocupados
                         </span>
                     </div>
                 </div>
 
-                <div style="padding: 1.25rem 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; font-size: 0.9rem;">
+                <div
+                    style="padding: 1.25rem 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; font-size: 0.9rem;">
                     <div>
-                        <span style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Aula Asignada</span>
+                        <span
+                            style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Aula
+                            Asignada</span>
                         <strong style="color: #1e293b;"><?= e($asignacion_seleccionada->aula_codigo) ?></strong>
                         <?php if (!empty($asignacion_seleccionada->aula_nombre)): ?>
-                            <span style="color: #64748b; display: block; font-size: 0.8rem;"><?= e($asignacion_seleccionada->aula_nombre) ?></span>
+                            <span
+                                style="color: #64748b; display: block; font-size: 0.8rem;"><?= e($asignacion_seleccionada->aula_nombre) ?></span>
                         <?php endif; ?>
                     </div>
                     <div>
-                        <span style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Fecha de Inicio</span>
+                        <span
+                            style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Fecha
+                            de Inicio</span>
                         <span style="color: #1e293b;"><?= e($asignacion_seleccionada->fecha_inicio) ?></span>
                     </div>
                     <div>
-                        <span style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Capacidad Máxima</span>
+                        <span
+                            style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Capacidad
+                            Máxima</span>
                         <span style="color: #1e293b;"><?= e($asignacion_seleccionada->seccion_capacidad) ?> estudiantes</span>
                     </div>
                     <div>
-                        <span style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Estado de Titularidad</span>
-                        <span style="display: inline-block; background: #dcfce7; color: #166534; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.8rem;"><?= e($asignacion_seleccionada->estado) ?></span>
+                        <span
+                            style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; display: block;">Estado
+                            de Titularidad</span>
+                        <span
+                            style="display: inline-block; background: #dcfce7; color: #166534; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.8rem;"><?= e($asignacion_seleccionada->estado) ?></span>
                     </div>
                 </div>
             </div>
 
             <!-- Listado de Estudiantes Asignados (RF-17) -->
-            <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden;">
-                <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div class="card"
+                style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden;">
+                <div
+                    style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                     <div>
                         <h3 style="margin: 0; color: #0f172a; font-size: 1.15rem;">Nómina Oficial de Estudiantes (RF-17)</h3>
-                        <p style="margin: 0.25rem 0 0 0; color: #64748b; font-size: 0.85rem;">Estudiantes con inscripción vigente y confirmada en su sección.</p>
+                        <p style="margin: 0.25rem 0 0 0; color: #64748b; font-size: 0.85rem;">Estudiantes con inscripción
+                            vigente y confirmada en su sección.</p>
                     </div>
                     <div>
-                        <span style="background: #f1f5f9; color: #334155; padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #cbd5e1;">
+                        <span
+                            style="background: #f1f5f9; color: #334155; padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid #cbd5e1;">
                             Total: <?= e($total_estudiantes) ?> estudiantes
                         </span>
                     </div>
@@ -150,9 +224,15 @@
 
                 <?php if (empty($estudiantes)): ?>
                     <div style="padding: 3rem 1.5rem; text-align: center; color: #64748b;">
-                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem auto; display: block; color: #94a3b8;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                        <p style="margin: 0; font-size: 1rem; font-weight: 500;">No hay estudiantes inscritos en esta sección actualmente.</p>
-                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem;">Las nuevas inscripciones confirmadas en línea se reflejarán automáticamente aquí.</p>
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            style="margin: 0 auto 1rem auto; display: block; color: #94a3b8;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <p style="margin: 0; font-size: 1rem; font-weight: 500;">No hay estudiantes inscritos en esta sección
+                            actualmente.</p>
+                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem;">Las nuevas inscripciones confirmadas en línea se
+                            reflejarán automáticamente aquí.</p>
                     </div>
                 <?php else: ?>
                     <div style="overflow-x: auto;">
@@ -169,9 +249,13 @@
                             <tbody>
                                 <?php $correlativo = 1; ?>
                                 <?php foreach ($estudiantes as $est): ?>
-                                    <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-                                        <td style="padding: 0.75rem 1rem; color: #64748b; font-weight: 500; text-align: center;"><?= $correlativo++ ?></td>
-                                        <td style="padding: 0.75rem 1rem; font-family: monospace; font-size: 0.85rem; font-weight: 600; color: #1e3a8a;">
+                                    <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;"
+                                        onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                                        <td style="padding: 0.75rem 1rem; color: #64748b; font-weight: 500; text-align: center;">
+                                            <?= $correlativo++ ?>
+                                        </td>
+                                        <td
+                                            style="padding: 0.75rem 1rem; font-family: monospace; font-size: 0.85rem; font-weight: 600; color: #1e3a8a;">
                                             <?= e($est['codigo_estudiante'] ?? 'Sin código asignado') ?>
                                         </td>
                                         <td style="padding: 0.75rem 1rem; font-weight: 600; color: #0f172a;">
@@ -181,7 +265,8 @@
                                             <?= e($est['fecha_nacimiento'] ?? 'No registrada') ?>
                                         </td>
                                         <td style="padding: 0.75rem 1rem; text-align: center;">
-                                            <span style="background: #dcfce7; color: #166534; padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 600; font-size: 0.8rem;">
+                                            <span
+                                                style="background: #dcfce7; color: #166534; padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 600; font-size: 0.8rem;">
                                                 Inscrito
                                             </span>
                                         </td>

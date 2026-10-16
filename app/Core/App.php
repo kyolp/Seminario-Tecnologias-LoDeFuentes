@@ -152,6 +152,12 @@ class App
         $this->router->get('/docente/permisos/ver', [\App\Controllers\DocentePermisoController::class, 'show'], $docenteGet);
         $this->router->get('/docente/permisos/documento', [\App\Controllers\DocentePermisoController::class, 'descargarDocumento'], $docenteGet);
 
+        // Notificaciones del Docente (Extensión RF-26)
+        $this->router->get('/docente/notificaciones', [\App\Controllers\DocenteNotificacionController::class, 'index'], $docenteGet);
+        $this->router->post('/docente/notificaciones/marcar-leida', [\App\Controllers\DocenteNotificacionController::class, 'marcarLeida'], $docentePost);
+        $this->router->post('/docente/notificaciones/marcar-todas', [\App\Controllers\DocenteNotificacionController::class, 'marcarTodasLeidas'], $docentePost);
+        $this->router->get('/docente/notificaciones/conteo', [\App\Controllers\DocenteNotificacionController::class, 'conteoNoLeidas'], $docenteGet);
+
         // 4. Módulos de Administración Básica (Fase 4)
         $adminGet = [
             \App\Middleware\Authenticate::class,

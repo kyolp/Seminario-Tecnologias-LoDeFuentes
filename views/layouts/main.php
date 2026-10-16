@@ -1,58 +1,124 @@
+<?php
+$currentUser = auth()->user();
+$panelUrl = null;
+$notificacionesUrl = null;
+$conteoAvisos = 0;
+
+if ($currentUser !== null) {
+    if ($currentUser->isAdmin()) {
+        $panelUrl = 'administracion';
+        $notificacionesUrl = 'administracion/notificaciones';
+    } elseif ($currentUser->isDocente()) {
+        $panelUrl = 'docente';
+        $notificacionesUrl = 'docente/notificaciones';
+    }
+
+    if ($notificacionesUrl !== null) {
+        $conteoAvisos = (new \App\Services\NotificacionService())
+            ->obtenerConteoNoLeidas($currentUser->id_usuario);
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= e($title ?? 'Sistema Web - Escuela Oficial Rural Mixta Lo de Fuentes') ?></title>
-    <link rel="stylesheet" href="<?= e(url('css/app.css')) ?>">
+    <title><?= e($title ?? 'Escuela Lo de Fuentes') ?></title>
+    <link rel="stylesheet" href="<?= e(url('css/app.css')) ?>?v=6">
 </head>
-<body>
+
+<body class="sitio-escolar">
+    <a class="saltar-contenido" href="#contenido">Ir al contenido</a>
+
     <header class="app-header">
         <div class="container header-container">
-            <div class="brand">
-                <h1 class="school-title">Escuela Oficial Rural Mixta Lo de Fuentes</h1>
-                <p class="school-subtitle">Sistema Web Integral — Prototipo Académico</p>
-            </div>
-            <nav class="main-nav">
-                <a href="<?= e(url()) ?>" class="nav-link">Inicio</a>
-                <a href="<?= e(url('inscripcion')) ?>" class="nav-link">Inscripción en Línea</a>
-                <a href="<?= e(url('inscripcion/consultar')) ?>" class="nav-link">Consultar Inscripción</a>
-                <a href="<?= e(url('status')) ?>" class="nav-link" target="_blank">Estado JSON</a>
-                <?php if (auth()->check()): ?>
-                    <?php $currentUser = auth()->user(); ?>
-                    <?php if ($currentUser !== null && $currentUser->isAdmin()): ?>
-                        <a href="<?= e(url('administracion')) ?>" class="nav-link">Administración</a>
-                        <a href="<?= e(url('administracion/notificaciones')) ?>" class="nav-link">🔔 Notificaciones</a>
-                        <a href="<?= e(url('administracion/reportes')) ?>" class="nav-link">📊 Reportes</a>
-                    <?php endif; ?>
-                    <?php if ($currentUser !== null && $currentUser->isDocente()): ?>
-                        <a href="<?= e(url('docente')) ?>" class="nav-link">Docente</a>
-                    <?php endif; ?>
-                    <span class="user-badge" style="color: #cbd5e1; margin-left: 0.5rem; font-size: 0.85rem;">
-                        <?= e($currentUser?->nombre_usuario) ?> (<?= e($currentUser?->rol_nombre) ?>)
+            <a href="<?= e(url()) ?>" class="marca-escolar">
+                <img src="<?= e(url('img/logo-escuela.png')) ?>" alt="Escudo de la Escuela Lo de Fuentes"
+                    class="logo-escolar" width="64" height="72">
+                <span>
+                    <span class="marca-descripcion">
+                        Escuela Oficial Rural Mixta
                     </span>
-                    <form action="<?= e(url('logout')) ?>" method="POST" style="display: inline; margin-left: 0.5rem;">
-                        <?= csrf_field() ?>
-                        <button type="submit" style="background: none; border: 1px solid #cbd5e1; color: #fff; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Salir</button>
-                    </form>
+                    <span class="marca-nombre">Lo de Fuentes</span>
+                    <span class="marca-jornada">Jornada vespertina</span>
+                </span>
+            </a>
+
+            <nav class="main-nav" aria-label="Navegación principal">
+                <?php if ($currentUser === null): ?>
+                    <a href="<?= e(url()) ?>" class="nav-link">Inicio</a>
+                    <a href="<?= e(url('inscripcion')) ?>" class="nav-link">
+                        Inscripciones
+                    </a>
+                    <a href="<?= e(url('inscripcion/consultar')) ?>" class="nav-link">
+                        Consultar inscripción
+                    </a>
+                    <a href="<?= e(url('login')) ?>" class="nav-link acceso-principal">
+                        Iniciar sesión
+                    </a>
                 <?php else: ?>
-                    <a href="<?= e(url('login')) ?>" class="nav-link" style="background: #2563eb; color: #fff; padding: 0.35rem 0.75rem; border-radius: 4px; text-decoration: none;">Iniciar Sesión</a>
+                    <?php if ($panelUrl !== null): ?>
+                        <a href="<?= e(url($panelUrl)) ?>" class="nav-link">
+                            Mi panel
+                        </a>
+                    <?php endif; ?>
+
+                    <?php if ($currentUser->isAdmin()): ?>
+                        <a href="<?= e(url('administracion/reportes')) ?>" class="nav-link">
+                            Reportes
+                        </a>
+                    <?php endif; ?>
+
+                    <?php if ($notificacionesUrl !== null): ?>
+                        <a href="<?= e(url($notificacionesUrl)) ?>" class="nav-link">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                                aria-hidden="true">
+                                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                                <path d="M10 21h4" />
+                            </svg>
+                            Notificaciones
+                            <?php if ($conteoAvisos > 0): ?>
+                                <span class="contador-avisos" aria-label="<?= (int) $conteoAvisos ?> sin leer">
+                                    <?= $conteoAvisos > 99 ? '99+' : (int) $conteoAvisos ?>
+                                </span>
+                            <?php endif; ?>
+                        </a>
+                    <?php endif; ?>
+
+                    <span class="usuario-navegacion">
+                        <?= e($currentUser->nombre_usuario) ?>
+                    </span>
+
+                    <form action="<?= e(url('logout')) ?>" method="POST" class="form-salir">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="boton-salir">
+                            Salir
+                        </button>
+                    </form>
                 <?php endif; ?>
             </nav>
         </div>
     </header>
 
-    <main class="app-main container">
+    <main id="contenido" class="app-main container">
         <?= $content ?>
     </main>
 
     <footer class="app-footer">
         <div class="container footer-content">
-            <p>&copy; <?= date('Y') ?> Escuela Oficial Rural Mixta Lo de Fuentes — 13 Calle, Lo de Fuentes, Zona 11, Mixco.</p>
-            <p class="phase-tag">Fase 3: Autenticación y Roles | Desarrollado con PHP 8.2 + PDO + MySQL 8.0</p>
+            <p class="footer-escuela">
+                Escuela Oficial Rural Mixta Lo de Fuentes
+            </p>
+            <p>13 Calle, Lo de Fuentes, Zona 11, Mixco.</p>
+            <p class="footer-derechos">
+                &copy; <?= date('Y') ?> · Jornada vespertina
+            </p>
         </div>
     </footer>
 
     <script src="<?= e(url('js/app.js')) ?>"></script>
 </body>
+
 </html>

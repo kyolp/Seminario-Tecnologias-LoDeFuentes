@@ -18,8 +18,8 @@
 
         <div style="background: #f8fafc; padding: 0.75rem 1rem; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.875rem;">
             <strong>Grado y Período Asociado:</strong><br>
-            <span style="color: #1e3a8a; font-weight: 600;"><?= e($seccion->nombre_grado ?? 'Grado #' . $seccion->id_grado_periodo) ?></span> &mdash;
-            <span style="color: #64748b;"><?= e($seccion->nombre_periodo ?? '') ?></span>
+            <span style="color: #1e3a8a; font-weight: 600;"><?= e($seccion->grado_nombre ?? 'Grado #' . $seccion->id_grado_periodo) ?></span> &mdash;
+            <span style="color: #64748b;"><?= e($seccion->periodo_nombre ?? '') ?></span>
         </div>
 
         <div>

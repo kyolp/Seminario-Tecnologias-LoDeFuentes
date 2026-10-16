@@ -45,7 +45,7 @@
                     <label for="latitud" style="display: block; font-weight: 600; color: #334155; margin-bottom: 0.4rem; font-size: 0.9rem;">
                         Latitud (grados decimales) <span style="color: #ef4444;">*</span>
                     </label>
-                    <input type="number" step="0.0000001" min="-90" max="90" id="latitud" name="latitud" required
+                    <input type="number" step="any" min="-90" max="90" id="latitud" name="latitud" required
                            value="<?= e((string)($valores['latitud'] ?? '14.6349150')) ?>"
                            style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; box-sizing: border-box; font-family: monospace;">
                     <small style="color: #64748b; display: block; margin-top: 0.25rem;">Rango válido: -90.0 a 90.0.</small>
@@ -54,7 +54,7 @@
                     <label for="longitud" style="display: block; font-weight: 600; color: #334155; margin-bottom: 0.4rem; font-size: 0.9rem;">
                         Longitud (grados decimales) <span style="color: #ef4444;">*</span>
                     </label>
-                    <input type="number" step="0.0000001" min="-180" max="180" id="longitud" name="longitud" required
+                    <input type="number" step="any" min="-180" max="180" id="longitud" name="longitud" required
                            value="<?= e((string)($valores['longitud'] ?? '-90.5068820')) ?>"
                            style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; box-sizing: border-box; font-family: monospace;">
                     <small style="color: #64748b; display: block; margin-top: 0.25rem;">Rango válido: -180.0 a 180.0.</small>

@@ -28,7 +28,7 @@
             <option value="">-- Todas las combinaciones Grado-Período --</option>
             <?php foreach ($gradosPeriodos as $gp): ?>
                 <option value="<?= e((string)$gp->id_grado_periodo) ?>" <?= ((int)$gpSeleccionado === (int)$gp->id_grado_periodo) ? 'selected' : '' ?>>
-                    <?= e($gp->nombre_periodo ?? 'Período #' . $gp->id_periodo_escolar) ?> &raquo; <?= e($gp->nombre_grado ?? 'Grado #' . $gp->id_grado) ?>
+                    <?= e($gp->periodo_nombre ?? 'Período #' . $gp->id_periodo_escolar) ?> &raquo; <?= e($gp->grado_nombre ?? 'Grado #' . $gp->id_grado) ?>
                 </option>
             <?php endforeach; ?>
         </select>
@@ -59,8 +59,8 @@
                             <td style="padding: 0.75rem; font-family: monospace; font-weight: 600; color: #1e3a8a;"><?= e($s->codigo) ?></td>
                             <td style="padding: 0.75rem; font-weight: 500;"><?= e($s->nombre) ?></td>
                             <td style="padding: 0.75rem; font-size: 0.85rem; color: #475569;">
-                                <?= e($s->nombre_grado ?? 'Grado #' . $s->id_grado_periodo) ?>
-                                <br><small style="color: #64748b;"><?= e($s->nombre_periodo ?? '') ?></small>
+                                <?= e($s->grado_nombre ?? 'Grado #' . $s->id_grado_periodo) ?>
+                                <br><small style="color: #64748b;"><?= e($s->periodo_nombre ?? '') ?></small>
                             </td>
                             <td style="padding: 0.75rem; font-weight: 600; color: #0f172a;">
                                 <?= e((string)$s->capacidad) ?> cupos

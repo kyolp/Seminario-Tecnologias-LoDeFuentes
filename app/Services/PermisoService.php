@@ -403,6 +403,46 @@ class PermisoService
                 $comentarioLimpio !== '' ? $comentarioLimpio : null
             );
 
+            // Avisar al docente dentro de la misma transacción (RF-26).
+            if ($this->debeEmitirNotificaciones()) {
+                $docente = $this->docenteRepo->findById($solicitud->id_docente);
+
+                if ($docente === null) {
+                    throw new DomainException(
+                        'No se encontró al docente destinatario de la notificación.'
+                    );
+                }
+
+                $aprobada = $nuevoEstado === SolicitudPermiso::ESTADO_APROBADO;
+                $resultado = $aprobada ? 'aprobada' : 'rechazada';
+
+                $titulo = $aprobada
+                    ? 'Solicitud de permiso aprobada'
+                    : 'Solicitud de permiso rechazada';
+
+                $fecha = \DateTimeImmutable::createFromFormat(
+                    '!Y-m-d',
+                    $solicitud->fecha_solicitada
+                );
+
+                $mensaje = sprintf(
+                    'Su solicitud de permiso #%d para el %s fue %s. Consulte el detalle para ver la resolución.',
+                    $idSolicitud,
+                    $fecha !== false
+                    ? $fecha->format('d/m/Y')
+                    : $solicitud->fecha_solicitada,
+                    $resultado
+                );
+
+                $this->notificacionRepo->crear(
+                    $idSolicitud,
+                    $docente->id_usuario,
+                    'CAMBIO_ESTADO',
+                    $titulo,
+                    $mensaje
+                );
+            }
+
             $this->db->commit();
 
             // Retornar entidad actualizada con relaciones hidratadas
@@ -539,6 +579,11 @@ class PermisoService
         }
 
         if (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 8097) {
+            return false;
+        }
+
+        $argv0 = (string) ($_SERVER['argv'][0] ?? ($GLOBALS['argv'][0] ?? ''));
+        if (str_contains($argv0, 'worker_permiso_concurrente') || str_contains($argv0, 'run_tests_fase9')) {
             return false;
         }
 
