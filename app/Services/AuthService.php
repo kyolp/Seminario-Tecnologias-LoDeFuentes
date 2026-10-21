@@ -80,6 +80,7 @@ class AuthService
         Session::set('auth_role', $user->rol_nombre);
         Session::set('auth_username', $user->nombre_usuario);
         Session::set('auth_logged_at', time());
+        Session::set('auth_last_activity', time());
 
         // Actualizar marca de último acceso
         $this->userRepository->updateLastAccess($user->id_usuario);
@@ -119,6 +120,17 @@ class AuthService
             $this->logout();
             return null;
         }
+
+        // Comprobar política auxiliar de expiración por inactividad (2 horas = 7200s) (DT-80)
+        $lastActivity = (int) Session::get('auth_last_activity', 0);
+        if ($lastActivity > 0 && (time() - $lastActivity) > 7200) {
+            Logger::info('Sesión expirada por inactividad prolongada.', ['id_usuario' => $userId]);
+            $this->logout();
+            return null;
+        }
+
+        // Renovar marca de actividad en solicitudes activas
+        Session::set('auth_last_activity', time());
 
         // Mantener sincronizado el rol activo de base de datos
         Session::set('auth_role', $user->rol_nombre);

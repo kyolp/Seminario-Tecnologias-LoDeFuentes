@@ -80,12 +80,12 @@ class App
         }
 
         try {
-            return $this->router->dispatch($request);
+            $response = $this->router->dispatch($request);
         } catch (DatabaseException $e) {
             // Error controlado de base de datos que nunca expone contraseñas
             Logger::error('Error de base de datos capturado en App: ' . $e->getSafeMessage());
 
-            return $this->renderDatabaseError($e);
+            $response = $this->renderDatabaseError($e);
         } catch (Throwable $e) {
             // Error interno no controlado
             Logger::error('Excepción interna en la aplicación: ' . $e->getMessage(), [
@@ -93,8 +93,10 @@ class App
                 'line' => $e->getLine(),
             ]);
 
-            return $this->renderInternalError($e);
+            $response = $this->renderInternalError($e);
         }
+
+        return $this->applySecurityHeaders($response, $request);
     }
 
     /**
@@ -349,6 +351,42 @@ class App
     /**
      * Reiniciar instancia para pruebas.
      */
+    /**
+     * Aplicar cabeceras de seguridad y hardening HTTP global (RNF-03, DT-77, DT-78).
+     */
+    private function applySecurityHeaders(Response $response, Request $request): Response
+    {
+        // 1. Mitigación de MIME sniffing (DT-77)
+        if ($response->getHeader('X-Content-Type-Options') === null) {
+            $response->setHeader('X-Content-Type-Options', 'nosniff');
+        }
+
+        // 2. Protección contra Clickjacking / iframes (DT-77)
+        if ($response->getHeader('X-Frame-Options') === null) {
+            $response->setHeader('X-Frame-Options', 'SAMEORIGIN');
+        }
+
+        // 3. Política de Referrer para privacidad (RNF-04)
+        if ($response->getHeader('Referrer-Policy') === null) {
+            $response->setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+        }
+
+        // 4. Protección contra caché en rutas privadas autenticadas o sensibles (DT-78)
+        $uri = $request->getPath();
+        $isSensitive = str_starts_with($uri, '/administracion')
+            || str_starts_with($uri, '/docente')
+            || str_starts_with($uri, '/login')
+            || str_starts_with($uri, '/recuperar-contrasena')
+            || str_starts_with($uri, '/restablecer-contrasena');
+
+        if ($isSensitive && $response->getHeader('Cache-Control') === null) {
+            $response->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+            $response->setHeader('Pragma', 'no-cache');
+        }
+
+        return $response;
+    }
+
     public static function reset(): void
     {
         self::$instance = null;

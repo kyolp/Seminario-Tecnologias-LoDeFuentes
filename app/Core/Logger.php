@@ -78,7 +78,7 @@ class Logger
      */
     private static function sanitizeContext(array $context): array
     {
-        $sensitiveKeys = ['password', 'pass', 'clave', 'clave_hash', 'token', 'secret'];
+        $sensitiveKeys = ['password', 'pass', 'clave', 'clave_hash', 'token', 'secret', 'cui', 'credencial', 'authorization'];
         $clean = [];
 
         foreach ($context as $k => $v) {

@@ -311,7 +311,8 @@ class DocentePermisoController extends BaseController
                 'requiredRole' => 'DOCENTE',
             ], 'main'), 403, ['Content-Type' => 'text/html; charset=utf-8']);
         } catch (Throwable $e) {
-            return new Response('Error al descargar el archivo: ' . e($e->getMessage()), 404);
+            \App\Core\Logger::error('Fallo en descarga de documento de soporte docente: ' . $e->getMessage());
+            return new Response('El documento solicitado no se encuentra disponible.', 404);
         }
     }
 
