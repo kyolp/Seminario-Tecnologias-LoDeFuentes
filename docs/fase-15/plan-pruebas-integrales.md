@@ -39,8 +39,8 @@ El objetivo primario de esta fase es someter el sistema completo a una validaci�
    - Compatibilidad de cliente en navegadores modernos (Chromium / Google Chrome y Microsoft Edge).
    - Usabilidad conforme a RNF-01: Formularios con labels semánticos, feedback visual de errores y mensajes comprensibles para personal no técnico.
 4. **Rendimiento y Disponibilidad:**
-   - Rendimiento conforme a RNF-07: Consultas agregadas ejecutadas en menos de 100 milisegundos sin cuellos de botella N+1.
-   - Disponibilidad y portabilidad conforme a RNF-10: Stack 100% auto-contenido en Apache/PHP 8.2/MySQL 8 sin dependencias de servicios externos ni APIs en la nube.
+   - Rendimiento conforme a RNF-07: Consultas agregadas ejecutadas en tiempo de respuesta razonable sin cuellos de botella N+1.
+   - Disponibilidad conforme a RNF-10: Dependencia de la infraestructura de alojamiento local (Apache/PHP 8.2/MySQL 8) sin servicios SaaS de terceros ni APIs en la nube.
 
 ### 2.2 Delimitaciones Estrictas:
 1. **Cero nuevas funcionalidades:** No se introdujeron módulos, tablas ni rutas fuera del alcance formalmente aprobado.
@@ -100,8 +100,8 @@ El objetivo primario de esta fase es someter el sistema completo a una validaci�
 | **T15-30** | Manejo de Errores | Vistas de error 404 y 500 sanitizadas sin fugas de stack trace (RNF-08) | HTTP 404 renderizado con vista institucional sin rutas físicas de Windows (`C:\`) ni trazas de código. |
 | **T15-31** | Integridad Relacional | Verificación de 20 tablas relacionales activas y `schema.sql` intacto (RNF-05) | 20 tablas presentes con FKs y checks; `database/schema.sql` con 0 modificaciones en git. |
 | **T15-32** | Usabilidad | Formularios accesibles con etiquetas semánticas y feedback claro (RNF-01) | Vistas clave cumplen con `<label for>`, indicadores obligatorios, feedback de error y componentes alert. |
-| **T15-33** | Rendimiento | Consultas agregadas de reportes ejecutadas en < 100ms sin N+1 (RNF-07) | Tiempo de ejecución medido inferior a 100 milisegundos para consultas consolidadas. |
-| **T15-34** | Disponibilidad | Arquitectura autónoma auto-contenida sin dependencias SaaS/Nube (RNF-10) | Cálculos geodésicos y PDFs generados localmente sin APIs externas pagadas (Google Maps, Stripe, etc.). |
+| **T15-33** | Rendimiento | Consultas agregadas de reportes ejecutadas eficientemente sin N+1 (RNF-07) | Tiempo de respuesta razonable en entorno de prueba (7.23 ms observados sin umbral SLA en documento). |
+| **T15-34** | Disponibilidad | Arquitectura auto-contenida dependiente de infraestructura de alojamiento (RNF-10) | Cálculos geodésicos y PDFs generados localmente sin APIs externas pagadas (Google Maps, Stripe, etc.). |
 | **T15-35** | Servidor HTTP Real | Validación end-to-end de códigos de respuesta HTTP en servidor web embebido | 200 en Home/Login, 302 en ruta protegida y 404 en ruta inexistente probados vía HTTP real. |
 | **T15-36** | Limpieza Atómica | Cero registros temporales permanentes y working tree limpio | Fixtures purgados en bloque `finally`; cero residuos en `usuarios`, `docentes`, `inscripciones`, etc. |
 

@@ -250,16 +250,16 @@ La suite de pruebas automatizadas de la Fase 15 fue diseñada e implementada par
 - **Resultado Obtenido:** `4/4 vistas validadas conforme a RNF-01`
 - **Estado:** **OK**
 
-### T15-33: Rendimiento: RNF-07 — Consultas agregadas de reportes ejecutadas en < 100ms sin N+1
-- **Objetivo:** Medir el tiempo de ejecución de las consultas consolidadas de asistencia e inscripciones.
+### T15-33: Rendimiento: RNF-07 — Consultas agregadas de reportes ejecutadas eficientemente sin N+1
+- **Objetivo:** Medir el tiempo de ejecución de las consultas consolidadas de asistencia e inscripciones en el entorno de pruebas.
 - **Entrada:** Ejecución consecutiva de `ReporteService::generarReporteAsistencia` y `ReporteService::generarReporteInscripciones`.
-- **Resultado Esperado:** Tiempo de ejecución inferior a 100 milisegundos para consultas consolidadas.
-- **Resultado Obtenido:** `Tiempo total medido: 7.23 ms (OPTIMO)`
+- **Resultado Esperado:** Respuesta en tiempo razonable bajo la carga prevista y dataset de prueba. *(El documento oficial no define un umbral de 100 ms ni SLA numérico formal; la medición observada es evidencia puntual del entorno).*
+- **Resultado Obtenido:** `Medición observada: 7.23 ms (OPTIMO)`
 - **Estado:** **OK**
 
-### T15-34: Disponibilidad: RNF-10 — Arquitectura autónoma auto-contenida sin dependencias SaaS/Nube
-- **Objetivo:** Confirmar que el código no requiere APIs de pago externas (Google Maps, Mailgun, etc.) para operar.
-- **Entrada:** Análisis de dependencias en `AsistenciaService` (Haversine nativo) y `PdfService` (FPDF local).
+### T15-34: Disponibilidad: RNF-10 — Arquitectura auto-contenida dependiente de la infraestructura de alojamiento
+- **Objetivo:** Confirmar que el código opera sobre la infraestructura del servidor local (Apache/PHP/MySQL) sin requerir APIs de pago externas ni dependencias en la nube.
+- **Entrada:** Análisis de componentes en `AsistenciaService` (Haversine nativo) y `PdfService` (FPDF local).
 - **Resultado Esperado:** Cálculos geodésicos y PDFs generados localmente sin APIs externas pagadas.
 - **Resultado Obtenido:** `Haversine local: SI | FPDF local: SI | Sin SaaS externo: SI`
 - **Estado:** **OK**

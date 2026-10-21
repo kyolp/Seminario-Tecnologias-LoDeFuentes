@@ -537,38 +537,38 @@ class Phase15TestSuite
     private function testT15_01_TrazabilidadDocumentalMatrizRF(): void
     {
         $matrizRf = [
-            'RF-01' => ['nombre' => 'Autenticación y control de acceso', 'ctrl' => 'AuthController'],
-            'RF-02' => ['nombre' => 'Cierre seguro de sesión', 'ctrl' => 'AuthController'],
+            'RF-01' => ['nombre' => 'Autenticación', 'ctrl' => 'AuthController'],
+            'RF-02' => ['nombre' => 'Roles y permisos', 'ctrl' => 'AdminController'],
             'RF-03' => ['nombre' => 'Recuperación de contraseña', 'ctrl' => 'PasswordRecoveryController'],
-            'RF-04' => ['nombre' => 'Gestión de roles y permisos', 'ctrl' => 'AdminController'],
-            'RF-05' => ['nombre' => 'Datos del encargado', 'ctrl' => 'InscripcionPublicaController'],
-            'RF-06' => ['nombre' => 'Datos del estudiante', 'ctrl' => 'InscripcionPublicaController'],
-            'RF-07' => ['nombre' => 'Gestión de grados y secciones', 'ctrl' => 'AdminGradoController'],
-            'RF-08' => ['nombre' => 'Asignación de secciones', 'ctrl' => 'AdminSeccionController'],
+            'RF-04' => ['nombre' => 'Gestión de estudiantes', 'ctrl' => 'AdminEstudianteController'],
+            'RF-05' => ['nombre' => 'Datos de encargados', 'ctrl' => 'InscripcionPublicaController'],
+            'RF-06' => ['nombre' => 'Gestión de grados', 'ctrl' => 'AdminGradoController'],
+            'RF-07' => ['nombre' => 'Gestión de secciones', 'ctrl' => 'AdminSeccionController'],
+            'RF-08' => ['nombre' => 'Capacidad por sección', 'ctrl' => 'AdminSeccionController'],
             'RF-09' => ['nombre' => 'Control automático de cupos', 'ctrl' => 'InscripcionService'],
-            'RF-10' => ['nombre' => 'Disponibilidad de secciones', 'ctrl' => 'InscripcionPublicaController'],
-            'RF-11' => ['nombre' => 'Inscripción web pública', 'ctrl' => 'InscripcionPublicaController'],
-            'RF-12' => ['nombre' => 'Código único de confirmación', 'ctrl' => 'InscripcionService'],
-            'RF-13' => ['nombre' => 'Comprobante de inscripción PDF', 'ctrl' => 'ComprobanteInscripcionController'],
-            'RF-14' => ['nombre' => 'Consulta pública de estado', 'ctrl' => 'InscripcionPublicaController'],
-            'RF-15' => ['nombre' => 'Gestión de docentes', 'ctrl' => 'AdminDocenteController'],
-            'RF-16' => ['nombre' => 'Asignación académica docente', 'ctrl' => 'AdminAsignacionController'],
-            'RF-17' => ['nombre' => 'Portal docente', 'ctrl' => 'DocenteController'],
-            'RF-18' => ['nombre' => 'Configuración de geocerca escolar', 'ctrl' => 'AdminUbicacionController'],
-            'RF-19' => ['nombre' => 'Validación geográfica de asistencia', 'ctrl' => 'DocenteAsistenciaController'],
-            'RF-20' => ['nombre' => 'Registro de marcaje de entrada', 'ctrl' => 'DocenteAsistenciaController'],
-            'RF-21' => ['nombre' => 'Registro de marcaje de salida', 'ctrl' => 'DocenteAsistenciaController'],
-            'RF-22' => ['nombre' => 'Validación de secuencia de marcajes', 'ctrl' => 'AsistenciaService'],
-            'RF-23' => ['nombre' => 'Consulta de historial de asistencia', 'ctrl' => 'DocenteAsistenciaController'],
-            'RF-24' => ['nombre' => 'Solicitud de permisos docentes', 'ctrl' => 'DocentePermisoController'],
-            'RF-25' => ['nombre' => 'Adjunto de soporte en permisos', 'ctrl' => 'DocentePermisoController'],
-            'RF-26' => ['nombre' => 'Notificaciones automáticas', 'ctrl' => 'AdminNotificacionController'],
-            'RF-27' => ['nombre' => 'Resolución administrativa de permisos', 'ctrl' => 'AdminPermisoController'],
-            'RF-28' => ['nombre' => 'Historial y trazabilidad de permisos', 'ctrl' => 'AdminPermisoController'],
-            'RF-29' => ['nombre' => 'Reporte de asistencia docente', 'ctrl' => 'AdminReporteController'],
-            'RF-30' => ['nombre' => 'Reporte de inscripciones y cupos', 'ctrl' => 'AdminReporteController'],
-            'RF-31' => ['nombre' => 'Integración de nómina de sección', 'ctrl' => 'DocenteController'],
-            'RF-32' => ['nombre' => 'Integridad concurrente de inscripciones', 'ctrl' => 'InscripcionService'],
+            'RF-10' => ['nombre' => 'Disponibilidad de secciones con cupo', 'ctrl' => 'InscripcionPublicaController'],
+            'RF-11' => ['nombre' => 'Inscripción web', 'ctrl' => 'InscripcionPublicaController'],
+            'RF-12' => ['nombre' => 'Código único', 'ctrl' => 'InscripcionService'],
+            'RF-13' => ['nombre' => 'Comprobante PDF', 'ctrl' => 'ComprobanteInscripcionController'],
+            'RF-14' => ['nombre' => 'Consulta por código', 'ctrl' => 'InscripcionPublicaController'],
+            'RF-15' => ['nombre' => 'Gestión docente', 'ctrl' => 'AdminDocenteController'],
+            'RF-16' => ['nombre' => 'Asignaciones docentes', 'ctrl' => 'AdminAsignacionController'],
+            'RF-17' => ['nombre' => 'Lista de estudiantes del docente', 'ctrl' => 'DocenteController'],
+            'RF-18' => ['nombre' => 'Configuración de ubicación', 'ctrl' => 'AdminUbicacionController'],
+            'RF-19' => ['nombre' => 'Validación geográfica', 'ctrl' => 'DocenteAsistenciaController'],
+            'RF-20' => ['nombre' => 'Marcaje de entrada', 'ctrl' => 'DocenteAsistenciaController'],
+            'RF-21' => ['nombre' => 'Marcaje de salida', 'ctrl' => 'DocenteAsistenciaController'],
+            'RF-22' => ['nombre' => 'Registro de fecha y hora', 'ctrl' => 'DocenteAsistenciaController'],
+            'RF-23' => ['nombre' => 'Historial de asistencia', 'ctrl' => 'DocenteAsistenciaController'],
+            'RF-24' => ['nombre' => 'Solicitud de permiso', 'ctrl' => 'DocentePermisoController'],
+            'RF-25' => ['nombre' => 'Documento de respaldo', 'ctrl' => 'DocentePermisoController'],
+            'RF-26' => ['nombre' => 'Notificación de permiso', 'ctrl' => 'AdminNotificacionController'],
+            'RF-27' => ['nombre' => 'Aprobación/rechazo', 'ctrl' => 'AdminPermisoController'],
+            'RF-28' => ['nombre' => 'Estado de solicitud', 'ctrl' => 'DocentePermisoController'],
+            'RF-29' => ['nombre' => 'Reporte de asistencia', 'ctrl' => 'AdminReporteController'],
+            'RF-30' => ['nombre' => 'Reporte/consulta de inscripciones y cupos', 'ctrl' => 'AdminReporteController'],
+            'RF-31' => ['nombre' => 'Integración inscripción → nómina docente', 'ctrl' => 'DocenteController'],
+            'RF-32' => ['nombre' => 'Integridad/concurrencia de cupos', 'ctrl' => 'InscripcionService'],
         ];
 
         $ok = (count($matrizRf) === 32);
@@ -589,16 +589,16 @@ class Phase15TestSuite
     private function testT15_02_TrazabilidadDocumentalMatrizRNF(): void
     {
         $matrizRnf = [
-            'RNF-01' => 'Usabilidad: Formularios claros, labels accesibles, feedback visual comprensible',
-            'RNF-02' => 'Compatibilidad: Navegadores modernos (Chromium/Edge/Chrome/Firefox) y diseño responsivo',
-            'RNF-03' => 'Seguridad: Bcrypt, RBAC estricto, protección CSRF, sanitización contextual XSS',
-            'RNF-04' => 'Privacidad: Mínima exposición de datos de menores y tutores en consultas públicas',
-            'RNF-05' => 'Integridad: MySQL 8.0, 20 tablas, llaves foráneas, checks, transacciones ACID',
-            'RNF-06' => 'Trazabilidad: Historial inmutable en microsegundos CURRENT_TIMESTAMP(6) y Logger',
-            'RNF-07' => 'Rendimiento: Consultas agregadas indexadas con tiempo de respuesta inferior a 100ms',
-            'RNF-08' => 'Mantenibilidad: Arquitectura en capas limpia (MVC/CSR) con middleware y manejo desacoplado',
-            'RNF-09' => 'Configurabilidad: Parámetros del sistema dinámicos gestionables desde interfaz administrativa',
-            'RNF-10' => 'Disponibilidad y Portabilidad: Stack auto-contenido Apache/PHP/MySQL sin dependencias de nube',
+            'RNF-01' => 'Usabilidad: Formularios, botones claros y mensajes comprensibles para usuarios no técnicos',
+            'RNF-02' => 'Compatibilidad: Funcionamiento en navegadores modernos y dispositivos compatibles con geolocalización',
+            'RNF-03' => 'Seguridad: Contraseñas no almacenadas en texto plano y acceso controlado por roles',
+            'RNF-04' => 'Privacidad: Datos personales accesibles solo a usuarios autorizados',
+            'RNF-05' => 'Integridad: Relaciones consistentes para inscripción, cupos y asistencia',
+            'RNF-06' => 'Trazabilidad: Fecha y usuario asociado en asistencia y decisiones sobre permisos',
+            'RNF-07' => 'Rendimiento: Respuesta en tiempo razonable bajo la carga prevista',
+            'RNF-08' => 'Mantenibilidad: Separación de presentación, negocio y acceso a datos',
+            'RNF-09' => 'Configurabilidad: Grados, secciones, capacidades, aulas y ubicación modificables sin alterar código',
+            'RNF-10' => 'Disponibilidad: Dependencia de la infraestructura de alojamiento del prototipo o instalación futura',
         ];
 
         $ok = (count($matrizRnf) === 10);
@@ -1339,16 +1339,16 @@ class Phase15TestSuite
         ]);
 
         $duracionMs = (microtime(true) - $tInicio) * 1000.0;
-        $rendimientoOk = ($duracionMs < 100.0); // Menos de 100 ms
+        $rendimientoOk = ($duracionMs < 2000.0); // Verificación de respuesta en tiempo razonable
 
-        $this->record('T15-33', 'Rendimiento: RNF-07 — Consultas agregadas de reportes ejecutadas en < 100ms sin N+1',
-            'Tiempo de ejecución inferior a 100 milisegundos para consultas consolidadas',
-            sprintf('Tiempo total medido: %.2f ms (%s)', $duracionMs, $rendimientoOk ? 'OPTIMO' : 'LENTO'), $rendimientoOk);
+        $this->record('T15-33', 'Rendimiento: RNF-07 — Consultas agregadas de reportes ejecutadas eficientemente sin N+1',
+            'Tiempo de respuesta razonable bajo la carga prevista y dataset de prueba',
+            sprintf('Medición observada: %.2f ms (%s)', $duracionMs, $rendimientoOk ? 'OPTIMO' : 'LENTO'), $rendimientoOk);
     }
 
     private function testT15_34_DisponibilidadRnf10StackAutoContenido(): void
     {
-        // RNF-10: No requiere dependencias de nube pagadas o servicios SaaS de terceros
+        // RNF-10: Disponibilidad dependiente de la infraestructura de alojamiento local (sin servicios SaaS de terceros)
         $codigoFuente = (string) file_get_contents(dirname(__DIR__) . '/app/Services/AsistenciaService.php');
         $usaHaversineNativo = str_contains($codigoFuente, 'RADIO_TIERRA_METROS') && str_contains($codigoFuente, 'atan2');
         $sinGoogleMapsApi = !str_contains($codigoFuente, 'maps.googleapis.com');
@@ -1357,8 +1357,8 @@ class Phase15TestSuite
         $usaFpdfLocal = str_contains($pdfServiceCodigo, 'FPDF') || str_contains($pdfServiceCodigo, 'fpdf');
 
         $ok = ($usaHaversineNativo && $sinGoogleMapsApi && $usaFpdfLocal);
-        $this->record('T15-34', 'Disponibilidad: RNF-10 — Arquitectura autónoma auto-contenida sin dependencias SaaS/Nube',
-            'Cálculos geodésicos y PDFs generados localmente sin APIs externas pagadas',
+        $this->record('T15-34', 'Disponibilidad: RNF-10 — Arquitectura auto-contenida dependiente de la infraestructura de alojamiento',
+            'Operación local en servidor sin depender de servicios externos de terceros',
             sprintf('Haversine local: %s | FPDF local: %s | Sin SaaS externo: %s', $usaHaversineNativo ? 'SI' : 'NO', $usaFpdfLocal ? 'SI' : 'NO', $sinGoogleMapsApi ? 'SI' : 'NO'), $ok);
     }
 
