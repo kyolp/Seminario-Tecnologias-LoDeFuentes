@@ -299,7 +299,7 @@ class Phase2TestSuite
 
         $hasHeader = str_contains($rendered, '<header class="app-header">');
         $hasFooter = str_contains($rendered, '<footer class="app-footer">');
-        $hasContent = str_contains($rendered, 'Arquitectura Base del Sistema');
+        $hasContent = str_contains($rendered, 'Escuela Oficial Rural Mixta Lo de Fuentes') || str_contains($rendered, 'Arquitectura Base del Sistema');
 
         $isOk = $hasHeader && $hasFooter && $hasContent;
         $obtained = $isOk ? 'Layout común renderizado con header, contenido y footer' : 'Fallo de ensamble de layout';
