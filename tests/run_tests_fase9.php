@@ -2139,7 +2139,7 @@ PHP;
         $tempDb = 'escuela_fase9_regresion_temp';
 
         $schemaFile = str_replace('/', '\\', $root . '/database/schema.sql');
-        $seedFile = str_replace('/', '\\', $root . '/database/seed.sql');
+        $seedFile = file_exists($root . '/database/tests/seed_fase1.sql') ? str_replace('/', '\\', $root . '/database/tests/seed_fase1.sql') : str_replace('/', '\\', $root . '/database/seed.sql');
         $valFile = str_replace('/', '\\', $root . '/database/tests/validacion.sql');
 
         $baseCmd = sprintf(

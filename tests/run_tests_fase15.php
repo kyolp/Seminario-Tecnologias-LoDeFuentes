@@ -432,7 +432,10 @@ class Phase15TestSuite
         // 10. Asegurar ubicación institucional activa
         $configActiva = $this->ubicacionRepo->findConfiguracionActiva();
         if ($configActiva === null) {
-            $this->db->exec('UPDATE configuraciones_ubicacion SET activa = 1, fecha_fin = NULL WHERE id_configuracion_ubicacion = 25');
+            $minId = (int) $this->db->query("SELECT MIN(id_configuracion_ubicacion) FROM configuraciones_ubicacion")->fetchColumn();
+            if ($minId > 0) {
+                $this->db->exec("UPDATE configuraciones_ubicacion SET activa = 1, fecha_fin = NULL WHERE id_configuracion_ubicacion = {$minId}");
+            }
         }
     }
 

@@ -34,6 +34,8 @@ class Phase3TestSuite
 
     private AuthService $auth;
     private UserRepository $userRepo;
+    private int $createdAdminId = 0;
+    private int $createdInacId = 0;
 
     public function __construct()
     {
@@ -50,7 +52,8 @@ class Phase3TestSuite
 
         $this->ensureDevUsers();
 
-        $this->testT3_01_LoginValidoAdministrador();
+        try {
+            $this->testT3_01_LoginValidoAdministrador();
         $this->testT3_02_LoginValidoDocente();
         $this->testT3_03_UsuarioInexistente();
         $this->testT3_04_PasswordIncorrecta();
@@ -69,6 +72,9 @@ class Phase3TestSuite
         $this->testT3_17_RegresionFase2();
         $this->testT3_18_RegresionFase1();
         $this->testT3_19_RegeneracionRealSesionHttp();
+        } finally {
+            $this->cleanupDevUsers();
+        }
 
         $this->printSummary();
     }
@@ -104,8 +110,16 @@ class Phase3TestSuite
 
         // Admin: Admin.2026!
         $adminHash = password_hash('Admin.2026!', PASSWORD_BCRYPT);
-        $pdo->prepare('UPDATE usuarios SET clave_hash = ?, estado = "ACTIVO" WHERE nombre_usuario = ?')
-            ->execute([$adminHash, 'admin.demo']);
+        $adminExists = (int)$pdo->query("SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'admin.demo'")->fetchColumn();
+        if ($adminExists === 0) {
+            $adminRolId = (int)$pdo->query("SELECT id_rol FROM roles WHERE nombre IN ('ADMINISTRACION', 'ADMINISTRADOR') LIMIT 1")->fetchColumn();
+            $pdo->prepare('INSERT INTO usuarios (id_rol, nombre_usuario, correo, clave_hash, nombres, apellidos, estado) VALUES (?, ?, ?, ?, ?, ?, ?)')
+                ->execute([$adminRolId, 'admin.demo', 'admin.f3@escuela.local', $adminHash, 'Admin', 'Temporal', 'ACTIVO']);
+            $this->createdAdminId = (int)$pdo->lastInsertId();
+        } else {
+            $pdo->prepare('UPDATE usuarios SET clave_hash = ?, estado = "ACTIVO" WHERE nombre_usuario = ?')
+                ->execute([$adminHash, 'admin.demo']);
+        }
 
         // Docente: Docente.2026!
         $docenteHash = password_hash('Docente.2026!', PASSWORD_BCRYPT);
@@ -681,7 +695,7 @@ class Phase3TestSuite
         $tempDb = 'escuela_fase3_regresion_fase1_temp';
 
         $schemaFile = str_replace('/', '\\', $root . '/database/schema.sql');
-        $seedFile = str_replace('/', '\\', $root . '/database/seed.sql');
+        $seedFile = file_exists($root . '/database/tests/seed_fase1.sql') ? str_replace('/', '\\', $root . '/database/tests/seed_fase1.sql') : str_replace('/', '\\', $root . '/database/seed.sql');
         $valFile = str_replace('/', '\\', $root . '/database/tests/validacion.sql');
 
         $baseCmd = sprintf(
@@ -933,6 +947,18 @@ class Phase3TestSuite
         }
 
         return null;
+    }
+
+    private function cleanupDevUsers(): void
+    {
+        $pdo = Database::getConnection();
+        if ($this->createdAdminId > 0) {
+            $pdo->exec("DELETE FROM usuarios WHERE id_usuario = {$this->createdAdminId}");
+        }
+        if ($this->createdInacId > 0) {
+            $pdo->exec("DELETE FROM usuarios WHERE id_usuario = {$this->createdInacId}");
+        }
+        $pdo->prepare('UPDATE usuarios SET clave_hash = "$2y$10$9zCQrOhppuS5iHV8FMda8ui6xqxmRV1DbN/ZdmpJSP7Es4BoiCul6" WHERE nombre_usuario = "carlos.mendez"')->execute();
     }
 
     private function printSummary(): void

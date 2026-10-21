@@ -39,6 +39,7 @@ class Phase5TestSuite
     private int $total = 0;
     private int $passed = 0;
     private int $failed = 0;
+    private int $createdAdminId = 0;
     /** @var array<int, array{id: string, name: string, expected: string, obtained: string, status: string}> */
     private array $results = [];
 
@@ -174,8 +175,16 @@ class Phase5TestSuite
         $docenteHash = password_hash('Docente.2026!', PASSWORD_BCRYPT);
 
         $this->db->exec("UPDATE usuarios SET nombre_usuario = 'carlos.mendez', correo = 'carlos.mendez@escuela.com', nombres = 'Carlos', apellidos = 'Méndez' WHERE nombre_usuario = 'docente.demo'");
+        $adminExists = (int)$this->db->query("SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'admin.demo'")->fetchColumn();
         $stmt = $this->db->prepare('UPDATE usuarios SET clave_hash = :hash, estado = "ACTIVO" WHERE nombre_usuario = :user');
-        $stmt->execute([':hash' => $adminHash, ':user' => 'admin.demo']);
+        if ($adminExists === 0) {
+            $adminRolId = (int)$this->db->query("SELECT id_rol FROM roles WHERE nombre IN ('ADMINISTRACION', 'ADMINISTRADOR') LIMIT 1")->fetchColumn();
+            $insAdmin = $this->db->prepare('INSERT INTO usuarios (id_rol, nombre_usuario, correo, clave_hash, nombres, apellidos, estado) VALUES (?, ?, ?, ?, ?, ?, ?)');
+            $insAdmin->execute([$adminRolId, 'admin.demo', 'admin.f5@escuela.local', $adminHash, 'Admin', 'Temporal', 'ACTIVO']);
+            $this->createdAdminId = (int)$this->db->lastInsertId();
+        } else {
+            $stmt->execute([':hash' => $adminHash, ':user' => 'admin.demo']);
+        }
         $stmt->execute([':hash' => $docenteHash, ':user' => 'carlos.mendez']);
     }
 
@@ -1143,7 +1152,7 @@ class Phase5TestSuite
         $tempDb = 'escuela_fase5_regresion_temp';
 
         $schemaFile = $root . '/database/schema.sql';
-        $seedFile = $root . '/database/seed.sql';
+        $seedFile = file_exists($root . '/database/tests/seed_fase1.sql') ? ($root . '/database/tests/seed_fase1.sql') : ($root . '/database/seed.sql');
         $valFile = $root . '/database/tests/validacion.sql';
 
         $passParam = $dbPass !== '' ? ' -p' . escapeshellarg($dbPass) : '';

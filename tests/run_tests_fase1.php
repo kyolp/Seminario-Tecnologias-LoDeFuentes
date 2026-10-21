@@ -44,7 +44,9 @@ class Phase1TestSuite
         $tempDb = 'escuela_fase1_standalone_test_' . uniqid();
 
         $schemaFile = $root . '/database/schema.sql';
-        $seedFile = $root . '/database/seed.sql';
+        $seedFile = file_exists($root . '/database/tests/seed_fase1.sql')
+            ? $root . '/database/tests/seed_fase1.sql'
+            : $root . '/database/seed.sql';
         $valFile = $root . '/database/tests/validacion.sql';
 
         $passParam = $dbPass !== '' ? ' -p' . escapeshellarg($dbPass) : '';

@@ -53,6 +53,7 @@ class Phase4TestSuite
     private int $total = 0;
     private int $passed = 0;
     private int $failed = 0;
+    private int $createdAdminId = 0;
     /** @var array<int, array{id: string, name: string, expected: string, obtained: string, status: string}> */
     private array $results = [];
 
@@ -178,8 +179,16 @@ class Phase4TestSuite
         $docenteHash = password_hash('Docente.2026!', PASSWORD_BCRYPT);
 
         $this->db->exec("UPDATE usuarios SET nombre_usuario = 'carlos.mendez', correo = 'carlos.mendez@escuela.com', nombres = 'Carlos', apellidos = 'Méndez' WHERE nombre_usuario = 'docente.demo'");
+        $adminExists = (int)$this->db->query("SELECT id_usuario FROM usuarios WHERE nombre_usuario = 'admin.demo'")->fetchColumn();
         $stmt = $this->db->prepare('UPDATE usuarios SET clave_hash = :hash, estado = "ACTIVO" WHERE nombre_usuario = :user');
-        $stmt->execute([':hash' => $adminHash, ':user' => 'admin.demo']);
+        if ($adminExists === 0) {
+            $adminRolId = (int)$this->db->query("SELECT id_rol FROM roles WHERE nombre IN ('ADMINISTRACION', 'ADMINISTRADOR') LIMIT 1")->fetchColumn();
+            $insAdmin = $this->db->prepare('INSERT INTO usuarios (id_rol, nombre_usuario, correo, clave_hash, nombres, apellidos, estado) VALUES (?, ?, ?, ?, ?, ?, ?)');
+            $insAdmin->execute([$adminRolId, 'admin.demo', 'admin.f4@escuela.local', $adminHash, 'Admin', 'Temporal', 'ACTIVO']);
+            $this->createdAdminId = (int)$this->db->lastInsertId();
+        } else {
+            $stmt->execute([':hash' => $adminHash, ':user' => 'admin.demo']);
+        }
         $stmt->execute([':hash' => $docenteHash, ':user' => 'carlos.mendez']);
     }
 
@@ -1126,7 +1135,7 @@ class Phase4TestSuite
         $tempDb = 'escuela_fase4_regresion_temp';
 
         $schemaFile = str_replace('/', '\\', $root . '/database/schema.sql');
-        $seedFile = str_replace('/', '\\', $root . '/database/seed.sql');
+        $seedFile = file_exists($root . '/database/tests/seed_fase1.sql') ? str_replace('/', '\\', $root . '/database/tests/seed_fase1.sql') : str_replace('/', '\\', $root . '/database/seed.sql');
         $valFile = str_replace('/', '\\', $root . '/database/tests/validacion.sql');
 
         $baseCmd = sprintf(
@@ -1296,7 +1305,7 @@ class Phase4TestSuite
 
             $loginOk = ($rLoginPost['code'] === 302 && str_contains($rLoginPost['location'], '/administracion'));
             $rAdminPanel = $httpRequest("http://127.0.0.1:$port/administracion", 'GET', null, $adminCookie);
-            $panelOk = ($rAdminPanel['code'] === 200 && str_contains($rAdminPanel['body'], 'Administraci'));
+            $panelOk = ($rAdminPanel['code'] === 200 && stripos($rAdminPanel['body'], 'administraci') !== false);
             $detalles[] = sprintf('Admin Login: 302->%s (Panel: %d)', $rLoginPost['location'], $rAdminPanel['code']);
 
             // (B) Creación administrativa real vía POST (Aula AUL-HTTP-01)
@@ -1606,3 +1615,4 @@ class Phase4TestSuite
 
 $suite = new Phase4TestSuite();
 $suite->run();
+
