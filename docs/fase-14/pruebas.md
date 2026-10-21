@@ -51,8 +51,15 @@
 
 ### Resumen de Ejecución
 
-- **Total ejecutadas:** 32
+- **Total ejecutadas (Fase 14):** 32
 - **Exitosas (OK):** 32
 - **Fallidas (FALLO):** 0
 - **Tasa de Aprobación:** 100.0%
-- **Regresión Histórica Acumulada (Fases 2 a 14):** 380/380 pruebas superadas satisfactoriamente (100% GREEN).
+
+### Resumen Consolidado de Regresión Histórica (Fases 1 a 14)
+
+- **Fase 1 (Base de Datos Relacional):** 18 / 18 OK (`tests/run_tests_fase1.php` / `database/tests/validacion.sql`)
+- **Fases 2 a 13 (Módulos Funcionales del Sistema):** 348 / 348 OK
+- **Subtotal Fases 2 a 14:** 380 / 380 OK
+- **Fase 14 (Seguridad, Privacidad y Hardening Global):** 32 / 32 OK (`tests/run_tests_fase14.php`)
+- **TOTAL GENERAL DEL PROYECTO (Fases 1 a 14):** 398 / 398 pruebas aprobadas (100% GREEN).

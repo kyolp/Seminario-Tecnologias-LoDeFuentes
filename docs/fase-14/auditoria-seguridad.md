@@ -11,7 +11,7 @@
 
 Durante la Fase 14 se llevó a cabo una auditoría integral sobre las capas de presentación, negocio, persistencia, enrutamiento, autenticación y manejo de archivos del sistema. El objetivo consistió en identificar vectores de riesgo, robustecer la arquitectura frente a ataques comunes (OWASP Top 10) y validar el cumplimiento definitivo del requerimiento no funcional **RNF-04 (Privacidad)**.
 
-Se identificaron y remediaron 5 hallazgos de seguridad (SEC-01 a SEC-05) y se documentaron 2 evaluaciones conformes (SEC-06 y SEC-07). Todas las mitigaciones fueron integradas sin alterar el esquema relacional (`database/schema.sql` permanece intacto) y sin degradar la funcionalidad preexistente, confirmándose mediante 32 pruebas específicas de seguridad y 380 pruebas de regresión acumuladas con 100% de éxito.
+Se identificaron y remediaron 5 hallazgos de seguridad (SEC-01 a SEC-05) y se documentaron 2 evaluaciones conformes (SEC-06 y SEC-07). Todas las mitigaciones fueron integradas sin alterar el esquema relacional (`database/schema.sql` permanece intacto) y sin degradar la funcionalidad preexistente, confirmándose mediante 32 pruebas específicas de seguridad y un total general acumulado de 398 pruebas (18 de Fase 1, 348 de Fases 2 a 13 y 32 de Fase 14) con 100% de éxito.
 
 ---
 

@@ -68,11 +68,12 @@ La Fase 14 tuvo como objetivo realizar una auditoría exhaustiva, mitigación tr
 - **Tasa de Aprobación:** 100.0% (100% GREEN)
 - **Verificación HTTP Real:** Servidor embebido local probado con cURL en puerto 8104 (`T14-31`), confirmando inyección de cabeceras de seguridad y control de acceso.
 
-### 5.2 Regresión Histórica Completa Acumulada (Fases 2 a 14)
+### 5.2 Regresión Histórica Completa Acumulada (Fases 1 a 14)
 Todas las suites de prueba fueron ejecutadas secuencialmente, confirmando la compatibilidad retroactiva absoluta:
 
 | Suite | Módulo / Fase | Pruebas | Resultado |
 |---|---|:---:|:---:|
+| `tests/run_tests_fase1.php` | Fase 1: Base de Datos Relacional (`database/tests/validacion.sql`) | 18 / 18 | **100% OK** |
 | `tests/run_tests.php` | Fase 2: Arquitectura Base y Enrutamiento | 16 / 16 | **100% OK** |
 | `tests/run_tests_fase3.php` | Fase 3: Autenticación y Roles (RBAC) | 19 / 19 | **100% OK** |
 | `tests/run_tests_fase4.php` | Fase 4: Administración Básica | 27 / 27 | **100% OK** |
@@ -86,7 +87,8 @@ Todas las suites de prueba fueron ejecutadas secuencialmente, confirmando la com
 | `tests/run_tests_fase12.php` | Fase 12: Reportes Institucionales (RF-29, RF-30) | 30 / 30 | **100% OK** |
 | `tests/run_tests_fase13.php` | Fase 13: Recuperación de Contraseña (RF-03) | 30 / 30 | **100% OK** |
 | `tests/run_tests_fase14.php` | Fase 14: Seguridad, Privacidad y Hardening Global | 32 / 32 | **100% OK** |
-| **TOTAL ACUMULADO** | **Todas las suites del sistema** | **380 / 380** | **100% GREEN** |
+| **SUBTOTAL FASES 2 A 14** | **Suites en PHP / Aplicación web** | **380 / 380** | **100% GREEN** |
+| **TOTAL GENERAL ACUMULADO** | **Todas las suites del proyecto (Fases 1 a 14)** | **398 / 398** | **100% GREEN** |
 
 ---
 
