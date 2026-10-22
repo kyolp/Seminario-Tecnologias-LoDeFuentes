@@ -62,6 +62,7 @@ Para el nuevo `database/seed.sql` se establecieron las siguientes directrices in
    - Latitud: `14.6349150`
    - Longitud: `-90.5068820`
    - Radio: `100.00` metros
+   - **Clasificación de Origen:** Opción B (Coordenadas institucionales proporcionadas y documentadas por el proyecto desde Fase 8 en `docs/fase-8/geolocalizacion.md`).
 9. **Marcajes de Asistencia:** 10 marcajes docentes dentro de la geocerca oficial en horarios hábiles escolares (distancia geodésica < 15 metros).
 10. **Permisos y Notificaciones:** 3 solicitudes de permiso con justificaciones reales (cita médica IGSS, capacitación MINEDUC, trámite legal) con historial inmutable de transiciones y notificaciones automáticas para directivos y docentes.
 11. **Tokens de Recuperación:** 0 tokens activos.

@@ -67,7 +67,7 @@ mysql -u su_usuario -p escuela_lo_de_fuentes < database/schema.sql
 mysql -u su_usuario -p escuela_lo_de_fuentes < database/seed.sql
 ```
 
-Alternativamente, para cargar el volcado completo de demostración:
+Alternativamente, si se dispone del volcado local de demostración:
 ```bash
 mysql -u su_usuario -p escuela_lo_de_fuentes < database/final_demo_2026.sql
 ```

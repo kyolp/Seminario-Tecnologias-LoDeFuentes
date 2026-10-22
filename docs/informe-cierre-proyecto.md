@@ -81,12 +81,12 @@ El sistema resuelve integralmente las necesidades operativas de la escuela:
 ## 4. Métricas de Calidad y Pruebas Acumuladas
 
 - **Suites de Pruebas Automatizadas:** 16 suites (Fases 1 a 16).
-- **Pruebas Totales Ejecutadas:** **430 pruebas automatizadas**.
-- **Pruebas Aprobadas:** **430 (100% GREEN)**.
+- **Pruebas Totales Ejecutadas:** **460 pruebas automatizadas** (434 pruebas en Fases 1 a 15 y 26 pruebas en Fase 16).
+- **Pruebas Aprobadas:** **460 / 460 (100% GREEN)**.
 - **Pruebas Fallidas:** **0 (0%)**.
 - **Integridad de Esquema:** `database/schema.sql` preservado al 100% inalterado desde su diseño canónico original.
 - **Datos Iniciales:** `database/seed.sql` 100% limpio y natural.
-- **Volcado Oficial de Demostración:** `database/final_demo_2026.sql` (202 KB) generado para entrega final.
+- **Volcado Local de Demostración:** `database/final_demo_2026.sql` (202 KB) generado para entrega local (.gitignore).
 
 ---
 

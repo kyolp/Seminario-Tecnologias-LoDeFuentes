@@ -69,7 +69,7 @@ En la Fase 16 se ejecutó una verificación completa de dos niveles:
 | **Fase 14** | Seguridad, Privacidad y Hardening Global | `tests/run_tests_fase14.php` | 32 | **32 / 32 OK** |
 | **Fase 15** | Pruebas Integrales, Compatibilidad y Validación Final | `tests/run_tests_fase15.php` | 36 | **36 / 36 OK** |
 | **Fase 16** | Limpieza Final, Datos Demo y Cierre de Proyecto | `tests/run_tests_fase16.php` | 26 | **26 / 26 OK** |
-| **TOTAL** | **Regresión Consolidada del Sistema** | **16 Suites** | **430** | **430 / 430 OK (100%)** |
+| **TOTAL** | **Regresión Consolidada del Sistema** | **16 Suites** | **460** | **460 / 460 OK (100%)** |
 
 ---
 

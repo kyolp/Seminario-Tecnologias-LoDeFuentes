@@ -73,7 +73,10 @@ Los parentescos registrados corresponden a los vínculos habituales: Padre, Madr
 ## 4. Geocerca y Asistencia Docente
 
 - **Ubicación Institucional:** Sede Central de la Escuela Oficial Rural Mixta Lo de Fuentes.
-- **Coordenadas Oficiales:** Latitud `14.6349150`, Longitud `-90.5068820`, Radio permitido: `100.00` metros.
+- **Coordenadas Institucionales:** Latitud `14.6349150`, Longitud `-90.5068820`, Radio permitido: `100.00` metros.
+- **Origen y Clasificación Técnica:** **Opción B — Coordenadas proporcionadas y documentadas por el proyecto**.
+  - **Fuente técnica preexistente:** Introducidas formalmente en la **Fase 8: Asistencia Docente y Geolocalización** (commit `5323285`), documentadas y calibradas cuantitativamente en `docs/fase-8/geolocalizacion.md` (Secciones 3 y 4) y consolidadas como constantes institucionales de referencia en el código (`tests/run_tests_fase8.php`: `ESCUELA_LAT`, `ESCUELA_LON`, `ESCUELA_RADIO`).
+  - **Verificación:** Evaluadas y verificadas continuamente a lo largo de las Fases 8, 12, 15 y 16 para el cálculo geodésico Haversine.
 - **Marcajes de Muestra:** 10 marcajes docentes (5 de ENTRADA y 5 de SALIDA) correspondientes a jornadas laborales regulares, con distancias reales menores a 12 metros respecto al punto central de la geocerca (`dentro_radio = 1`).
 
 ---

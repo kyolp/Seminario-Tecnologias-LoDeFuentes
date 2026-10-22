@@ -26,10 +26,10 @@ En cumplimiento estricto con los requerimientos autorizados para la Fase 16, se 
 5. **Auditoría del Repositorio y README:**
    - `README.md` fue reescrito para eliminar bitácoras históricas obsoletas de fases intermedias, rutas locales absolutas de disco y credenciales en texto plano, manteniendo un tono técnico profesional.
 6. **Exportación Final:**
-   - Se generó el volcado SQL oficial de entrega: `database/final_demo_2026.sql` (202 KB).
+   - Se generó el volcado SQL de demostración: `database/final_demo_2026.sql` (202 KB), preservado como artefacto local para entrega (.gitignore).
 7. **Pruebas y Regresión:**
    - Se diseñó y ejecutó la suite `tests/run_tests_fase16.php` obteniendo **26 / 26 pruebas OK**.
-   - Se verificaron las 15 suites de regresión históricas (Fases 1 a 15) para un acumulado consolidado de **430 / 430 pruebas aprobadas (100% GREEN)**.
+   - Se verificaron las 15 suites de regresión históricas (Fases 1 a 15) con **434 / 434 pruebas aprobadas**, alcanzando un total consolidado de **460 / 460 pruebas aprobadas (100% GREEN)** al integrar las 16 suites del sistema.
 8. **Control de Versiones:**
    - Se mantuvo la política estricta de **cero git push**, dejando la rama `main` lista para la revisión y publicación manual por parte del usuario.
 
