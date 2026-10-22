@@ -19,6 +19,7 @@ class Request
     private array $headers;
     /** @var array<string, mixed> */
     private array $files;
+    private string $ip;
 
     /**
      * @param array<string, mixed> $query
@@ -26,8 +27,15 @@ class Request
      * @param array<string, string> $headers
      * @param array<string, mixed> $files
      */
-    public function __construct(string $method, string $path, array $query = [], array $post = [], array $headers = [], array $files = [])
-    {
+    public function __construct(
+        string $method,
+        string $path,
+        array $query = [],
+        array $post = [],
+        array $headers = [],
+        array $files = [],
+        ?string $ip = null
+    ) {
         $this->method = strtoupper($method);
         $this->path = self::normalizePath($path);
         $this->query = $query;
@@ -43,6 +51,9 @@ class Request
         }
         $this->headers = $normalizedHeaders;
         $this->files = $files;
+
+        // Determinar IP de cliente de forma segura exclusivamente desde REMOTE_ADDR (sin confiar en cabeceras manipulables)
+        $this->ip = $ip ?? ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
     }
 
     /**
@@ -73,7 +84,9 @@ class Request
             }
         }
 
-        return new self($method, $path, $_GET, $_POST, $headers, $_FILES);
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+
+        return new self($method, $path, $_GET, $_POST, $headers, $_FILES, $ip);
     }
 
     /**
@@ -84,8 +97,15 @@ class Request
      * @param array<string, string> $headers
      * @param array<string, mixed> $files
      */
-    public static function create(string $method, string $uri, array $query = [], array $post = [], array $headers = [], array $files = []): self
-    {
+    public static function create(
+        string $method,
+        string $uri,
+        array $query = [],
+        array $post = [],
+        array $headers = [],
+        array $files = [],
+        ?string $ip = null
+    ): self {
         $parsed = parse_url($uri);
         $path = $parsed['path'] ?? '/';
 
@@ -94,7 +114,7 @@ class Request
             $query = array_merge($urlQuery, $query);
         }
 
-        return new self($method, $path, $query, $post, $headers, $files);
+        return new self($method, $path, $query, $post, $headers, $files, $ip);
     }
 
     public function getMethod(): string
@@ -225,6 +245,22 @@ class Request
     public function getFiles(): array
     {
         return $this->files;
+    }
+
+    /**
+     * Obtener la dirección IP del cliente resuelta de manera segura.
+     */
+    public function ip(): string
+    {
+        return $this->ip;
+    }
+
+    /**
+     * Alias de ip().
+     */
+    public function getClientIp(): string
+    {
+        return $this->ip();
     }
 
     private static function normalizePath(string $path): string

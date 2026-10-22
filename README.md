@@ -12,7 +12,7 @@ Plataforma web integral para la gestión académica, control de inscripciones co
 - **Inscripciones Públicas y Control de Cupos:** Módulo web público para registro de inscripciones, cálculo de cupos en tiempo real bajo concurrencia, bloqueo automático ante sección llena y generación de código único de confirmación.
 - **Comprobante de Inscripción Oficial:** Generación al vuelo de comprobantes individuales de inscripción en formato PDF para los encargados de familia.
 - **Portal Docente:** Panel personalizado para docentes donde consultan sus secciones asignadas, nómina de alumnos inscritos, marcaje de asistencia y solicitudes de permisos laborales.
-- **Control de Asistencia con Geocerca:** Registro de entrada y salida docente validado geodésicamente (fórmula de Haversine) contra la geocerca institucional oficial de la escuela.
+- **Control de Asistencia con Geocerca y Red Institucional:** Registro de entrada y salida docente validado geodésicamente (fórmula de Haversine) contra la geocerca institucional oficial de la escuela. El registro de asistencia puede configurarse para requerir simultáneamente la geocerca institucional y una red autorizada.
 - **Gestión de Permisos y Notificaciones:** Flujo de solicitudes de permiso con documentos adjuntos (PDF/imágenes), alertas automáticas a la administración y bandeja de resolución con historial inmutable.
 - **Reportes Institucionales:** Reportes administrativos con filtros por docente, período, grado, sección y rango de fechas para asistencia e inscripciones.
 - **Seguridad y Control de Acceso:** Control de acceso basado en roles (RBAC), protección estricta contra CSRF, XSS, inyección SQL (100% sentencias preparadas PDO), hardening de sesiones y cabeceras HTTP de seguridad.

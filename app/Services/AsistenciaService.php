@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Core\Config;
 use App\Models\ConfiguracionUbicacion;
 use App\Models\MarcajeAsistencia;
 use App\Repositories\AsistenciaRepository;
@@ -12,6 +13,7 @@ use App\Repositories\DocenteRepository;
 use App\Repositories\DocenteRepositoryInterface;
 use App\Repositories\UbicacionRepository;
 use App\Repositories\UbicacionRepositoryInterface;
+use App\Utils\NetworkUtil;
 use DomainException;
 use InvalidArgumentException;
 
@@ -33,15 +35,42 @@ class AsistenciaService
     private AsistenciaRepositoryInterface $asistenciaRepo;
     private UbicacionRepositoryInterface $ubicacionRepo;
     private DocenteRepositoryInterface $docenteRepo;
+    private ?string $allowedNetworks;
 
     public function __construct(
         ?AsistenciaRepositoryInterface $asistenciaRepo = null,
         ?UbicacionRepositoryInterface $ubicacionRepo = null,
-        ?DocenteRepositoryInterface $docenteRepo = null
+        ?DocenteRepositoryInterface $docenteRepo = null,
+        ?string $allowedNetworks = null
     ) {
         $this->asistenciaRepo = $asistenciaRepo ?? new AsistenciaRepository();
         $this->ubicacionRepo = $ubicacionRepo ?? new UbicacionRepository();
         $this->docenteRepo = $docenteRepo ?? new DocenteRepository();
+        $this->allowedNetworks = $allowedNetworks;
+    }
+
+    /**
+     * Comprobar si una dirección IP pertenece a las redes institucionales autorizadas.
+     */
+    public function isRedAutorizada(string $ip): bool
+    {
+        $networks = $this->allowedNetworks;
+        if ($networks === null) {
+            $networks = (string) (Config::get('app.attendance_allowed_networks') ?? '');
+            if ($networks === '' && (Config::get('app.env') === 'development' || Config::get('app.env') === 'testing')) {
+                $networks = '127.0.0.1/32,::1/128';
+            }
+        }
+
+        return NetworkUtil::isIpInAllowedNetworks($ip, $networks);
+    }
+
+    /**
+     * Configurar explícitamente las redes permitidas (útil para pruebas o inyección).
+     */
+    public function setAllowedNetworks(?string $networks): void
+    {
+        $this->allowedNetworks = $networks;
     }
 
     /**
@@ -85,6 +114,7 @@ class AsistenciaService
      * @param int $idDocente Identificador resuelto desde la sesión autenticada.
      * @param int $idUsuario Identificador del usuario en sesión.
      * @param array<string, mixed> $datosCliente Coordenadas enviadas por el navegador.
+     * @param string|null $ipCliente Dirección IP del cliente evaluada.
      * @return array{
      *     exito: bool,
      *     mensaje: string,
@@ -93,9 +123,9 @@ class AsistenciaService
      *     radio_metros: float
      * }
      */
-    public function registrarEntrada(int $idDocente, int $idUsuario, array $datosCliente): array
+    public function registrarEntrada(int $idDocente, int $idUsuario, array $datosCliente, ?string $ipCliente = null): array
     {
-        return $this->procesarMarcaje($idDocente, $idUsuario, 'ENTRADA', $datosCliente);
+        return $this->procesarMarcaje($idDocente, $idUsuario, 'ENTRADA', $datosCliente, $ipCliente);
     }
 
     /**
@@ -104,6 +134,7 @@ class AsistenciaService
      * @param int $idDocente Identificador resuelto desde la sesión autenticada.
      * @param int $idUsuario Identificador del usuario en sesión.
      * @param array<string, mixed> $datosCliente Coordenadas enviadas por el navegador.
+     * @param string|null $ipCliente Dirección IP del cliente evaluada.
      * @return array{
      *     exito: bool,
      *     mensaje: string,
@@ -112,19 +143,20 @@ class AsistenciaService
      *     radio_metros: float
      * }
      */
-    public function registrarSalida(int $idDocente, int $idUsuario, array $datosCliente): array
+    public function registrarSalida(int $idDocente, int $idUsuario, array $datosCliente, ?string $ipCliente = null): array
     {
-        return $this->procesarMarcaje($idDocente, $idUsuario, 'SALIDA', $datosCliente);
+        return $this->procesarMarcaje($idDocente, $idUsuario, 'SALIDA', $datosCliente, $ipCliente);
     }
 
     /**
-     * Procesar y validar un marcaje docente (ENTRADA o SALIDA) con validación geográfica autoritativa.
+     * Procesar y validar un marcaje docente (ENTRADA o SALIDA) con validación geográfica y de red autoritativas.
      */
     private function procesarMarcaje(
         int $idDocente,
         int $idUsuario,
         string $tipo,
-        array $datosCliente
+        array $datosCliente,
+        ?string $ipCliente = null
     ): array {
         $tipo = strtoupper(trim($tipo));
         if (!in_array($tipo, ['ENTRADA', 'SALIDA'], true)) {
@@ -137,16 +169,22 @@ class AsistenciaService
             throw new DomainException('No tiene permisos para registrar marcajes de asistencia: su cuenta docente no se encuentra activa.');
         }
 
-        // 2. Obtener la configuración institucional activa
+        // 2. Verificar pertenencia a red institucional autorizada (DT y RNF de control perimetral combinado)
+        $ip = $ipCliente ?? ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+        if (!$this->isRedAutorizada($ip)) {
+            throw new DomainException('Para registrar la asistencia debe estar conectado a la red institucional.');
+        }
+
+        // 3. Obtener la configuración institucional activa
         $config = $this->ubicacionRepo->findConfiguracionActiva();
         if ($config === null) {
             throw new DomainException('No existe una ubicación institucional activa configurada en el sistema.');
         }
 
-        // 3. Sanitizar y validar coordenadas recibidas del cliente
+        // 4. Sanitizar y validar coordenadas recibidas del cliente
         $coordenadas = $this->validarCoordenadasCliente($datosCliente);
 
-        // 4. Calcular distancia de forma autoritativa exclusivamente en backend (DT-49, DT-50)
+        // 5. Calcular distancia de forma autoritativa exclusivamente en backend (DT-49, DT-50)
         // Se ignoran deliberadamente campos espurios del cliente como 'dentro_radio' o 'distancia'
         $distanciaCalculada = $this->calcularDistanciaHaversine(
             $config->latitud,
@@ -155,24 +193,24 @@ class AsistenciaService
             $coordenadas['longitud']
         );
 
-        // 5. Validar regla de radio institucional (<= radio_metros)
+        // 6. Validar regla de radio institucional (<= radio_metros)
         if (!$this->isDentroRadio($distanciaCalculada, $config->radio_metros)) {
             $distanciaRedondeada = round($distanciaCalculada, 2);
             $radioRedondeado = round($config->radio_metros, 2);
             throw new DomainException(
                 sprintf(
-                    'Marcaje denegado: Su ubicación actual se encuentra a %.2f metros de la institución, excediendo el radio autorizado de %.2f metros.',
+                    'Marcaje denegado: Debe encontrarse dentro del área autorizada para registrar la asistencia. Su ubicación actual se encuentra a %.2f metros de la institución, excediendo el radio autorizado de %.2f metros.',
                     $distanciaRedondeada,
                     $radioRedondeado
                 )
             );
         }
 
-        // 6. Validar secuencia lógica de marcajes para prevenir duplicados y secuencias inválidas
+        // 7. Validar secuencia lógica de marcajes para prevenir duplicados y secuencias inválidas
         $ultimoMarcaje = $this->asistenciaRepo->findUltimoMarcajeDocente($idDocente);
         $this->validarSecuenciaMarcaje($tipo, $ultimoMarcaje);
 
-        // 7. Persistir marcaje inmutable en base de datos
+        // 8. Persistir marcaje inmutable en base de datos
         $marcaje = $this->asistenciaRepo->crearMarcaje(
             $idDocente,
             $idUsuario,

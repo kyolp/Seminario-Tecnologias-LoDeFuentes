@@ -64,6 +64,7 @@
                                 <?php endif; ?>
                             </td>
                             <td style="padding: 0.75rem; text-align: right; white-space: nowrap;">
+                                <a href="<?= e(url('/administracion/reportes/asistencia?id_docente=' . $d->id_docente)) ?>" style="color: #7c3aed; text-decoration: none; font-weight: 600; margin-right: 0.5rem;" title="Consultar historial individual de asistencia">Asistencia</a>
                                 <a href="<?= e(url('/administracion/docentes/ver?id=' . $d->id_docente)) ?>" style="color: #2563eb; text-decoration: none; font-weight: 600; margin-right: 0.5rem;">Ver</a>
                                 <a href="<?= e(url('/administracion/docentes/editar?id=' . $d->id_docente)) ?>" style="color: #0d9488; text-decoration: none; font-weight: 600; margin-right: 0.5rem;">Editar</a>
                                 <form method="POST" action="<?= e(url('/administracion/docentes/estado?id=' . $d->id_docente)) ?>" style="display: inline;">

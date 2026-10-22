@@ -134,7 +134,16 @@ class DocenteAsistenciaController extends BaseController
         $historial = $this->asistenciaService->obtenerHistorialDocente($docente->id_docente, 100);
 
         if ($this->isJsonRequest($request)) {
-            $data = array_map(fn($m) => $m->toArray(), $historial);
+            $data = array_map(function ($m) {
+                $ts = strtotime($m->fecha_hora);
+                return [
+                    'fecha' => date('d/m/Y', $ts),
+                    'hora' => date('H:i:s', $ts),
+                    'tipo' => $m->tipo,
+                    'estado' => $m->dentro_radio === 1 ? 'Válido' : 'Fuera de rango',
+                    'resultado' => $m->dentro_radio === 1 ? 'Registrado correctamente' : 'Rechazado',
+                ];
+            }, $historial);
             return new Response((string) json_encode(['exito' => true, 'historial' => $data], JSON_UNESCAPED_UNICODE), 200, [
                 'Content-Type' => 'application/json; charset=utf-8',
             ]);
@@ -196,13 +205,15 @@ class DocenteAsistenciaController extends BaseController
                 $resultado = $this->asistenciaService->registrarEntrada(
                     $docente->id_docente,
                     $user->id_usuario,
-                    $datosCliente
+                    $datosCliente,
+                    $request->ip()
                 );
             } else {
                 $resultado = $this->asistenciaService->registrarSalida(
                     $docente->id_docente,
                     $user->id_usuario,
-                    $datosCliente
+                    $datosCliente,
+                    $request->ip()
                 );
             }
 

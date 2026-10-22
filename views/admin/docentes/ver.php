@@ -4,8 +4,9 @@
             <h2 style="margin: 0; color: #1e3a8a; font-size: 1.3rem;">Ficha del Docente</h2>
             <p style="margin: 0.25rem 0 0 0; color: #64748b; font-size: 0.875rem;">Información detallada del docente registrado</p>
         </div>
-        <div style="display: flex; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <a href="<?= e(url('/administracion/docentes')) ?>" style="padding: 0.5rem 1rem; background: #64748b; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">&larr; Volver</a>
+            <a href="<?= e(url('/administracion/reportes/asistencia?id_docente=' . $docente->id_docente)) ?>" style="padding: 0.5rem 1rem; background: #7c3aed; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">🕒 Ver Historial de Asistencia</a>
             <a href="<?= e(url('/administracion/docentes/editar?id=' . $docente->id_docente)) ?>" style="padding: 0.5rem 1rem; background: #0d9488; color: #fff; text-decoration: none; border-radius: 4px; font-size: 0.875rem; font-weight: 600;">Editar</a>
         </div>
     </div>
@@ -35,6 +36,14 @@
             <tr style="border-bottom: 1px solid #e2e8f0;">
                 <th style="padding: 0.75rem 0; color: #475569;">Fecha de Ingreso:</th>
                 <td style="padding: 0.75rem 0; color: #0f172a;"><?= e($docente->fecha_ingreso ?? 'No especificada') ?></td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+                <th style="padding: 0.75rem 0; color: #475569;">Historial de Asistencia:</th>
+                <td style="padding: 0.75rem 0;">
+                    <a href="<?= e(url('/administracion/reportes/asistencia?id_docente=' . $docente->id_docente)) ?>" style="color: #7c3aed; font-weight: 600; text-decoration: none;">
+                        Consultar marcajes de este docente &rarr;
+                    </a>
+                </td>
             </tr>
             <tr>
                 <th style="padding: 0.75rem 0; color: #475569;">Estado:</th>

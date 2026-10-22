@@ -57,7 +57,7 @@
         <div style="background: #1e3a8a; color: #ffffff; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
             <div>
                 <h2 style="margin: 0; font-size: 1.2rem; font-weight: 600;">Marcaje de Entrada y Salida</h2>
-                <span style="font-size: 0.85rem; color: #bfdbfe;">Validación geográfica obligatoria dentro del radio institucional</span>
+                <span style="font-size: 0.85rem; color: #bfdbfe;">Validación simultánea: geocerca escolar y red institucional autorizada</span>
             </div>
             <div>
                 <?php if ($configuracion !== null): ?>
@@ -70,6 +70,14 @@
                     </span>
                 <?php endif; ?>
             </div>
+        </div>
+
+        <!-- Condiciones Obligatorias para el Registro de Asistencia -->
+        <div style="background: #eff6ff; border-bottom: 1px solid #dbeafe; padding: 0.85rem 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; color: #1e40af; flex-wrap: wrap;">
+            <strong style="color: #1e3a8a;">Condiciones obligatorias para registrar marcaje:</strong>
+            <span style="display: inline-flex; align-items: center; gap: 0.25rem;">📍 1. Dispositivo con GPS habilitado</span>
+            <span style="display: inline-flex; align-items: center; gap: 0.25rem;">🏫 2. Ubicación física dentro del perímetro escolar</span>
+            <span style="display: inline-flex; align-items: center; gap: 0.25rem;">📶 3. Conexión a la red institucional autorizada</span>
         </div>
 
         <div style="padding: 1.5rem;">
@@ -151,9 +159,14 @@
 
     <!-- Historial de Asistencia Personal (RF-23) -->
     <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden;">
-        <div style="background: #f8fafc; padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="margin: 0; font-size: 1.15rem; color: #1e293b; font-weight: 600;">Mi Historial Reciente de Asistencia</h2>
-            <span style="font-size: 0.8rem; color: #64748b;">Últimos marcajes registrados (Inmutables)</span>
+        <div style="background: #f8fafc; padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+                <h2 style="margin: 0; font-size: 1.15rem; color: #1e293b; font-weight: 600;">Mi Historial Reciente de Asistencia</h2>
+                <span style="font-size: 0.8rem; color: #64748b;">Últimos marcajes registrados (Inmutables)</span>
+            </div>
+            <a href="<?= e(url('/docente/asistencia/historial')) ?>" style="padding: 0.4rem 0.85rem; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
+                Ver Historial Completo &rarr;
+            </a>
         </div>
 
         <div style="overflow-x: auto;">
@@ -162,17 +175,14 @@
                     <tr style="background: #f1f5f9; color: #475569; border-bottom: 1px solid #e2e8f0;">
                         <th style="padding: 0.75rem 1rem;">Fecha</th>
                         <th style="padding: 0.75rem 1rem;">Hora</th>
-                        <th style="padding: 0.75rem 1rem;">Tipo</th>
-                        <th style="padding: 0.75rem 1rem;">Distancia al Centro</th>
-                        <th style="padding: 0.75rem 1rem;">Coordenadas Registradas</th>
-                        <th style="padding: 0.75rem 1rem;">Precisión GPS</th>
-                        <th style="padding: 0.75rem 1rem;">Validación</th>
+                        <th style="padding: 0.75rem 1rem;">Tipo de Marcaje</th>
+                        <th style="padding: 0.75rem 1rem;">Estado / Resultado</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($historial)): ?>
                         <tr>
-                            <td colspan="7" style="padding: 2.5rem 1rem; text-align: center; color: #64748b;">
+                            <td colspan="4" style="padding: 2.5rem 1rem; text-align: center; color: #64748b;">
                                 No tiene marcajes de asistencia registrados en su historial.
                             </td>
                         </tr>
@@ -193,18 +203,9 @@
                                         <span style="background: #ffedd5; color: #c2410c; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.75rem;">SALIDA</span>
                                     <?php endif; ?>
                                 </td>
-                                <td style="padding: 0.75rem 1rem; font-weight: 600; color: #047857;">
-                                    <?= number_format($m->distancia_metros, 1) ?> m
-                                </td>
-                                <td style="padding: 0.75rem 1rem; font-family: monospace; font-size: 0.8rem; color: #64748b;">
-                                    <?= number_format($m->latitud_dispositivo, 6) ?>, <?= number_format($m->longitud_dispositivo, 6) ?>
-                                </td>
-                                <td style="padding: 0.75rem 1rem; font-size: 0.85rem; color: #64748b;">
-                                    <?= $m->precision_metros !== null ? number_format($m->precision_metros, 1) . ' m' : 'N/A' ?>
-                                </td>
                                 <td style="padding: 0.75rem 1rem;">
-                                    <span style="background: #e0e7ff; color: #3730a3; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
-                                        Dentro del radio
+                                    <span style="background: #e0f2fe; color: #0369a1; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
+                                        ✓ Válido (Dentro de área)
                                     </span>
                                 </td>
                             </tr>
