@@ -52,10 +52,10 @@ Clase estática encargada de la evaluación binaria de direcciones IP contra ran
 
 ### 3.3. Configuración del Entorno (`config/app.php`, `.env`, `.env.example`)
 - Variable de entorno: `ATTENDANCE_ALLOWED_NETWORKS`.
-- Formato: Lista de direcciones IP o rangos CIDR separados por coma.
-  - *Ejemplo institucional:* `192.168.10.0/24,10.0.0.0/8`
-  - *Desarrollo / Testing:* `127.0.0.1/32,::1/128`
-- En producción, si la configuración se encuentra vacía, el sistema asume una postura restrictiva de seguridad y deniega el marcaje hasta su configuración formal por el administrador de sistemas.
+- **Configurable por Entorno:** La lista de redes institucionales es completamente desacoplada y configurable según el ambiente de ejecución:
+  - *Entorno Institucional Real:* Debe configurarse con el CIDR real de la red Wi-Fi/LAN autorizada de la escuela (por ejemplo `192.168.1.0/24` o la subred asignada por la administración del centro educativo).
+  - *Desarrollo Local y Pruebas:* Se utiliza la interfaz loopback (`127.0.0.1/32,::1/128`) o subred de desarrollo para permitir la ejecución de suites automatizadas locales sin conexión a la red física de la escuela. Las direcciones loopback no constituyen la red institucional.
+- **Política Fail-Closed:** Si la variable `ATTENDANCE_ALLOWED_NETWORKS` se encuentra vacía, no definida o contiene únicamente formatos inválidos, el sistema opera bajo la política de seguridad más restrictiva (fail-closed), denegando todo marcaje de asistencia hasta que se configure una red válida.
 
 ### 3.4. `App\Services\AsistenciaService`
 - Validación en el flujo de `procesarMarcaje()` antes del cómputo geodésico y de la persistencia transaccional.

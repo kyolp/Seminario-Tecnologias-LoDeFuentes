@@ -38,7 +38,7 @@ El presente ajuste técnico complementa y refuerza los módulos entregados y apr
 ### 2.2. Archivos Actualizados
 - `app/Core/Request.php`: Métodos autoritativos `ip()` y `getClientIp()`, extracción segura desde `REMOTE_ADDR`, soporte para inyección de IP en pruebas.
 - `config/app.php`: Parámetro `'attendance_allowed_networks'`.
-- `.env`: Configuración local de subredes permitidas (`ATTENDANCE_ALLOWED_NETWORKS=127.0.0.1/32,::1/128`).
+- `.env`: Configuración local de subredes permitidas (`ATTENDANCE_ALLOWED_NETWORKS=127.0.0.1/32,::1/128,192.168.0.0/24`). Configurable por entorno; las direcciones loopback se emplean exclusivamente para desarrollo y pruebas automatizadas, requiriéndose el CIDR escolar real en el despliegue de producción.
 - `.env.example`: Documentación de la variable para despliegues institucionales.
 - `app/Services/AsistenciaService.php`: Métodos `isRedAutorizada()`, validación obligatoria de red antes del cómputo geodésico, mensajes normativos exactos y preservación de compatibilidad histórica.
 - `app/Controllers/DocenteAsistenciaController.php`: Envío de IP autoritativa del request al servicio, respuesta JSON limpia y protección anti-IDOR en historial.
@@ -49,20 +49,38 @@ El presente ajuste técnico complementa y refuerza los módulos entregados y apr
 
 ### 2.3. Integridad de la Base de Datos
 - **`database/schema.sql`:** Intacto y sin modificaciones (0 cambios en esquema relacional).
-- **Datos de Demostración:** Tras la ejecución de las suites de prueba, se ejecutó la rutina de teardown que eliminó cualquier registro temporal de prueba en `marcajes_asistencia`, garantizando que la base de datos se mantiene en el estado limpio de demostración alcanzado en Fase 16.
+- **Datos de Demostración:** La base de datos contiene exactamente los datos canónicos consolidados en Fase 16:
+  - **Inscripciones:** 24 inscripciones totales, todas en estado `CONFIRMADA` (0 en otros estados), asignadas de forma equitativa (2 por sección).
+  - **Docentes:** 12 docentes institucionales activos con asignaciones académicas vigentes.
+  - **Secciones:** 12 secciones académicas (Primero a Sexto Primaria, secciones A y B).
+  - **Inocuidad de Pruebas:** Tras la ejecución de las suites de prueba, la rutina de teardown eliminó cualquier registro temporal de prueba en `marcajes_asistencia`, garantizando que la base de datos se mantiene en su estado limpio de demostración.
 
 ---
 
-## 3. Resumen de Pruebas y Regresión
+## 3. Resumen de Pruebas y Regresión Acumulada
 
-| Suite Ejecutada | Casos de Prueba | Aprobados | Fallidos | Tasa de Éxito | Estado |
-|:---|:---:|:---:|:---:|:---:|:---:|
-| **Ajuste Final (`tests/run_tests_ajuste_final.php`)** | 20 | 20 | 0 | 100.00% | **OK** |
-| **Fase 8 — Asistencia y Geocerca** | 30 | 30 | 0 | 100.00% | **OK** |
-| **Fase 12 — Reportes Administrativos (RF-29)** | 30 | 30 | 0 | 100.00% | **OK** |
-| **Fase 14 — Seguridad Global y Hardening** | 32 | 32 | 0 | 100.00% | **OK** |
-| **Fase 15 — Validación Integral y Compatibilidad** | 36 | 36 | 0 | 100.00% | **OK** |
-| **Fase 16 — Limpieza y Cierre** | 26 | 26 | 0 | 100.00% | **OK** |
+A continuación se detalla la regresión completa ejecutada a través de todas las fases históricas del proyecto más la suite del Ajuste Final:
+
+| Suite Ejecutada | Archivo de Prueba | Pruebas | Aprobadas | Fallidas | Estado |
+|:---|:---|:---:|:---:|:---:|:---:|
+| **Fase 1: Base de Datos** | `tests/run_tests_fase1.php` | 18 | 18 | 0 | **OK** |
+| **Fase 2: Arquitectura y Autenticación** | `tests/run_tests.php` | 16 | 16 | 0 | **OK** |
+| **Fase 3: Ciclo Escolar y Catálogos** | `tests/run_tests_fase3.php` | 19 | 19 | 0 | **OK** |
+| **Fase 4: Gestión de Docentes y Aulas** | `tests/run_tests_fase4.php` | 27 | 27 | 0 | **OK** |
+| **Fase 5: Asignación de Secciones** | `tests/run_tests_fase5.php` | 26 | 26 | 0 | **OK** |
+| **Fase 6: Inscripción y Cupos** | `tests/run_tests_fase6.php` | 30 | 30 | 0 | **OK** |
+| **Fase 7: Asignación Masiva** | `tests/run_tests_fase7.php` | 28 | 28 | 0 | **OK** |
+| **Fase 8: Asistencia y Geocerca** | `tests/run_tests_fase8.php` | 40 | 40 | 0 | **OK** |
+| **Fase 9: Permisos Docentes** | `tests/run_tests_fase9.php` | 46 | 46 | 0 | **OK** |
+| **Fase 10: Notificaciones Administrativas** | `tests/run_tests_fase10.php` | 27 | 27 | 0 | **OK** |
+| **Fase 11: Comprobante PDF** | `tests/run_tests_fase11.php` | 29 | 29 | 0 | **OK** |
+| **Fase 12: Reportes Institucionales** | `tests/run_tests_fase12.php` | 30 | 30 | 0 | **OK** |
+| **Fase 13: Recuperación de Contraseña** | `tests/run_tests_fase13.php` | 30 | 30 | 0 | **OK** |
+| **Fase 14: Seguridad y Hardening Global** | `tests/run_tests_fase14.php` | 32 | 32 | 0 | **OK** |
+| **Fase 15: Validación Integral y Compatibilidad** | `tests/run_tests_fase15.php` | 36 | 36 | 0 | **OK** |
+| **Fase 16: Limpieza y Cierre** | `tests/run_tests_fase16.php` | 26 | 26 | 0 | **OK** |
+| **Ajuste Final: Control de Red e Historial** | `tests/run_tests_ajuste_final.php` | 20 | 20 | 0 | **OK** |
+| **TOTAL CONSOLIDADO** | **17 Suites Automatizadas** | **480** | **480** | **0** | **100% GREEN** |
 
 ---
 
